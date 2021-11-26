@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
         connect(mpRipper, &CJackTheRipper::progress, ui->progressBar, &QProgressBar::setValue);
         connect(mpRipper->cddb(), &CCDDB::entries, this, &MainWindow::catchCDDBEntries);
         connect(mpRipper->cddb(), &CCDDB::match, this, &MainWindow::catchCDDBEntry);
+        connect(mpRipper, &CJackTheRipper::match, this, &MainWindow::catchCDDBEntry);
     }
 }
 

@@ -26,8 +26,9 @@ public:
     int extractTrack(int trackNo, const QString& fName);
 
     CCDDB *cddb();
-
     QVector<time_t> trackTimes();
+
+    int parseCDText(cdtext_t* pCDT, track_t t, QStringList& ttitles);
 
 public slots:
     bool mediaChanged();
@@ -43,6 +44,7 @@ protected:
 signals:
     void mediaChgd();
     void progress(int i);
+    void match(QStringList l);
 
 private:
     QString mCDDBRequest;

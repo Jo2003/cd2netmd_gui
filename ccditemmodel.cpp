@@ -1,5 +1,6 @@
 #include "ccditemmodel.h"
 #include <QFont>
+#include <QIcon>
 
 CCDItemModel::CCDItemModel(const CCDItemModel::CDTitles &titles,
                            const CCDItemModel::TrackTimes &times,
@@ -49,6 +50,10 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
     else if ((role == Qt::EditRole) && (col == 0))
     {
         return mTitles.at(row);
+    }
+    else if ((role == Qt::DecorationRole) && (col == 0))
+    {
+        return QIcon(":/view/audio");
     }
 
     return QVariant();

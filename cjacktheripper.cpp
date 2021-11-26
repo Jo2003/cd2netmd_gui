@@ -1,6 +1,7 @@
 #include "cjacktheripper.h"
 #include <cdio/logging.h>
 #include <cdio/cd_types.h>
+#include <cdio/cdtext.h>
 #include <QVector>
 #include <stdexcept>
 
@@ -129,6 +130,24 @@ QVector<time_t> CJackTheRipper::trackTimes()
     return mTrackTimes;
 }
 
+int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t t, QStringList &ttitles)
+{
+    QString track;
+    const char* tok = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, t);
+
+    if (tok)
+    {
+        track = QString("%1 - ").arg(tok);
+    }
+
+    tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, t);
+    track += tok;
+
+    ttitles.append(track);
+
+    return track.isEmpty() ? -1 : 0;
+}
+
 int CJackTheRipper::cddbReqString()
 {
     QString req;
@@ -138,6 +157,7 @@ int CJackTheRipper::cddbReqString()
     uint32_t checkSum = 0, tmp = 0;
     uint32_t offset = 0, lastOffset;
     QVector<lba_t> tracks;
+    QStringList trackTitles;
     mTrackTimes.clear();
 
     mCDDBRequest.clear();
@@ -148,6 +168,9 @@ int CJackTheRipper::cddbReqString()
         int secs   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) / CDIO_CD_FRAMES_PER_SEC;
         noTracks   = cdio_get_num_tracks(mpCDIO);
         firstTrack = cdio_get_first_track_num(mpCDIO);
+
+        // check for CDText
+        cdtext_t *cdtext = cdio_get_cdtext(mpCDIO);
 
         for (int j = 0; j < noTracks; j++)
         {
@@ -162,10 +185,20 @@ int CJackTheRipper::cddbReqString()
             {
                 // first pregap
                 secs -= offset / CDIO_CD_FRAMES_PER_SEC;
+
+                if (cdtext)
+                {
+                    parseCDText(cdtext, j, trackTitles);
+                }
             }
             else
             {
                 mTrackTimes.append((offset - lastOffset) / CDIO_CD_FRAMES_PER_SEC);
+            }
+
+            if (cdtext)
+            {
+                parseCDText(cdtext, j + firstTrack, trackTitles);
             }
 
             {
@@ -194,7 +227,15 @@ int CJackTheRipper::cddbReqString()
         req += QString("+%1").arg(secs);
         mCDDBRequest = req;
 
-        mpCddb->getEntries(req);
+        if (trackTitles.isEmpty())
+        {
+            // no CDText -> ask CDDB
+            mpCddb->getEntries(req);
+        }
+        else
+        {
+            emit match(trackTitles);
+        }
     }
 
     return mCDDBRequest.isEmpty() ? -1 : 0;
