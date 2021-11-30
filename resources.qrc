@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/view">
-        <file alias="audio">res/Mimetypes-sound-icon.png</file>
+        <file alias="folder">res/folder.png</file>
+        <file alias="audio">res/wave.png</file>
     </qresource>
     <qresource prefix="/main">
         <file alias="md">res/minidisc.png</file>

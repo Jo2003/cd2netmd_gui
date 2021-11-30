@@ -21,6 +21,9 @@ SOURCES += \
     ccditemmodel.cpp \
     ccdtableview.cpp \
     cjacktheripper.cpp \
+    cmdtreemodel.cpp \
+    cmdtreeview.cpp \
+    cnetmd.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -30,6 +33,9 @@ HEADERS += \
     ccditemmodel.h \
     ccdtableview.h \
     cjacktheripper.h \
+    cmdtreemodel.h \
+    cmdtreeview.h \
+    cnetmd.h \
     mainwindow.h
 
 FORMS += \

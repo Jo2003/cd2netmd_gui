@@ -1,11 +1,32 @@
+/**
+ * Copyright (C) 2021 Jo2003 (olenka.joerg@gmail.com)
+ * This file is part of cd2netmd_gui
+ *
+ * cd2netmd is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * cd2netmd is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ */
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QStringListModel>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include "cmdtreemodel.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow), mpRipper(nullptr)
+    , ui(new Ui::MainWindow), mpRipper(nullptr), mpNetMD(nullptr)
 {
     ui->setupUi(this);
 
@@ -16,6 +37,12 @@ MainWindow::MainWindow(QWidget *parent)
         connect(mpRipper->cddb(), &CCDDB::match, this, &MainWindow::catchCDDBEntry);
         connect(mpRipper, &CJackTheRipper::match, this, &MainWindow::catchCDDBEntry);
     }
+
+    if ((mpNetMD = new CNetMD(this)) != nullptr)
+    {
+        connect(mpNetMD, &CNetMD::jsonOut, this, &MainWindow::catchJson);
+    }
+
 }
 
 MainWindow::~MainWindow()
@@ -65,7 +92,24 @@ void MainWindow::catchCDDBEntry(QStringList l)
     ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
 }
 
+void MainWindow::catchJson(QString j)
+{
+    CMDTreeModel* model = new CMDTreeModel(j, this);
+    ui->treeView->setModel(model);
+
+    ui->treeView->expandAll();
+
+    ui->treeView->setColumnWidth(0, (ui->treeView->width() / 100) * 80);
+    ui->treeView->setColumnWidth(1, (ui->treeView->width() / 100) * 5);
+    ui->treeView->setColumnWidth(2, (ui->treeView->width() / 100) * 10);
+}
+
 void MainWindow::on_pushInitCD_clicked()
 {
     mpRipper->init();
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    mpNetMD->start({CNetMD::NetMDCmd::DISCINFO});
 }

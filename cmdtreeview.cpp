@@ -14,16 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  */
-#pragma once
-#include <QObject>
-#include <QTableView>
-#include <QResizeEvent>
+#include "cmdtreeview.h"
 
-class CCDTableView : public QTableView
+void CMDTreeView::resizeEvent(QResizeEvent *e)
 {
-    Q_OBJECT
-public:
-    using QTableView::QTableView;
-protected:
-    void resizeEvent(QResizeEvent *e) override;
-};
+    QTreeView::resizeEvent(e);
+    setColumnWidth(0, (width() / 100) * 80);
+    setColumnWidth(1, (width() / 100) * 5);
+    setColumnWidth(2, (width() / 100) * 10);
+}

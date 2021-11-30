@@ -16,34 +16,14 @@
  */
 #pragma once
 #include <QObject>
-#include <QNetworkAccessManager>
+#include <QTreeView>
+#include <QResizeEvent>
 
-class CCDDB : public QObject
+class CMDTreeView : public QTreeView
 {
     Q_OBJECT
-    static constexpr const char* CDDB_SERVER = "https://gnudb.gnudb.org:443";
-
 public:
-    enum class REQ_WHAT : uint8_t {
-        REQ_UNKNOWN,
-        REQ_ENTRIES,
-        REQ_MATCH
-    };
-
-    explicit CCDDB(QObject *parent = nullptr);
-
-    int getEntries(const QString& queryPart);
-    int getEntry(const QString& queryPart);
-
-private slots:
-    int catchResponse(QNetworkReply *reply);
-
+    using QTreeView::QTreeView;
 protected:
-    int parseReply(REQ_WHAT type, QString reply);
-    QNetworkAccessManager *mpNetwork;
-
-signals:
-    void entries(QStringList l);
-    void match(QStringList l);
+    void resizeEvent(QResizeEvent *e) override;
 };
-

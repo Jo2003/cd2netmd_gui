@@ -85,12 +85,10 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QTreeWidget" name="treeWidget">
-          <column>
-           <property name="text">
-            <string notr="true">1</string>
-           </property>
-          </column>
+         <widget class="CMDTreeView" name="treeView">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::ContiguousSelection</enum>
+          </property>
          </widget>
         </item>
         <item>
@@ -147,6 +145,11 @@
    <class>CCDTableView</class>
    <extends>QTableView</extends>
    <header>ccdtableview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CMDTreeView</class>
+   <extends>QTreeView</extends>
+   <header>cmdtreeview.h</header>
   </customwidget>
  </customwidgets>
  <resources>
