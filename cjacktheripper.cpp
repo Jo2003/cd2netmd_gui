@@ -149,15 +149,21 @@ QVector<time_t> CJackTheRipper::trackTimes()
 int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t t, QStringList &ttitles)
 {
     QString track;
+    QString stok;
     const char* tok = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, t);
 
     if (tok)
     {
-        track = QString("%1 - ").arg(tok);
+        stok  = QString(tok).trimmed();
+        track = QString("%1 - ").arg(stok);
     }
 
     tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, t);
-    track += tok;
+    if (tok)
+    {
+        stok   = QString(tok).trimmed();
+        track += stok;
+    }
 
     ttitles.append(track);
 

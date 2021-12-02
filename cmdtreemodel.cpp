@@ -15,22 +15,16 @@
  * You should have received a copy of the GNU General Public License
  */
 #include "cmdtreemodel.h"
-#include <QJsonDocument>
-#include <QJsonArray>
 #include <QIcon>
+#include <string>
 
 CMDTreeModel::CMDTreeModel(const QString& jsonContent, QObject *parent)
     :QAbstractItemModel(parent)
 {
-    QJsonDocument doc = QJsonDocument::fromJson(jsonContent.toUtf8());
-
-    if (doc.isObject())
-    {
-        mMDJson = doc.object();
-    }
+    mMDJson = nlohmann::json::parse(jsonContent.toStdString());
 
     // root item with column names
-    mpTreeRoot = new CTreeItem({tr("Name"), tr("Mode"), tr("Time")});
+    mpTreeRoot = new CTreeItem(ItemRole::ROOT, {tr("Name"), tr("Mode"), tr("Time")});
     setupModelData();
 }
 
@@ -95,20 +89,18 @@ int CMDTreeModel::columnCount(const QModelIndex &parent) const
 void CMDTreeModel::setupModelData()
 {
     // create Disc node
-    CTreeItem*  pDisc  = new CTreeItem({mMDJson["title"].toString(), QString(), QString()}, mpTreeRoot);
+    CTreeItem*  pDisc  = new CTreeItem(ItemRole::DISC, {QString::fromStdString(mMDJson["title"].get<std::string>()),
+                                                        QString(), QString()}, mpTreeRoot);
     CTreeItem*  pGroup = nullptr;
-    QJsonObject currGrp;
+    nlohmann::json currGrp;
 
-    for (const auto& t : mMDJson["tracks"].toArray())
+    for (const auto& track : mMDJson["tracks"])
     {
         CTreeItem*  pTrack;
-        QJsonObject track      = t.toObject();
-        int trackNumber        = track["no"].toInt() + 1;
-        QJsonObject trackGroup = group(trackNumber);
-        QString trackName      = QString("%1. %2").arg(trackNumber, 2, 10, QChar('0'))
-                                        .arg(track["name"].toString());
+        int trackNumber           = track["no"].get<int>() + 1;
+        nlohmann::json trackGroup = group(trackNumber);
 
-        if (trackGroup.isEmpty())
+        if (trackGroup.empty())
         {
             currGrp = trackGroup;
 
@@ -118,8 +110,10 @@ void CMDTreeModel::setupModelData()
                 pGroup = nullptr;
             }
 
-            pTrack = new CTreeItem({trackName, track["bitrate"].toString(),
-                                    track["time"].toString()}, pDisc);
+            pTrack = new CTreeItem(ItemRole::TRACK, {QString::fromStdString(track["name"].get<std::string>()),
+                                                     QString::fromStdString(track["bitrate"].get<std::string>()),
+                                                     QString::fromStdString(track["time"].get<std::string>())},
+                                   pDisc, trackNumber);
 
             pDisc->appendChild(pTrack);
         }
@@ -133,11 +127,14 @@ void CMDTreeModel::setupModelData()
                 {
                     pDisc->appendChild(pGroup);
                 }
-                pGroup = new CTreeItem({trackGroup["name"].toString(), QString(), QString()}, pDisc);
+                pGroup = new CTreeItem(ItemRole::GROUP, {QString::fromStdString(trackGroup["name"].get<std::string>()),
+                                                         QString(), QString()}, pDisc);
             }
 
-            pTrack = new CTreeItem({trackName, track["bitrate"].toString(),
-                                    track["time"].toString()}, pGroup);
+            pTrack = new CTreeItem(ItemRole::TRACK, {QString::fromStdString(track["name"].get<std::string>()),
+                                                     QString::fromStdString(track["bitrate"].get<std::string>()),
+                                                     QString::fromStdString(track["time"].get<std::string>())},
+                                   pGroup, trackNumber);
 
             pGroup->appendChild(pTrack);
         }
@@ -151,17 +148,16 @@ void CMDTreeModel::setupModelData()
     mpTreeRoot->appendChild(pDisc);
 }
 
-QJsonObject CMDTreeModel::group(int track)
+nlohmann::json CMDTreeModel::group(int track)
 {
-    for (const auto& g : mMDJson["groups"].toArray())
+    for (const auto& grp : mMDJson["groups"])
     {
-        QJsonObject grp = g.toObject();
-        if ((track >= grp["first"].toInt()) && (track <= grp["last"].toInt()))
+        if ((track >= grp["first"].get<int>()) && (track <= grp["last"].get<int>()))
         {
             return grp;
         }
     }
-    return QJsonObject();
+    return nlohmann::json();
 }
 
 QVariant CMDTreeModel::data(const QModelIndex &index, int role) const
@@ -173,15 +169,15 @@ QVariant CMDTreeModel::data(const QModelIndex &index, int role) const
 
     if ((role == Qt::DecorationRole) && (index.column() == 0))
     {
-        if (item->parentItem() == mpTreeRoot)
+        if (item->itemRole() == ItemRole::DISC)
         {
             return QIcon(":/main/md");
         }
-        else if (!item->data(2).toString().isEmpty())
+        else if (item->itemRole() == ItemRole::TRACK)
         {
             return QIcon(":/view/audio");
         }
-        else
+        else if (item->itemRole() == ItemRole::GROUP)
         {
             return QIcon(":/view/folder");
         }
@@ -189,13 +185,42 @@ QVariant CMDTreeModel::data(const QModelIndex &index, int role) const
 
     if ((role == Qt::EditRole) && (index.column() == 0))
     {
+        if (item->title().isEmpty())
+        {
+            return item->data(index.column());
+        }
+        else
+        {
+            return QString(item->title());
+        }
+    }
+
+    if (role == Qt::DisplayRole)
+    {
+        if ((item->itemRole() == ItemRole::TRACK) && (index.column() == 0))
+        {
+            QString name = item->title().isEmpty() ? item->data(index.column()).toString() : item->title();
+            return QString("%1. %2").arg(item->trackNumber(), 2).arg(name);
+        }
         return item->data(index.column());
     }
 
-    if (role != Qt::DisplayRole)
-        return QVariant();
+    return QVariant();
+}
 
-    return item->data(index.column());
+bool CMDTreeModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!index.isValid())
+        return false;
+
+    if ((role == Qt::EditRole) && (index.column() == 0))
+    {
+        CTreeItem *item = static_cast<CTreeItem*>(index.internalPointer());
+        item->title()   = value.toString();
+        return true;
+    }
+
+    return false;
 }
 
 Qt::ItemFlags CMDTreeModel::flags(const QModelIndex &index) const
@@ -223,10 +248,9 @@ QVariant CMDTreeModel::headerData(int section, Qt::Orientation orientation,
 
 //////////////////////////////////////////////////////////////////////////
 
-CTreeItem::CTreeItem(const QVector<QVariant> &data, CTreeItem *parentItem)
-    :m_itemData(data), m_parentItem(parentItem)
+CTreeItem::CTreeItem(CMDTreeModel::ItemRole role, const QVector<QVariant> &data, CTreeItem *parentItem, int iNo)
+    :m_itemData(data), m_parentItem(parentItem), mItRole(role), miNumber(iNo)
 {
-
 }
 
 CTreeItem::~CTreeItem()
@@ -281,4 +305,19 @@ QVariant CTreeItem::data(int column) const
 CTreeItem *CTreeItem::parentItem()
 {
     return m_parentItem;
+}
+
+CMDTreeModel::ItemRole CTreeItem::itemRole() const
+{
+    return mItRole;
+}
+
+int CTreeItem::trackNumber() const
+{
+    return miNumber;
+}
+
+QString &CTreeItem::title()
+{
+    return mTitle;
 }
