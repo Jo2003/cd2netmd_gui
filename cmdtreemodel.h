@@ -36,7 +36,7 @@ public:
     explicit CMDTreeModel(const QString& jsonContent, QObject *parent = nullptr);
     virtual ~CMDTreeModel();
 
-    void addTrack(const QString& title, const QString& mode, const QString& time);
+    void addTrack(int number, const QString& title, const QString& mode, const QString& time);
 
     QVariant data(const QModelIndex &index, int role) const override;
     bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
@@ -49,17 +49,22 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
+signals:
+    void editTitle(ItemRole role, QString title, int no);
+
 protected:
     void setupModelData();
-    nlohmann::json group(int track);
+    nlohmann::json& group(int track);
     nlohmann::json mMDJson;
     CTreeItem*  mpTreeRoot;
+    nlohmann::json mRootData;
+    nlohmann::json mEmpty;
 };
 
 class CTreeItem
 {
 public:
-    explicit CTreeItem(CMDTreeModel::ItemRole role, const QVector<QVariant> &data, CTreeItem *parentItem = nullptr, int iNo = -1);
+    explicit CTreeItem(CMDTreeModel::ItemRole role, nlohmann::json& data, CTreeItem *parentItem = nullptr);
     ~CTreeItem();
 
     void appendChild(CTreeItem *child);
@@ -71,14 +76,12 @@ public:
     int row() const;
     CTreeItem *parentItem();
     CMDTreeModel::ItemRole itemRole() const;
+    nlohmann::json &rawData();
     int trackNumber() const;
-    QString& title();
 
 private:
     QVector<CTreeItem*> m_childItems;
-    QVector<QVariant> m_itemData;
+    nlohmann::json& mItemData;
     CTreeItem *m_parentItem;
     CMDTreeModel::ItemRole mItRole;
-    int miNumber;
-    QString mTitle;
 };

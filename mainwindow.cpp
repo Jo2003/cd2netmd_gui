@@ -82,8 +82,14 @@ void MainWindow::catchCDDBEntry(QStringList l)
 
     l.removeFirst();
 
+    CCDItemModel *pModel = static_cast<CCDItemModel *>(ui->tableViewCD->model());
 
-    CCDItemModel *pModel = new CCDItemModel(l, v, this);
+    if (pModel != nullptr)
+    {
+        delete pModel;
+    }
+
+    pModel = new CCDItemModel(l, v, this);
 
     ui->tableViewCD->setModel(pModel);
     int width = ui->tableViewCD->width();
@@ -94,7 +100,13 @@ void MainWindow::catchCDDBEntry(QStringList l)
 
 void MainWindow::catchJson(QString j)
 {
-    CMDTreeModel* model = new CMDTreeModel(j, this);
+    CMDTreeModel* model = static_cast<CMDTreeModel*>(ui->treeView->model());
+    if (model != nullptr)
+    {
+        delete model;
+    }
+
+    model = new CMDTreeModel(j, this);
     ui->treeView->setModel(model);
 
     ui->treeView->expandAll();
