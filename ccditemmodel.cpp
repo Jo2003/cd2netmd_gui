@@ -71,6 +71,11 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
     {
         return QIcon(":/view/audio");
     }
+    else if ((role == Qt::UserRole) && (col == 1))
+    {
+        // return track time in seconds
+        return mTTimes.at(row);
+    }
 
     return QVariant();
 }

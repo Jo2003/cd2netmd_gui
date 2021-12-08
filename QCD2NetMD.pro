@@ -21,10 +21,12 @@ SOURCES += \
     ccddbentriesdialog.cpp \
     ccditemmodel.cpp \
     ccdtableview.cpp \
+    ccliprocess.cpp \
     cjacktheripper.cpp \
     cmdtreemodel.cpp \
     cmdtreeview.cpp \
     cnetmd.cpp \
+    cxenc.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -33,10 +35,12 @@ HEADERS += \
     ccddbentriesdialog.h \
     ccditemmodel.h \
     ccdtableview.h \
+    ccliprocess.h \
     cjacktheripper.h \
     cmdtreemodel.h \
     cmdtreeview.h \
     cnetmd.h \
+    cxenc.h \
     include/json.hpp \
     mainwindow.h
 

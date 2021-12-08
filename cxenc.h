@@ -15,53 +15,44 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-#include <QObject>
-#include <QProcess>
+#include "ccliprocess.h"
 
-class CXEnc : public QObject
+class CXEnc : public CCliProcess
 {
     Q_OBJECT
-    static constexpr const char* XENC_CLI = "toolchain/netmdcli.exe";
+    static constexpr const char* XENC_CLI = "toolchain/atracdenc.exe";
+
+    /// Sony WAVE format
+    static constexpr uint32_t WAVE_FORMAT_SONY_SCX = 624;
+
+    struct WaveFormatEx
+    {
+        uint16_t wFormatTag;
+        uint16_t nChannels;
+        uint32_t nSamplesPerSec;
+        uint32_t nAvgBytesPerSec;
+        uint16_t nBlockAlign;
+        uint16_t wBitsPerSample;
+        uint16_t cbSize;
+    };
 
 public:
     enum class XEncCmd : uint8_t
     {
-        UNKNWON
-    };
-
-    struct XEncStartup
-    {
-        NetMDStartup(NetMDCmd cmd, const QString& trk = "",
-                     const QString& title = "", const QString& grp = "",
-                     int16_t first = -1, int16_t last = -1, int16_t group = -1)
-            : mCmd(cmd), msTrack(trk), msTitle(title), msGroup(grp),
-              miFirst(first), miLast(last), miGroup(group)
-        {}
-
-        XEncCmd  mCmd;
-        QString  msTrack;
-        QString  msTitle;
-        QString  msGroup;
-        int16_t  miFirst;
-        int16_t  miLast;
-        int16_t  miGroup;
+        NONE,
+        LP2_ENCODE,
+        LP4_ENCODE
     };
 
     explicit CXEnc(QObject *parent = nullptr);
 
-    int start(XEncStartup startup);
-    int terminate();
-    bool busy() const;
-
-private slots:
-    void readProcOutput();
-    void procEnded(int, QProcess::ExitStatus);
-
-signals:
-    void progress(int);
+    int start(XEncCmd cmd, const QString& tmpFileName);
 
 protected:
-    QProcess *mpXEncCli;
+    int atrac3WaveHeader(const QString& tmpFileName, XEncCmd cmd, uint32_t dataSz);
+
+private slots:
+
+protected:
     XEncCmd   mCurrCmd;
-    QString   mResponse;
 };

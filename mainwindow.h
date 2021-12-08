@@ -16,11 +16,15 @@
  */
 #pragma once
 #include <QMainWindow>
+#include <QTemporaryFile>
+#include <QDir>
 #include "cjacktheripper.h"
 #include "ccddb.h"
 #include "ccddbentriesdialog.h"
 #include "ccditemmodel.h"
 #include "cnetmd.h"
+#include "cxenc.h"
+#include "cmdtreemodel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -31,8 +35,38 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    enum class WorkStep : uint8_t
+    {
+        NONE,       // steady
+        RIP,        // transient
+        RIPPED,     // steady
+        ENCODE,     // transient
+        ENCODED,    // steady
+        TRANSFER,   // transient
+        DONE        // steady
+    };
+
+    struct SRipTrack
+    {
+        int16_t         mCDTrackNo;
+        QString         mTitle;
+        QTemporaryFile* mpFile;
+        time_t          mLength;
+        WorkStep        mStep;
+    };
+
+    using TransferQueue = QVector<SRipTrack>;
+
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+protected:
+    void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd, QString& trackMode);
+    void addMDTrack(int number, const QString &title, const QString &mode, time_t length);
+    void addMDGroup(const QString& title, int16_t first, int16_t last);
+    void setMDTitle(const QString& title);
+    void enableDialogItems(bool ena);
+    void recreateTreeView(const QString& json);
 
 private slots:
     void catchCDDBEntries(QStringList l);
@@ -40,11 +74,21 @@ private slots:
     void catchJson(QString);
 
     void on_pushInitCD_clicked();
+    void on_pushLoadMD_clicked();
 
-    void on_pushButton_clicked();
+    void mdTitling(CMDTreeModel::ItemRole role, QString title, int no);
+
+    void on_pushTransfer_clicked();
+
+    void ripFinished();
+    void encodeFinished(bool checkBusy = false);
+    void transferFinished(bool checkBusy = false);
 
 private:
     Ui::MainWindow *ui;
     CJackTheRipper *mpRipper;
     CNetMD         *mpNetMD;
+    CXEnc          *mpXEnc;
+    CMDTreeModel   *mpMDmodel;
+    TransferQueue   mWorkQueue;
 };

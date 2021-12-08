@@ -33,11 +33,16 @@ public:
         TRACK
     };
 
+    struct SDiscConf
+    {
+       int mOTFEnc;
+       int mTrkCount;
+       int mTotTime;
+       int mFreeTime;
+    };
+
     explicit CMDTreeModel(const QString& jsonContent, QObject *parent = nullptr);
     virtual ~CMDTreeModel();
-
-    void addTrack(int number, const QString& title, const QString& mode, const QString& time);
-
     QVariant data(const QModelIndex &index, int role) const override;
     bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
@@ -49,6 +54,12 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
+    const SDiscConf *discConf() const;
+    void decreaseFreeTime(time_t secs);
+    void increaseTracks(int tracks);
+    nlohmann::json exportJson() const;
+
+
 signals:
     void editTitle(ItemRole role, QString title, int no);
 
@@ -59,6 +70,8 @@ protected:
     CTreeItem*  mpTreeRoot;
     nlohmann::json mRootData;
     nlohmann::json mEmpty;
+
+    SDiscConf mDiscConf;
 };
 
 class CTreeItem

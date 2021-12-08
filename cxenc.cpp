@@ -17,11 +17,11 @@
 #include "cxenc.h"
 
 CXEnc::CXEnc(QObject *parent)
-    : QObject(parent), mpXEncCli(nullptr), mCurrCmd(XEncCmd::UNKNWON)
+    : CCliProcess(parent), mCurrCmd(XEncCmd::NONE)
 {
 }
 
-int CXEnc::start(CNetMD::NetMDStartup startup)
+int CXEnc::start(XEncCmd cmd, const QString& tmpFileName)
 {
     /*
     int ret = 0;
@@ -77,64 +77,57 @@ int CXEnc::start(CNetMD::NetMDStartup startup)
     return 0;
 }
 
-int CXEnc::terminate()
+int CXEnc::atrac3WaveHeader(const QString &tmpFileName, CXEnc::XEncCmd cmd, uint32_t dataSz)
 {
-    if (mpXEncCli != nullptr)
+    /*
+    int ret = -1;
+
+    if ((fWave != nullptr)
+        && ((mode == NetMDCmds::WRITE_TRACK_LP2) || (mode == NetMDCmds::WRITE_TRACK_LP4))
+        && (dataSz > 92)) // 1x lp4 frame size
     {
-        mpXEncCli->terminate();
+        // heavily inspired by atrac3tool and completed through
+        // reverse engineering of ffmpeg output ...
+        char dstFormatBuf[0x20];
+        WAVEFORMATEX *pDstFormat   = (WAVEFORMATEX *)dstFormatBuf;
+        pDstFormat->wFormatTag     = WAVE_FORMAT_SONY_SCX;
+        pDstFormat->nChannels      = 2;
+        pDstFormat->nSamplesPerSec = 44100;
+        if (mode == NetMDCmds::WRITE_TRACK_LP2)
+        {
+            pDstFormat->nAvgBytesPerSec = 16537;
+            pDstFormat->nBlockAlign     = 0x180;
+            memcpy(&dstFormatBuf[0x12], "\x01\x00\x44\xAC\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00", 0xE);
+        }
+        else if (mode == NetMDCmds::WRITE_TRACK_LP4)
+        {
+            pDstFormat->nAvgBytesPerSec = 8268;
+            pDstFormat->nBlockAlign     = 0xc0;
+            memcpy(&dstFormatBuf[0x12], "\x01\x00\x44\xAC\x00\x00\x01\x00\x01\x00\x01\x00\x00\x00", 0xE);
+        }
+
+        pDstFormat->wBitsPerSample = 0;
+        pDstFormat->cbSize         = 0xE;
+
+        uint32_t i = 0xC + 8 + 0x20 + 8 + dataSz - 8;
+
+        fwrite("RIFF", 1, 4, fWave);
+        fwrite(&i, 4, 1, fWave);
+        fwrite("WAVE", 1, 4, fWave);
+
+        fwrite("fmt ", 1, 4, fWave);
+        i = 0x20;
+        fwrite(&i, 4, 1, fWave);
+        fwrite(dstFormatBuf, 1, 0x20, fWave);
+
+        fwrite("data", 1, 4, fWave);
+        i = dataSz;
+        fwrite(&i, 4, 1, fWave);
+
+        ret = 0;
     }
+
+    return ret;
+    */
     return 0;
-}
-
-bool CXEnc::busy() const
-{
-    return mpXEncCli != nullptr;
-}
-
-void CXEnc::readProcOutput()
-{
-    mResponse += mpXEncCli->readAll();
-    int pos;
-
-    if ((pos = mResponse.lastIndexOf(QChar('%'))) > 0)
-    {
-        int startPos = mResponse.lastIndexOf(QRegExp("[^0-9]+"), pos - 1);
-
-        if (startPos > -1)
-        {
-            bool ok;
-            int length  = (pos - 1) - startPos;
-            int percent = mResponse.mid(startPos + 1, length).toInt(&ok);
-
-            if (ok)
-            {
-                emit progress(percent);
-            }
-        }
-    }
-}
-
-void CXEnc::procEnded(int iRet, QProcess::ExitStatus ps)
-{
-    Q_UNUSED(iRet)
-    mResponse += QString::fromUtf8(mpXEncCli->readAll());
-    if (ps == QProcess::ExitStatus::NormalExit)
-    {
-        /*
-        if (mCurrCmd == NetMDCmd::DISCINFO)
-        {
-            int start = mResponse.indexOf(QChar('{'));
-            int end   = mResponse.lastIndexOf(QChar('}'));
-
-            mResponse = mResponse.mid(start, 1 + end - start);
-            emit jsonOut(mResponse);
-        }
-        */
-    }
-
-    qDebug("%s", static_cast<const char*>(mResponse.toUtf8()));
-
-    delete mpXEncCli;
-    mpXEncCli = nullptr;
-    mResponse.clear();
 }

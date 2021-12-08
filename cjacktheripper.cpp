@@ -61,7 +61,8 @@ static int writeFileHeader(QFile &wf, size_t byteCount)
 ///
 CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
-      mpCDParanoia(nullptr), mpRipThread(nullptr), mpCddb(nullptr)
+      mpCDParanoia(nullptr), mpRipThread(nullptr), mpInitThread(nullptr),
+      mpCddb(nullptr), mBusy(false)
 {
     mpCddb = new CCDDB(this);
 }
@@ -84,13 +85,13 @@ CJackTheRipper::~CJackTheRipper()
 int CJackTheRipper::init()
 {
     cleanup();
-    CCDInitThread *pInit = new CCDInitThread(&mpCDIO, &mpCDAudio, &mpCDParanoia);
+    CCDInitThread *pInit = new CCDInitThread(this, &mpCDIO, &mpCDAudio, &mpCDParanoia);
 
     if (pInit)
     {
         connect(pInit, &CCDInitThread::finished, pInit, &QObject::deleteLater);
         connect(pInit, &CCDInitThread::finished, this, &CJackTheRipper::cddbReqString);
-        pInit->run();
+        pInit->start(QThread::LowPriority);
         return 0;
     }
 
@@ -99,6 +100,13 @@ int CJackTheRipper::init()
 
 int CJackTheRipper::cleanup()
 {
+    if (mpRipThread != nullptr)
+    {
+       mpRipThread->join();
+       delete mpRipThread;
+       mpRipThread = nullptr;
+    }
+
     if (mpCDParanoia != nullptr)
     {
         cdio_paranoia_free(mpCDParanoia);
@@ -121,15 +129,17 @@ int CJackTheRipper::cleanup()
 
 int CJackTheRipper::extractTrack(int trackNo, const QString &fName)
 {
-    mpRipThread = new CRipThread(mpCDAudio, mpCDParanoia, trackNo, fName);
+    if (mpRipThread != nullptr)
+    {
+        mpRipThread->join();
+        delete mpRipThread;
+    }
+
+    mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName);
 
     if (mpRipThread)
     {
-        connect(mpRipThread, &CRipThread::finished, mpRipThread, &QObject::deleteLater);
-        connect(mpRipThread, &CRipThread::progress, this, &CJackTheRipper::getProgress);
-
-        mpRipThread->start();
-
+        mBusy = true;
         return 0;
     }
 
@@ -168,6 +178,85 @@ int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t t, QStringList &ttitles)
     ttitles.append(track);
 
     return track.isEmpty() ? -1 : 0;
+}
+
+bool CJackTheRipper::busy() const
+{
+    return mBusy;
+}
+
+int CJackTheRipper::ripThread(int track, const QString &fName)
+{
+    int ret = 0;
+
+    try
+    {
+        if ((mpCDAudio == nullptr) || (mpCDParanoia == nullptr))
+        {
+            throw std::runtime_error("CD device(s) not initialized!");
+        }
+
+        cdio_paranoia_modeset(mpCDParanoia, PARANOIA_MODE_FULL ^ PARANOIA_MODE_NEVERSKIP);
+
+        lsn_t disctStart   = cdio_cddap_disc_firstsector(mpCDAudio);
+        track_t firstTrack = cdio_cddap_sector_gettrack(mpCDAudio, disctStart);
+        track_t trackCount = cdio_cddap_tracks(mpCDAudio);
+
+        if ((track < firstTrack) || (track > (firstTrack + (trackCount - 1))))
+        {
+            throw std::runtime_error("Track is not part of disc!");
+        }
+
+        // get track sectors
+        lsn_t trkStart = cdio_cddap_track_firstsector(mpCDAudio, track);
+        lsn_t trkEnd   = cdio_cddap_track_lastsector(mpCDAudio, track);
+
+        // get track size ...
+        size_t trkSz = (trkEnd - trkStart) * CDIO_CD_FRAMESIZE_RAW;
+        size_t read  = 0;
+
+        cdio_paranoia_seek(mpCDParanoia, trkStart, SEEK_SET);
+        int16_t* pReadBuff;
+
+        QFile f(fName);
+
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            writeFileHeader(f, trkSz);
+
+            cdio_cddap_speed_set(mpCDAudio, 4);
+
+            int curPercent = 0, oldPercent = 0;
+
+            while (read < trkSz)
+            {
+                if((pReadBuff = cdio_paranoia_read(mpCDParanoia, nullptr)) != nullptr)
+                {
+                    read += CDIO_CD_FRAMESIZE_RAW;
+                    f.write((char*)pReadBuff, CDIO_CD_FRAMESIZE_RAW);
+
+                    curPercent = (read * 100) / trkSz;
+
+                    if (curPercent != oldPercent)
+                    {
+                        emit progress(curPercent);
+                        oldPercent = curPercent;
+                    }
+                }
+            }
+
+            f.close();
+        }
+
+    }
+    catch (const std::exception& e)
+    {
+        qDebug("%s", e.what());
+        ret = -1;
+    }
+    noBusy();
+    emit finished();
+    return ret;
 }
 
 int CJackTheRipper::cddbReqString()
@@ -263,6 +352,11 @@ int CJackTheRipper::cddbReqString()
     return mCDDBRequest.isEmpty() ? -1 : 0;
 }
 
+void CJackTheRipper::noBusy()
+{
+    mBusy = false;
+}
+
 ///
 /// \brief CJackTheRipper::mediaChanged
 /// \return true if media was changed
@@ -295,87 +389,8 @@ void CJackTheRipper::getProgress(int percent)
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-CRipThread::CRipThread(cdrom_drive_t *pCDAudio, cdrom_paranoia_t *pCDParanoia,
-                       track_t trkNo, const QString &fileName)
-    :QThread(), mpCDAudio(pCDAudio), mpCDParanoia(pCDParanoia),
-     mTrkNo(trkNo), mFileName(fileName)
-{
-}
-
-void CRipThread::run()
-{
-    try
-    {
-        if ((mpCDAudio == nullptr) || (mpCDParanoia == nullptr))
-        {
-            throw std::runtime_error("CD device(s) not initialized!");
-        }
-
-        cdio_paranoia_modeset(mpCDParanoia, PARANOIA_MODE_FULL ^ PARANOIA_MODE_NEVERSKIP);
-
-        lsn_t disctStart   = cdio_cddap_disc_firstsector(mpCDAudio);
-        track_t firstTrack = cdio_cddap_sector_gettrack(mpCDAudio, disctStart);
-        track_t trackCount = cdio_cddap_tracks(mpCDAudio);
-
-        if ((mTrkNo < firstTrack) || (mTrkNo > (firstTrack + (trackCount - 1))))
-        {
-            throw std::runtime_error("Track is not part of disc!");
-        }
-
-        // get track sectors
-        lsn_t trkStart = cdio_cddap_track_firstsector(mpCDAudio, mTrkNo);
-        lsn_t trkEnd   = cdio_cddap_track_lastsector(mpCDAudio, mTrkNo);
-
-        // get track size ...
-        size_t trkSz = (trkEnd - trkStart) * CDIO_CD_FRAMESIZE_RAW;
-        size_t read  = 0;
-
-        cdio_paranoia_seek(mpCDParanoia, trkStart, SEEK_SET);
-        int16_t* pReadBuff;
-
-        QFile f(mFileName);
-
-        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
-        {
-            writeFileHeader(f, trkSz);
-
-            cdio_cddap_speed_set(mpCDAudio, 4);
-
-            int curPercent = 0, oldPercent = 0;
-
-            while (read < trkSz)
-            {
-                if((pReadBuff = cdio_paranoia_read(mpCDParanoia, nullptr)) != nullptr)
-                {
-                    read += CDIO_CD_FRAMESIZE_RAW;
-                    f.write((char*)pReadBuff, CDIO_CD_FRAMESIZE_RAW);
-
-                    curPercent = (read * 100) / trkSz;
-
-                    if (curPercent != oldPercent)
-                    {
-                        emit progress(curPercent);
-                        oldPercent = curPercent;
-                    }
-                }
-            }
-
-            f.close();
-        }
-
-    }
-    catch (const std::exception& e)
-    {
-        qDebug("%s", e.what());
-    }
-
-    emit finished();
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-CCDInitThread::CCDInitThread(CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio, cdrom_paranoia_t** ppCDParanoia)
-    :QThread(), mppCDIO(ppCDIO), mppCDAudio(ppCDAudio), mppCDParanoia(ppCDParanoia)
+CCDInitThread::CCDInitThread(QObject *parent, CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio, cdrom_paranoia_t** ppCDParanoia)
+    :QThread(parent), mppCDIO(ppCDIO), mppCDAudio(ppCDAudio), mppCDParanoia(ppCDParanoia)
 {
 }
 

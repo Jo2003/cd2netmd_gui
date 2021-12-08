@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-#include <QObject>
-#include <QProcess>
+#include "ccliprocess.h"
 
-class CNetMD : public QObject
+class CNetMD : public CCliProcess
 {
     Q_OBJECT
     static constexpr const char* NETMD_CLI = "toolchain/netmdcli.exe";
@@ -31,6 +30,10 @@ public:
         WRITE_TRACK_LP2,
         WRITE_TRACK_LP4,
         ADD_GROUP,
+        RENAME_DISC,
+        RENAME_TRACK,
+        RENAME_GROUP,
+        DEL_GROUP,
         UNKNWON
     };
 
@@ -55,17 +58,13 @@ public:
     explicit CNetMD(QObject *parent = nullptr);
 
     int start(NetMDStartup startup);
-    int terminate();
 
 private slots:
-    void readProcOutput();
     void procEnded(int, QProcess::ExitStatus);
 
 signals:
-    void progress(int);
     void jsonOut(QString);
 
 protected:
-    QProcess *mpNetMDCli;
     NetMDCmd  mCurrCmd;
 };

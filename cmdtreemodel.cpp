@@ -34,21 +34,6 @@ CMDTreeModel::~CMDTreeModel()
     delete mpTreeRoot;
 }
 
-void CMDTreeModel::addTrack(int number, const QString &title, const QString &mode, const QString &time)
-{
-    nlohmann::json trk;
-    trk["no"]      = number;
-    trk["name"]    = title.toStdString();
-    trk["bitrate"] = mode.toStdString();
-    trk["time"]    = time.toStdString();
-    mMDJson["tracks"].push_back(trk);
-
-    delete mpTreeRoot;
-    // root item with column names
-    mpTreeRoot = new CTreeItem(ItemRole::ROOT, mRootData);
-    setupModelData();
-}
-
 QModelIndex CMDTreeModel::index(int row, int column, const QModelIndex &parent) const
 {
     if (!hasIndex(row, column, parent))
@@ -102,8 +87,36 @@ int CMDTreeModel::columnCount(const QModelIndex &parent) const
     return mpTreeRoot->columnCount();
 }
 
+const CMDTreeModel::SDiscConf *CMDTreeModel::discConf() const
+{
+    return &mDiscConf;
+}
+
+void CMDTreeModel::decreaseFreeTime(time_t secs)
+{
+    mDiscConf.mFreeTime -= secs;
+}
+
+void CMDTreeModel::increaseTracks(int tracks)
+{
+    mDiscConf.mTrkCount += tracks;
+}
+
+nlohmann::json CMDTreeModel::exportJson() const
+{
+    return mMDJson;
+}
+
 void CMDTreeModel::setupModelData()
 {
+    // fill mDiscConf structure
+    mDiscConf = {
+        mMDJson["otf_enc"].get<int>(),
+        mMDJson["trk_count"].get<int>(),
+        mMDJson["t_total"].get<int>(),
+        mMDJson["t_free"].get<int>()
+    };
+
     // create Disc node
     CTreeItem*  pDisc  = new CTreeItem(ItemRole::DISC, mMDJson, mpTreeRoot);
     CTreeItem*  pGroup = nullptr;

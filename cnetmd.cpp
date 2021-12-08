@@ -17,17 +17,14 @@
 #include "cnetmd.h"
 
 CNetMD::CNetMD(QObject *parent)
-    : QObject(parent), mpNetMDCli(nullptr), mCurrCmd(NetMDCmd::UNKNWON)
+    : CCliProcess(parent), mCurrCmd(NetMDCmd::UNKNWON)
 {
+    connect(this, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &CNetMD::procEnded);
 }
 
 int CNetMD::start(CNetMD::NetMDStartup startup)
 {
     int ret = 0;
-    mpNetMDCli = new QProcess(this);
-    mpNetMDCli->setProcessChannelMode(QProcess::MergedChannels);
-    connect(mpNetMDCli, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &CNetMD::procEnded);
-
     QStringList args;
     args << "-v";
 
@@ -37,19 +34,25 @@ int CNetMD::start(CNetMD::NetMDStartup startup)
         args << "json_gui";
         break;
     case NetMDCmd::WRITE_TRACK_SP:
-        connect(mpNetMDCli, &QProcess::readyRead, this, &CNetMD::readProcOutput);
         args << "send" << startup.msTrack << startup.msTitle;
         break;
     case NetMDCmd::WRITE_TRACK_LP2:
-        connect(mpNetMDCli, &QProcess::readyRead, this, &CNetMD::readProcOutput);
         args << "-d" << "lp2" << "send" << startup.msTrack << startup.msTitle;
         break;
     case NetMDCmd::WRITE_TRACK_LP4:
-        connect(mpNetMDCli, &QProcess::readyRead, this, &CNetMD::readProcOutput);
         args << "-d" << "lp4" << "send" << startup.msTrack << startup.msTitle;
         break;
     case NetMDCmd::ADD_GROUP:
         args << "add_group" << startup.msGroup << QString::number(startup.miFirst) << QString::number(startup.miLast);
+        break;
+    case NetMDCmd::RENAME_DISC:
+        args << "rename_disc" << startup.msTitle;
+        break;
+    case NetMDCmd::RENAME_TRACK:
+        args << "rename" << QString::number(startup.miFirst - 1) << startup.msTrack;
+        break;
+    case NetMDCmd::RENAME_GROUP:
+        args << "retitle" << QString::number(startup.miGroup) << startup.msGroup;
         break;
     default:
         ret = -1;
@@ -59,42 +62,27 @@ int CNetMD::start(CNetMD::NetMDStartup startup)
     if (ret == 0)
     {
         mCurrCmd = startup.mCmd;
-        mpNetMDCli->start(NETMD_CLI, args);
+        run(NETMD_CLI, args);
     }
 
     return ret;
 }
 
-int CNetMD::terminate()
-{
-    if (mpNetMDCli != nullptr)
-    {
-        mpNetMDCli->terminate();
-    }
-    return 0;
-}
-
-void CNetMD::readProcOutput()
-{
-}
-
 void CNetMD::procEnded(int iRet, QProcess::ExitStatus ps)
 {
     Q_UNUSED(iRet)
+    mLog += QString::fromUtf8(readAllStandardOutput());
     if (ps == QProcess::ExitStatus::NormalExit)
     {
         if (mCurrCmd == NetMDCmd::DISCINFO)
         {
-            QString resp = QString::fromUtf8(mpNetMDCli->readAll());
+            int start = mLog.indexOf(QChar('{'));
+            int end   = mLog.lastIndexOf(QChar('}'));
 
-            int start = resp.indexOf(QChar('{'));
-            int end   = resp.lastIndexOf(QChar('}'));
-
-            resp = resp.mid(start, 1 + end - start);
-            emit jsonOut(resp);
+            mLog = mLog.mid(start, 1 + end - start);
+            emit jsonOut(mLog);
         }
     }
 
-    delete mpNetMDCli;
-    mpNetMDCli = nullptr;
+    qDebug("%s", static_cast<const char*>(mLog.toUtf8()));
 }

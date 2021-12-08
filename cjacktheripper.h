@@ -20,6 +20,7 @@
 #include <QString>
 #include <QFile>
 #include <QThread>
+#include <thread>
 #include <cdio/cdio.h>
 #include <cdio/paranoia/paranoia.h>
 
@@ -45,11 +46,14 @@ public:
     QVector<time_t> trackTimes();
 
     int parseCDText(cdtext_t* pCDT, track_t t, QStringList& ttitles);
+    bool busy() const;
+    int ripThread(int track, const QString& fName);
 
 public slots:
     bool mediaChanged();
     void getProgress(int percent);
     int cddbReqString();
+    void noBusy();
 
 protected:
     CdIo_t* mpCDIO;
@@ -61,34 +65,15 @@ signals:
     void mediaChgd();
     void progress(int i);
     void match(QStringList l);
+    void finished();
 
 private:
     QString mCDDBRequest;
-    CRipThread*  mpRipThread;
+    std::thread*  mpRipThread;
+    std::thread*  mpInitThread;
     CCDDB* mpCddb;
     QVector<time_t> mTrackTimes;
-};
-
-///
-/// \brief The CRipThread class
-///
-class CRipThread : public QThread
-{
-    Q_OBJECT
-
-public:
-    CRipThread(cdrom_drive_t* pCDAudio, cdrom_paranoia_t* pCDParanoia, track_t trkNo, const QString& fileName);
-    void run() override;
-
-protected:
-    cdrom_drive_t*    mpCDAudio;
-    cdrom_paranoia_t* mpCDParanoia;
-    track_t           mTrkNo;
-    QString           mFileName;
-
-signals:
-    void progress(int prct);
-    void finished();
+    bool mBusy;
 };
 
 ///
@@ -99,7 +84,7 @@ class CCDInitThread : public QThread
     Q_OBJECT
 
 public:
-    CCDInitThread(CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio, cdrom_paranoia_t** ppCDParanoia);
+    CCDInitThread(QObject* parent, CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio, cdrom_paranoia_t** ppCDParanoia);
     void run() override;
 
 protected:
@@ -110,4 +95,3 @@ protected:
 signals:
     void finished();
 };
-
