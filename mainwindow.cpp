@@ -141,6 +141,16 @@ void MainWindow::catchCDDBEntry(QStringList l)
 void MainWindow::catchJson(QString j)
 {
     recreateTreeView(j);
+    if (mpMDmodel->discConf()->mOTFEnc == 0)
+    {
+        ui->checkOTFEnc->setChecked(false);
+        ui->checkOTFEnc->setEnabled(false);
+    }
+    else
+    {
+        ui->checkOTFEnc->setEnabled(true);
+        ui->checkOTFEnc->setChecked(true);
+    }
     enableDialogItems(true);
 }
 
@@ -517,17 +527,6 @@ void MainWindow::recreateTreeView(const QString &json)
 
     mpMDmodel = new CMDTreeModel(json, this);
     connect(mpMDmodel, &CMDTreeModel::editTitle, this, &MainWindow::mdTitling);
-
-    if (mpMDmodel->discConf()->mOTFEnc == 0)
-    {
-        ui->checkOTFEnc->setChecked(false);
-        ui->checkOTFEnc->setEnabled(false);
-    }
-    else
-    {
-        ui->checkOTFEnc->setEnabled(true);
-        ui->checkOTFEnc->setChecked(true);
-    }
 
     ui->treeView->setModel(mpMDmodel);
     ui->treeView->expandAll();
