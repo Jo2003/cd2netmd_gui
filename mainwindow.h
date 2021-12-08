@@ -18,6 +18,8 @@
 #include <QMainWindow>
 #include <QTemporaryFile>
 #include <QDir>
+#include <QLabel>
+#include <QMovie>
 #include "cjacktheripper.h"
 #include "ccddb.h"
 #include "ccddbentriesdialog.h"
@@ -67,6 +69,7 @@ protected:
     void setMDTitle(const QString& title);
     void enableDialogItems(bool ena);
     void recreateTreeView(const QString& json);
+    void countLabel(QLabel *pLabel, WorkStep step, const QString& text);
 
 private slots:
     void catchCDDBEntries(QStringList l);
@@ -84,6 +87,8 @@ private slots:
     void encodeFinished(bool checkBusy = false);
     void transferFinished(bool checkBusy = false);
 
+    void on_pushEraseMD_clicked();
+
 private:
     Ui::MainWindow *ui;
     CJackTheRipper *mpRipper;
@@ -91,4 +96,5 @@ private:
     CXEnc          *mpXEnc;
     CMDTreeModel   *mpMDmodel;
     TransferQueue   mWorkQueue;
+    QMovie         *mpWaitAni;
 };

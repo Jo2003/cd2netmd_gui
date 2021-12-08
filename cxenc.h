@@ -16,6 +16,7 @@
  */
 #pragma once
 #include "ccliprocess.h"
+#include <QFile>
 
 class CXEnc : public CCliProcess
 {
@@ -25,16 +26,8 @@ class CXEnc : public CCliProcess
     /// Sony WAVE format
     static constexpr uint32_t WAVE_FORMAT_SONY_SCX = 624;
 
-    struct WaveFormatEx
-    {
-        uint16_t wFormatTag;
-        uint16_t nChannels;
-        uint32_t nSamplesPerSec;
-        uint32_t nAvgBytesPerSec;
-        uint16_t nBlockAlign;
-        uint16_t wBitsPerSample;
-        uint16_t cbSize;
-    };
+    /// atrac3 header size in bytes
+    static constexpr uint32_t ATRAC3_HEADER_SIZE = 96;
 
 public:
     enum class XEncCmd : uint8_t
@@ -49,10 +42,15 @@ public:
     int start(XEncCmd cmd, const QString& tmpFileName);
 
 protected:
-    int atrac3WaveHeader(const QString& tmpFileName, XEncCmd cmd, uint32_t dataSz);
+    int atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz);
 
 private slots:
+    void finishCopy(int exitCode, ExitStatus exitStatus);
+
+signals:
+    void fileDone(bool);
 
 protected:
-    XEncCmd   mCurrCmd;
+    XEncCmd mCurrCmd;
+    QString mAtracFileName;
 };

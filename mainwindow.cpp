@@ -24,7 +24,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
-      mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr)
+      mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr), mpWaitAni(nullptr)
 {
     ui->setupUi(this);
 
@@ -46,9 +46,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     if ((mpXEnc = new CXEnc(this)) != nullptr)
     {
-        connect(mpXEnc, &CNetMD::progress, ui->progressExtEnc, &QProgressBar::setValue);
-        connect(mpXEnc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::encodeFinished);
+        connect(mpXEnc, &CXEnc::progress, ui->progressExtEnc, &QProgressBar::setValue);
+        connect(mpXEnc, &CXEnc::fileDone, this, &MainWindow::encodeFinished);
     }
+    mpWaitAni = new QMovie(":/main/wait", QByteArray(), this);
 }
 
 MainWindow::~MainWindow()
@@ -178,6 +179,14 @@ void MainWindow::on_pushTransfer_clicked()
 {
     enableDialogItems(false);
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
+
+    // no selection means all!
+    if (selected.isEmpty())
+    {
+        ui->tableViewCD->selectAll();
+        selected = ui->tableViewCD->selectionModel()->selectedRows();
+    }
+
     time_t selectionTime = 0;
     mWorkQueue.clear();
 
@@ -191,6 +200,15 @@ void MainWindow::on_pushTransfer_clicked()
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
 
+    if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
+    {
+        selectionTime /= 2;
+    }
+    else if (ui->radioGroup->checkedButton()->objectName() == "radioLP4")
+    {
+        selectionTime /= 4;
+    }
+
     if (selectionTime > mpMDmodel->discConf()->mFreeTime)
     {
         // not enough space left on device
@@ -199,7 +217,7 @@ void MainWindow::on_pushTransfer_clicked()
         QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
         mWorkQueue.clear();
     }
-    else if (mWorkQueue.size() > 0)
+    else if (!mWorkQueue.isEmpty())
     {
         for (auto& j : mWorkQueue)
         {
@@ -238,6 +256,8 @@ void MainWindow::ripFinished()
         }
     }
 
+    countLabel(ui->labelCDRip, WorkStep::NONE, tr("CD-RIP"));
+
     // do we need encoding?
     if (noEnc)
     {
@@ -265,6 +285,9 @@ void MainWindow::encodeFinished(bool checkBusy)
             if (j.mStep == WorkStep::ENCODE)
             {
                 j.mStep = WorkStep::ENCODED;
+
+                // atracdenc always misses 100% ;)
+                ui->progressExtEnc->setValue(100);
                 break;
             }
         }
@@ -279,6 +302,7 @@ void MainWindow::encodeFinished(bool checkBusy)
             }
         }
 
+        countLabel(ui->labelExtEnc, WorkStep::RIPPED, tr("External-Encoder"));
         transferFinished(true);
     }
 }
@@ -321,6 +345,8 @@ void MainWindow::transferFinished(bool checkBusy)
             }
         }
 
+        countLabel(ui->labMDTransfer, WorkStep::ENCODED, tr("MD-Transfer"));
+
         if (dc == mWorkQueue.size())
         {
             if (trackMode != "SP")
@@ -344,7 +370,7 @@ void MainWindow::transferFinished(bool checkBusy)
                 delete j.mpFile;
             }
             mWorkQueue.clear();
-            QMessageBox::information(this, tr("Hurra"), tr("All done!"));
+            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
             enableDialogItems(true);
         }
     }
@@ -406,6 +432,31 @@ void MainWindow::setMDTitle(const QString &title)
 
 void MainWindow::enableDialogItems(bool ena)
 {
+    if (!ena)
+    {
+        // reset progress bars and lables
+        ui->progressRip->setValue(0);
+        ui->progressExtEnc->setValue(0);
+        ui->progressMDTransfer->setValue(0);
+
+        ui->labelCDRip->clear();
+        ui->labelExtEnc->clear();
+        ui->labMDTransfer->clear();
+
+        ui->labelCDRip->setText(tr("CD_RIP: "));
+        ui->labelExtEnc->setText(tr("External-Encoder: "));
+        ui->labMDTransfer->setText(tr("MD-Tranfer: "));
+
+        ui->labAnimation->clear();
+        ui->labAnimation->setMovie(mpWaitAni);
+        mpWaitAni->start();
+    }
+    else
+    {
+        mpWaitAni->stop();
+        ui->labAnimation->clear();
+    }
+
     ui->tableViewCD->setEnabled(ena);
     ui->lineCDTitle->setEnabled(ena);
     ui->treeView->setEnabled(ena);
@@ -440,6 +491,19 @@ void MainWindow::enableDialogItems(bool ena)
     {
         ui->pushTransfer->setEnabled(ena);
     }
+
+    if (ena)
+    {
+        if ((ui->treeView->model() != nullptr)
+            && (ui->treeView->model()->rowCount() > 0))
+        {
+            ui->pushEraseMD->setEnabled(ena);
+        }
+    }
+    else
+    {
+        ui->pushEraseMD->setEnabled(ena);
+    }
 }
 
 void MainWindow::recreateTreeView(const QString &json)
@@ -471,4 +535,27 @@ void MainWindow::recreateTreeView(const QString &json)
     ui->treeView->setColumnWidth(0, (ui->treeView->width() / 100) * 80);
     ui->treeView->setColumnWidth(1, (ui->treeView->width() / 100) * 5);
     ui->treeView->setColumnWidth(2, (ui->treeView->width() / 100) * 10);
+}
+
+void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QString &text)
+{
+    int count = 0;
+    for (auto& j : mWorkQueue)
+    {
+        if (static_cast<uint8_t>(j.mStep) > static_cast<uint8_t>(step))
+        {
+            count ++;
+        }
+    }
+    pLabel->clear();
+    pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(mWorkQueue.size()));
+}
+
+void MainWindow::on_pushEraseMD_clicked()
+{
+    if (QMessageBox::question(this, tr("Question"), tr("Do you really want to erase the MD? This can't be undone!")) == QMessageBox::Yes)
+    {
+        enableDialogItems(false);
+        mpNetMD->start({CNetMD::NetMDCmd::ERASE_DISC});
+    }
 }

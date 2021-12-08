@@ -31,7 +31,6 @@ ui_*.h
 qrc_*.cpp
 Thumbs.db
 *.res
-*.rc
 /.qmake.cache
 /.qmake.stash
 
@@ -66,8 +65,7 @@ Thumbs.db
 # Python byte code
 *.pyc
 
-# Binaries
-# --------
-*.dll
-*.exe
-
+# all from install folder
+install/*
+release/*
+debug/*

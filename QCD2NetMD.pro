@@ -28,7 +28,8 @@ SOURCES += \
     cnetmd.cpp \
     cxenc.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    utils.cpp
 
 HEADERS += \
     ccddb.h \
@@ -42,7 +43,8 @@ HEADERS += \
     cnetmd.h \
     cxenc.h \
     include/json.hpp \
-    mainwindow.h
+    mainwindow.h \
+    utils.h
 
 FORMS += \
     ccddbentriesdialog.ui \
@@ -51,7 +53,7 @@ FORMS += \
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
 
-LIBS += -lcdio -lcdio_cdda -lcdio_paranoia
+LIBS += -static-libgcc -lcdio -lcdio_cdda -lcdio_paranoia
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -60,3 +62,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     resources.qrc
+
+win32: RC_FILE = program.rc

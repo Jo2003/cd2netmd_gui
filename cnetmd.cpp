@@ -54,6 +54,9 @@ int CNetMD::start(CNetMD::NetMDStartup startup)
     case NetMDCmd::RENAME_GROUP:
         args << "retitle" << QString::number(startup.miGroup) << startup.msGroup;
         break;
+    case NetMDCmd::ERASE_DISC:
+        args << "erase" << "force";
+        break;
     default:
         ret = -1;
         break;
@@ -81,6 +84,10 @@ void CNetMD::procEnded(int iRet, QProcess::ExitStatus ps)
 
             mLog = mLog.mid(start, 1 + end - start);
             emit jsonOut(mLog);
+        }
+        else if (mCurrCmd == NetMDCmd::ERASE_DISC)
+        {
+            start({NetMDCmd::DISCINFO});
         }
     }
 

@@ -176,7 +176,10 @@ nlohmann::json& CMDTreeModel::group(int track)
 {
     for (auto& grp : mMDJson["groups"])
     {
-        if ((track >= grp["first"].get<int>()) && (track <= grp["last"].get<int>()))
+        int first = grp["first"].get<int>();
+        int last  = grp["last"].get<int>();
+        if (last == -1) last = first;
+        if ((track >= first) && (track <= last))
         {
             return grp;
         }

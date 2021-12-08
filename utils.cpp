@@ -14,25 +14,20 @@
  *
  * You should have received a copy of the GNU General Public License
  */
-#pragma once
-#include <QObject>
-#include <QProcess>
+#include "utils.h"
 
-class CCliProcess : public QProcess
+int putNum(uint32_t num, QFile &f, size_t sz)
 {
-    Q_OBJECT
-public:
-    CCliProcess(QObject* parent = nullptr);
-    void run(const QString &program, const QStringList &arguments, QIODevice::OpenMode mode = ReadWrite);
-    bool busy() const;
+    unsigned int i;
+    char c;
 
-private slots:
-    void extractPercent();
-
-signals:
-    void progress(int);
-
-protected:
-    QString mLog;
-};
-
+    for (i = 0; sz--; i++)
+    {
+        c = (num >> (i << 3)) & 0xff;
+        if (f.write(&c, 1) != 1)
+        {
+            return -1;
+        }
+    }
+    return 0;
+}

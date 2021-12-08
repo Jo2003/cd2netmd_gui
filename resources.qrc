@@ -5,5 +5,7 @@
     </qresource>
     <qresource prefix="/main">
         <file alias="md">res/minidisc.png</file>
+        <file alias="wait">res/wait_ani.gif</file>
+        <file alias="icon">res/cd2netmdgui.ico</file>
     </qresource>
 </RCC>

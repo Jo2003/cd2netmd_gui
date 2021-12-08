@@ -20,22 +20,7 @@
 #include <cdio/cdtext.h>
 #include <QVector>
 #include <stdexcept>
-
-static int putNum(uint32_t num, QFile &f, size_t sz)
-{
-    unsigned int i;
-    unsigned char c;
-
-    for (i = 0; sz--; i++)
-    {
-        c = (num >> (i << 3)) & 0xff;
-        if (f.write((char*)&c, 1) != 1)
-        {
-            return -1;
-        }
-    }
-    return 0;
-}
+#include "utils.h"
 
 static int writeFileHeader(QFile &wf, size_t byteCount)
 {
@@ -129,6 +114,7 @@ int CJackTheRipper::cleanup()
 
 int CJackTheRipper::extractTrack(int trackNo, const QString &fName)
 {
+    qDebug("Extract track %d to %s ...", trackNo, static_cast<const char*>(fName.toUtf8()));
     if (mpRipThread != nullptr)
     {
         mpRipThread->join();
@@ -202,7 +188,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName)
         track_t firstTrack = cdio_cddap_sector_gettrack(mpCDAudio, disctStart);
         track_t trackCount = cdio_cddap_tracks(mpCDAudio);
 
-        if ((track < firstTrack) || (track > (firstTrack + (trackCount - 1))))
+        if ((track < firstTrack) || ((track + firstTrack) > (trackCount + firstTrack)))
         {
             throw std::runtime_error("Track is not part of disc!");
         }
