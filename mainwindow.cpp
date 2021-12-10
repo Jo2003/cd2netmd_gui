@@ -21,7 +21,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr), mpWaitAni(nullptr)
@@ -50,6 +49,17 @@ MainWindow::MainWindow(QWidget *parent)
         connect(mpXEnc, &CXEnc::fileDone, this, &MainWindow::encodeFinished);
     }
     mpWaitAni = new QMovie(":/main/wait", QByteArray(), this);
+
+    connect(ui->treeView, &CMDTreeView::addGroup, this, &MainWindow::addMDGroup);
+    connect(ui->treeView, &CMDTreeView::delGroup, this, &MainWindow::delMDGroup);
+    connect(ui->treeView, &CMDTreeView::eraseDisc, this, &MainWindow::eraseDisc);
+    connect(ui->treeView, &CMDTreeView::delTrack, this, &MainWindow::delTrack);
+
+    mpMDDevice = new QLabel();
+    mpCDDevice = new QLabel();
+
+    ui->statusbar->addPermanentWidget(mpCDDevice);
+    ui->statusbar->addPermanentWidget(mpMDDevice);
 }
 
 MainWindow::~MainWindow()
@@ -95,8 +105,10 @@ void MainWindow::catchCDDBEntries(QStringList l)
     if (pDlg->exec() == QDialog::Accepted)
     {
         mpRipper->cddb()->getEntry(pDlg->request());
+        delete pDlg;
+        return;
     }
-    delete pDlg;
+    catchCDDBEntry(QStringList{});
 }
 
 void MainWindow::catchCDDBEntry(QStringList l)
@@ -135,6 +147,10 @@ void MainWindow::catchCDDBEntry(QStringList l)
 
     ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
     ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
+
+    mpCDDevice->clear();
+    mpCDDevice->setText(mpRipper->deviceInfo());
+    mpCDDevice->show();
     enableDialogItems(true);
 }
 
@@ -226,6 +242,7 @@ void MainWindow::on_pushTransfer_clicked()
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
         QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
         mWorkQueue.clear();
+        enableDialogItems(true);
     }
     else if (!mWorkQueue.isEmpty())
     {
@@ -261,7 +278,8 @@ void MainWindow::ripFinished()
         if (j.mStep == WorkStep::NONE)
         {
             j.mStep = WorkStep::RIP;
-            mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName());
+            ui->progressRip->setValue(0);
+            mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName(), ui->checkParanoia->isChecked());
             break;
         }
     }
@@ -307,6 +325,7 @@ void MainWindow::encodeFinished(bool checkBusy)
             if (j.mStep == WorkStep::RIPPED)
             {
                 j.mStep = WorkStep::ENCODE;
+                ui->progressExtEnc->setValue(0);
                 mpXEnc->start(xencCmd, j.mpFile->fileName());
                 break;
             }
@@ -341,6 +360,7 @@ void MainWindow::transferFinished(bool checkBusy)
             if (j.mStep == WorkStep::ENCODED)
             {
                 j.mStep = WorkStep::TRANSFER;
+                ui->progressMDTransfer->setValue(0);
                 mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
                 break;
             }
@@ -364,10 +384,6 @@ void MainWindow::transferFinished(bool checkBusy)
                 addMDGroup(ui->lineCDTitle->text(),
                            static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount - mWorkQueue.size() + 1),
                            static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount));
-
-                mpNetMD->start({CNetMD::NetMDCmd::ADD_GROUP, "", "", ui->lineCDTitle->text(),
-                                static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount - mWorkQueue.size() + 1),
-                                static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount)});
             }
             else
             {
@@ -422,6 +438,8 @@ void MainWindow::addMDTrack(int number, const QString &title, const QString &mod
 
 void MainWindow::addMDGroup(const QString &title, int16_t first, int16_t last)
 {
+    mpNetMD->start({CNetMD::NetMDCmd::ADD_GROUP, "", "", title, first, last});
+
     nlohmann::json group;
     group["name"]  = title.toStdString();
     group["first"] = first;
@@ -431,6 +449,39 @@ void MainWindow::addMDGroup(const QString &title, int16_t first, int16_t last)
     mdJson["groups"].push_back(group);
 
     recreateTreeView(QString::fromStdString(mdJson.dump()));
+}
+
+void MainWindow::delMDGroup(int16_t number)
+{
+    CNetMD::NetMDStartup startUp(CNetMD::NetMDCmd::DEL_GROUP);
+    startUp.miGroup = number + 1;
+    mpNetMD->start(startUp);
+
+    nlohmann::json mdJson = mpMDmodel->exportJson();
+
+    nlohmann::json::iterator it;
+
+    for (it = mdJson["groups"].begin(); it != mdJson["groups"].end(); it++)
+    {
+        if (it->at("no").get<int>() == number)
+        {
+            mdJson["groups"].erase(it);
+            break;
+        }
+    }
+    recreateTreeView(QString::fromStdString(mdJson.dump()));
+}
+
+void MainWindow::delTrack(int16_t track)
+{
+    if (QMessageBox::question(this, tr("Question"),
+                              tr("Do you really want to delete MD track %1? This can't be undone!").arg(track + 1)) == QMessageBox::Yes)
+    {
+        enableDialogItems(false);
+        CNetMD::NetMDStartup startUp(CNetMD::NetMDCmd::DEL_TRACK);
+        startUp.miFirst = track;
+        mpNetMD->start(startUp);
+    }
 }
 
 void MainWindow::setMDTitle(const QString &title)
@@ -453,7 +504,7 @@ void MainWindow::enableDialogItems(bool ena)
         ui->labelExtEnc->clear();
         ui->labMDTransfer->clear();
 
-        ui->labelCDRip->setText(tr("CD_RIP: "));
+        ui->labelCDRip->setText(tr("CD-RIP: "));
         ui->labelExtEnc->setText(tr("External-Encoder: "));
         ui->labMDTransfer->setText(tr("MD-Tranfer: "));
 
@@ -486,6 +537,7 @@ void MainWindow::enableDialogItems(bool ena)
     }
     ui->pushLoadMD->setEnabled(ena);
     ui->pushInitCD->setEnabled(ena);
+    ui->checkParanoia->setEnabled(ena);
 
     if (ena)
     {
@@ -500,19 +552,6 @@ void MainWindow::enableDialogItems(bool ena)
     else
     {
         ui->pushTransfer->setEnabled(ena);
-    }
-
-    if (ena)
-    {
-        if ((ui->treeView->model() != nullptr)
-            && (ui->treeView->model()->rowCount() > 0))
-        {
-            ui->pushEraseMD->setEnabled(ena);
-        }
-    }
-    else
-    {
-        ui->pushEraseMD->setEnabled(ena);
     }
 }
 
@@ -534,6 +573,17 @@ void MainWindow::recreateTreeView(const QString &json)
     ui->treeView->setColumnWidth(0, (ui->treeView->width() / 100) * 80);
     ui->treeView->setColumnWidth(1, (ui->treeView->width() / 100) * 5);
     ui->treeView->setColumnWidth(2, (ui->treeView->width() / 100) * 10);
+
+    ui->labFreeTime->clear();
+    ui->labFreeTime->setText(tr("Free: %1:%2:%3")
+                            .arg(mpMDmodel->discConf()->mFreeTime / 3600, 1, 10, QChar('0'))
+                            .arg((mpMDmodel->discConf()->mFreeTime % 3600) / 60, 2, 10, QChar('0'))
+                            .arg(mpMDmodel->discConf()->mFreeTime %  60, 2, 10, QChar('0')));
+    ui->labFreeTime->show();
+
+    mpMDDevice->clear();
+    mpMDDevice->setText(mpMDmodel->discConf()->mDevice);
+    mpMDDevice->show();
 }
 
 void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QString &text)
@@ -550,7 +600,7 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
     pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(mWorkQueue.size()));
 }
 
-void MainWindow::on_pushEraseMD_clicked()
+void MainWindow::eraseDisc()
 {
     if (QMessageBox::question(this, tr("Question"), tr("Do you really want to erase the MD? This can't be undone!")) == QMessageBox::Yes)
     {

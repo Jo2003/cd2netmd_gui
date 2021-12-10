@@ -25,6 +25,7 @@ SOURCES += \
     cjacktheripper.cpp \
     cmdtreemodel.cpp \
     cmdtreeview.cpp \
+    cnamingdialog.cpp \
     cnetmd.cpp \
     cxenc.cpp \
     main.cpp \
@@ -40,6 +41,7 @@ HEADERS += \
     cjacktheripper.h \
     cmdtreemodel.h \
     cmdtreeview.h \
+    cnamingdialog.h \
     cnetmd.h \
     cxenc.h \
     include/json.hpp \
@@ -48,6 +50,7 @@ HEADERS += \
 
 FORMS += \
     ccddbentriesdialog.ui \
+    cnamingdialog.ui \
     mainwindow.ui
 
 TRANSLATIONS += \

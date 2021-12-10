@@ -39,6 +39,7 @@ public:
        int mTrkCount;
        int mTotTime;
        int mFreeTime;
+       QString mDevice;
     };
 
     explicit CMDTreeModel(const QString& jsonContent, QObject *parent = nullptr);
@@ -58,6 +59,7 @@ public:
     void decreaseFreeTime(time_t secs);
     void increaseTracks(int tracks);
     nlohmann::json exportJson() const;
+    nlohmann::json& group(int track);
 
 
 signals:
@@ -65,7 +67,6 @@ signals:
 
 protected:
     void setupModelData();
-    nlohmann::json& group(int track);
     nlohmann::json mMDJson;
     CTreeItem*  mpTreeRoot;
     nlohmann::json mRootData;

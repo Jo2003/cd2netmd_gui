@@ -40,14 +40,15 @@ public:
     virtual int init();
     virtual int cleanup();
 
-    int extractTrack(int trackNo, const QString& fName);
+    int extractTrack(int trackNo, const QString& fName, bool paranoia);
 
     CCDDB *cddb();
     QVector<time_t> trackTimes();
 
     int parseCDText(cdtext_t* pCDT, track_t t, QStringList& ttitles);
     bool busy() const;
-    int ripThread(int track, const QString& fName);
+    int ripThread(int track, const QString& fName, bool paranoia);
+    QString deviceInfo();
 
 public slots:
     bool mediaChanged();

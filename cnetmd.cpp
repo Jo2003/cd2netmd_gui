@@ -57,6 +57,12 @@ int CNetMD::start(CNetMD::NetMDStartup startup)
     case NetMDCmd::ERASE_DISC:
         args << "erase" << "force";
         break;
+    case NetMDCmd::DEL_GROUP:
+        args << "deletegroup" << QString::number(startup.miGroup);
+        break;
+    case NetMDCmd::DEL_TRACK:
+        args << "del_track" << QString::number(startup.miFirst);
+        break;
     default:
         ret = -1;
         break;
@@ -82,10 +88,18 @@ void CNetMD::procEnded(int iRet, QProcess::ExitStatus ps)
             int start = mLog.indexOf(QChar('{'));
             int end   = mLog.lastIndexOf(QChar('}'));
 
-            mLog = mLog.mid(start, 1 + end - start);
-            emit jsonOut(mLog);
+            if ((start != -1) && (end != -1))
+            {
+                mLog = mLog.mid(start, 1 + end - start);
+                emit jsonOut(mLog);
+            }
+            else
+            {
+                emit jsonOut(R"({"title":"no disc found","t_used":0,"t_free":0,"otf_enc":0,"trk_count":0,"t_total":0,"device":"unknown",tracks":[],"groups":[]})");
+            }
+
         }
-        else if (mCurrCmd == NetMDCmd::ERASE_DISC)
+        else if ((mCurrCmd == NetMDCmd::ERASE_DISC) || (mCurrCmd == NetMDCmd::DEL_TRACK))
         {
             start({NetMDCmd::DISCINFO});
         }

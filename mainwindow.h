@@ -65,7 +65,6 @@ public:
 protected:
     void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd, QString& trackMode);
     void addMDTrack(int number, const QString &title, const QString &mode, time_t length);
-    void addMDGroup(const QString& title, int16_t first, int16_t last);
     void setMDTitle(const QString& title);
     void enableDialogItems(bool ena);
     void recreateTreeView(const QString& json);
@@ -86,8 +85,10 @@ private slots:
     void ripFinished();
     void encodeFinished(bool checkBusy = false);
     void transferFinished(bool checkBusy = false);
-
-    void on_pushEraseMD_clicked();
+    void addMDGroup(const QString& title, int16_t first, int16_t last);
+    void delMDGroup(int16_t number);
+    void delTrack(int16_t);
+    void eraseDisc();
 
 private:
     Ui::MainWindow *ui;
@@ -97,4 +98,6 @@ private:
     CMDTreeModel   *mpMDmodel;
     TransferQueue   mWorkQueue;
     QMovie         *mpWaitAni;
+    QLabel         *mpMDDevice;
+    QLabel         *mpCDDevice;
 };

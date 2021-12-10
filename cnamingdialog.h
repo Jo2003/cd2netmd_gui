@@ -15,38 +15,25 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-#include <QObject>
-#include <QTreeView>
-#include <QResizeEvent>
-#include <QContextMenuEvent>
-#include <QAction>
+#include <QDialog>
+#include <QAbstractButton>
 
-class CMDTreeView : public QTreeView
+namespace Ui {
+class CNamingDialog;
+}
+
+class CNamingDialog : public QDialog
 {
     Q_OBJECT
+
 public:
-    explicit CMDTreeView(QWidget* parent);
-
-protected:
-    void resizeEvent(QResizeEvent *e) override;
-    void contextMenuEvent(QContextMenuEvent *event) override;
-    void createActions();
-
-signals:
-    void delTrack(int16_t);
-    void delGroup(int16_t);
-    void eraseDisc();
-    void addGroup(QString, int16_t, int16_t);
+    explicit CNamingDialog(QWidget *parent, const QString& wtitle, const QString& descr);
+    ~CNamingDialog();
+    QString name() const;
 
 private slots:
-    void slotDelTrack();
-    void slotDelGroup();
-    void slotEraseDisc();
-    void slotAddGroup();
+    void on_buttonBox_clicked(QAbstractButton *button);
 
 private:
-    QAction* mpaAddGroup;
-    QAction* mpaDelGroup;
-    QAction* mpaDelTrack;
-    QAction* mpaEraseDisc;
+    Ui::CNamingDialog *ui;
 };

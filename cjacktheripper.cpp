@@ -112,7 +112,7 @@ int CJackTheRipper::cleanup()
     return 0;
 }
 
-int CJackTheRipper::extractTrack(int trackNo, const QString &fName)
+int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoia)
 {
     qDebug("Extract track %d to %s ...", trackNo, static_cast<const char*>(fName.toUtf8()));
     if (mpRipThread != nullptr)
@@ -121,7 +121,7 @@ int CJackTheRipper::extractTrack(int trackNo, const QString &fName)
         delete mpRipThread;
     }
 
-    mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName);
+    mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName, paranoia);
 
     if (mpRipThread)
     {
@@ -171,7 +171,7 @@ bool CJackTheRipper::busy() const
     return mBusy;
 }
 
-int CJackTheRipper::ripThread(int track, const QString &fName)
+int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 {
     int ret = 0;
 
@@ -182,7 +182,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName)
             throw std::runtime_error("CD device(s) not initialized!");
         }
 
-        cdio_paranoia_modeset(mpCDParanoia, PARANOIA_MODE_FULL ^ PARANOIA_MODE_NEVERSKIP);
+        cdio_paranoia_modeset(mpCDParanoia, paranoia ? (PARANOIA_MODE_FULL ^ PARANOIA_MODE_NEVERSKIP) : PARANOIA_MODE_DISABLE);
 
         lsn_t disctStart   = cdio_cddap_disc_firstsector(mpCDAudio);
         track_t firstTrack = cdio_cddap_sector_gettrack(mpCDAudio, disctStart);
@@ -210,7 +210,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName)
         {
             writeFileHeader(f, trkSz);
 
-            cdio_cddap_speed_set(mpCDAudio, 4);
+            cdio_cddap_speed_set(mpCDAudio, 8);
 
             int curPercent = 0, oldPercent = 0;
 
@@ -242,6 +242,22 @@ int CJackTheRipper::ripThread(int track, const QString &fName)
     }
     noBusy();
     emit finished();
+    return ret;
+}
+
+QString CJackTheRipper::deviceInfo()
+{
+    QString ret;
+    cdio_hwinfo_t hwInf;
+
+    if (mpCDIO != nullptr)
+    {
+        if (cdio_get_hwinfo (mpCDIO, &hwInf))
+        {
+            ret = QString("%1 %2 %3").arg(hwInf.psz_vendor).arg(hwInf.psz_model).arg(hwInf.psz_revision);
+        }
+    }
+
     return ret;
 }
 
@@ -333,6 +349,10 @@ int CJackTheRipper::cddbReqString()
         {
             emit match(trackTitles);
         }
+    }
+    else
+    {
+        emit match(QStringList() << "no disc found!");
     }
 
     return mCDDBRequest.isEmpty() ? -1 : 0;

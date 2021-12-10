@@ -114,7 +114,8 @@ void CMDTreeModel::setupModelData()
         mMDJson["otf_enc"].get<int>(),
         mMDJson["trk_count"].get<int>(),
         mMDJson["t_total"].get<int>(),
-        mMDJson["t_free"].get<int>()
+        mMDJson["t_free"].get<int>(),
+        QString::fromStdString(mMDJson["device"].get<std::string>()),
     };
 
     // create Disc node

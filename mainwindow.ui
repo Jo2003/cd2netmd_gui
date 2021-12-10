@@ -76,6 +76,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushInitCD">
+            <property name="statusTip">
+             <string>Load first Audio CD found.</string>
+            </property>
             <property name="text">
              <string>(&amp;Re)-load CD</string>
             </property>
@@ -100,12 +103,9 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QPushButton" name="pushEraseMD">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
+           <widget class="QLabel" name="labFreeTime">
             <property name="text">
-             <string>&amp;Erase MD</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -124,6 +124,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushLoadMD">
+            <property name="statusTip">
+             <string>Load First MiniDisc found.</string>
+            </property>
             <property name="text">
              <string>(Re)-load &amp;MD</string>
             </property>
@@ -138,6 +141,33 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>CD Read Config: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkParanoia">
+        <property name="text">
+         <string>CDDA Paranoia</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>Transfer Config: </string>
@@ -146,6 +176,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="checkOTFEnc">
+        <property name="statusTip">
+         <string>Use On-the-flyy encoding (where supported)</string>
+        </property>
         <property name="text">
          <string>On-the-fly Encoding</string>
         </property>
@@ -153,6 +186,9 @@
       </item>
       <item>
        <widget class="QRadioButton" name="radioSP">
+        <property name="statusTip">
+         <string>Transfer in SP mode</string>
+        </property>
         <property name="text">
          <string>SP</string>
         </property>
@@ -166,6 +202,9 @@
       </item>
       <item>
        <widget class="QRadioButton" name="radioLP2">
+        <property name="statusTip">
+         <string>Transfer in LP2 mode</string>
+        </property>
         <property name="text">
          <string>LP2</string>
         </property>
@@ -176,6 +215,9 @@
       </item>
       <item>
        <widget class="QRadioButton" name="radioLP4">
+        <property name="statusTip">
+         <string>Transfer in LP4 mode</string>
+        </property>
         <property name="text">
          <string>LP4</string>
         </property>
@@ -220,6 +262,9 @@
        <widget class="QPushButton" name="pushTransfer">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="statusTip">
+         <string>Transfer all/selected tracks from CD to MD.</string>
         </property>
         <property name="text">
          <string>Transfer</string>

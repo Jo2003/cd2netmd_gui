@@ -35,6 +35,7 @@ public:
         RENAME_GROUP,
         DEL_GROUP,
         ERASE_DISC,
+        DEL_TRACK,
         UNKNWON
     };
 
