@@ -27,6 +27,8 @@
 #include "cnetmd.h"
 #include "cxenc.h"
 #include "cmdtreemodel.h"
+#include "defines.h"
+#include "caboutdialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -35,30 +37,10 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+    using TransferQueue = c2n::TransferQueue;
+    using WorkStep      = c2n::WorkStep;
 
 public:
-    enum class WorkStep : uint8_t
-    {
-        NONE,       // steady
-        RIP,        // transient
-        RIPPED,     // steady
-        ENCODE,     // transient
-        ENCODED,    // steady
-        TRANSFER,   // transient
-        DONE        // steady
-    };
-
-    struct SRipTrack
-    {
-        int16_t         mCDTrackNo;
-        QString         mTitle;
-        QTemporaryFile* mpFile;
-        time_t          mLength;
-        WorkStep        mStep;
-    };
-
-    using TransferQueue = QVector<SRipTrack>;
-
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
@@ -90,6 +72,10 @@ private slots:
     void delTrack(int16_t);
     void eraseDisc();
 
+    void on_pushDAO_clicked();
+
+    void on_pushAbout_clicked();
+
 private:
     Ui::MainWindow *ui;
     CJackTheRipper *mpRipper;
@@ -100,4 +86,5 @@ private:
     QMovie         *mpWaitAni;
     QLabel         *mpMDDevice;
     QLabel         *mpCDDevice;
+    bool            mbDAO;
 };

@@ -44,6 +44,7 @@ public:
 
     CCDDB *cddb();
     QVector<time_t> trackTimes();
+    uint32_t discLength();
 
     int parseCDText(cdtext_t* pCDT, track_t t, QStringList& ttitles);
     bool busy() const;
@@ -74,6 +75,7 @@ private:
     std::thread*  mpInitThread;
     CCDDB* mpCddb;
     QVector<time_t> mTrackTimes;
+    uint32_t        mDiscLength;
     bool mBusy;
 };
 

@@ -95,7 +95,7 @@ void CNetMD::procEnded(int iRet, QProcess::ExitStatus ps)
             }
             else
             {
-                emit jsonOut(R"({"title":"no disc found","t_used":0,"t_free":0,"otf_enc":0,"trk_count":0,"t_total":0,"device":"unknown",tracks":[],"groups":[]})");
+                emit jsonOut(R"({"title":"no disc found","t_used":0,"t_free":0,"otf_enc":0,"trk_count":0,"t_total":0,"device":"unknown","tracks":[],"groups":[]})");
             }
 
         }

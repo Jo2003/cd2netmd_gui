@@ -17,6 +17,7 @@
 #pragma once
 #include "ccliprocess.h"
 #include <QFile>
+#include "defines.h"
 
 class CXEnc : public CCliProcess
 {
@@ -29,20 +30,29 @@ class CXEnc : public CCliProcess
     /// atrac3 header size in bytes
     static constexpr uint32_t ATRAC3_HEADER_SIZE = 96;
 
+    /// block alignment for LP2 (used for DAO mode)
+    static constexpr uint32_t ATRAC3_LP2_BLOCK_ALIGN = 384;
+
+    /// block alignment for LP4
+    static constexpr uint32_t ATRAC3_LP4_BLOCK_ALIGN = 192;
+
 public:
     enum class XEncCmd : uint8_t
     {
         NONE,
         LP2_ENCODE,
-        LP4_ENCODE
+        LP4_ENCODE,
+        DAO_LP2_ENCODE
     };
 
     explicit CXEnc(QObject *parent = nullptr);
 
-    int start(XEncCmd cmd, const QString& tmpFileName);
+    int start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength);
+    int start(XEncCmd cmd, const c2n::TransferQueue& queue, uint32_t discLength);
 
 protected:
-    int atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz);
+    int atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int length);
+    int splitAtrac3();
 
 private slots:
     void finishCopy(int exitCode, ExitStatus exitStatus);
@@ -53,4 +63,6 @@ signals:
 protected:
     XEncCmd mCurrCmd;
     QString mAtracFileName;
+    c2n::TransferQueue mQueue;
+    uint32_t mLength;
 };

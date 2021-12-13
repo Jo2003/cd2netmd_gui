@@ -47,7 +47,7 @@ static int writeFileHeader(QFile &wf, size_t byteCount)
 CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
       mpCDParanoia(nullptr), mpRipThread(nullptr), mpInitThread(nullptr),
-      mpCddb(nullptr), mBusy(false)
+      mpCddb(nullptr), mDiscLength(0), mBusy(false)
 {
     mpCddb = new CCDDB(this);
 }
@@ -142,6 +142,11 @@ QVector<time_t> CJackTheRipper::trackTimes()
     return mTrackTimes;
 }
 
+uint32_t CJackTheRipper::discLength()
+{
+    return mDiscLength;
+}
+
 int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t t, QStringList &ttitles)
 {
     QString track;
@@ -188,14 +193,26 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
         track_t firstTrack = cdio_cddap_sector_gettrack(mpCDAudio, disctStart);
         track_t trackCount = cdio_cddap_tracks(mpCDAudio);
 
-        if ((track < firstTrack) || ((track + firstTrack) > (trackCount + firstTrack)))
-        {
-            throw std::runtime_error("Track is not part of disc!");
-        }
+        lsn_t trkStart = 0;
+        lsn_t trkEnd   = 0;
 
-        // get track sectors
-        lsn_t trkStart = cdio_cddap_track_firstsector(mpCDAudio, track);
-        lsn_t trkEnd   = cdio_cddap_track_lastsector(mpCDAudio, track);
+        if (track != -1)
+        {
+            if ((track < firstTrack) || ((track + firstTrack) > (trackCount + firstTrack)))
+            {
+                throw std::runtime_error("Track is not part of disc!");
+            }
+
+            // get track sectors
+            trkStart = cdio_cddap_track_firstsector(mpCDAudio, track);
+            trkEnd   = cdio_cddap_track_lastsector(mpCDAudio, track);
+        }
+        else
+        {
+            // track == -1 -> disc at once mode
+            trkStart = disctStart;
+            trkEnd   = cdio_cddap_disc_lastsector(mpCDAudio);
+        }
 
         // get track size ...
         size_t trkSz = (trkEnd - trkStart) * CDIO_CD_FRAMESIZE_RAW;
@@ -324,6 +341,9 @@ int CJackTheRipper::cddbReqString()
                 } while (tmp != 0);
             }
         }
+
+        // whole disc length
+        mDiscLength = secs;
 
         // add last track time
         mTrackTimes.append(secs - (offset / CDIO_CD_FRAMES_PER_SEC));

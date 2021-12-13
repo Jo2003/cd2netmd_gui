@@ -8,4 +8,10 @@
         <file alias="wait">res/wait_ani.gif</file>
         <file alias="icon">res/cd2netmdgui.ico</file>
     </qresource>
+    <qresource prefix="/black">
+        <file alias="cd">res/cd_black.png</file>
+        <file alias="md">res/minidisc_black.png</file>
+        <file alias="transfer">res/transfer.png</file>
+        <file alias="about">res/about.png</file>
+    </qresource>
 </RCC>

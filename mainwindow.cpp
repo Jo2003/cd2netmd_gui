@@ -21,9 +21,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+using namespace c2n;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
-      mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr), mpWaitAni(nullptr)
+      mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
+      mpWaitAni(nullptr), mbDAO(false)
 {
     ui->setupUi(this);
 
@@ -73,7 +76,13 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
     xencCmd   = CXEnc::XEncCmd::NONE;
     trackMode = "SP";
 
-    if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
+    if (mbDAO)
+    {
+        netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_SP;
+        xencCmd   = CXEnc::XEncCmd::DAO_LP2_ENCODE;
+        trackMode = "LP2";
+    }
+    else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
         if (ui->checkOTFEnc->isChecked())
         {
@@ -204,6 +213,7 @@ void MainWindow::mdTitling(CMDTreeModel::ItemRole role, QString title, int no)
 void MainWindow::on_pushTransfer_clicked()
 {
     enableDialogItems(false);
+    mbDAO = false;
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
     // no selection means all!
@@ -264,23 +274,40 @@ void MainWindow::ripFinished()
 
     bool noEnc = xencCmd == CXEnc::XEncCmd::NONE;
 
-    for (auto& j : mWorkQueue)
+    if (mbDAO)
     {
-        if (j.mStep == WorkStep::RIP)
+        if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
-            j.mStep = noEnc ? WorkStep::ENCODED : WorkStep::RIPPED;
-            break;
+            mWorkQueue[0].mStep = WorkStep::RIPPED;
+        }
+
+        if (mWorkQueue.at(0).mStep == WorkStep::NONE)
+        {
+            mWorkQueue[0].mStep = WorkStep::RIP;
+            ui->progressRip->setValue(0);
+            mpRipper->extractTrack(-1, mWorkQueue.at(0).mpFile->fileName(), ui->checkParanoia->isChecked());
         }
     }
-
-    for (auto& j : mWorkQueue)
+    else
     {
-        if (j.mStep == WorkStep::NONE)
+        for (auto& j : mWorkQueue)
         {
-            j.mStep = WorkStep::RIP;
-            ui->progressRip->setValue(0);
-            mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName(), ui->checkParanoia->isChecked());
-            break;
+            if (j.mStep == WorkStep::RIP)
+            {
+                j.mStep = noEnc ? WorkStep::ENCODED : WorkStep::RIPPED;
+                break;
+            }
+        }
+
+        for (auto& j : mWorkQueue)
+        {
+            if (j.mStep == WorkStep::NONE)
+            {
+                j.mStep = WorkStep::RIP;
+                ui->progressRip->setValue(0);
+                mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName(), ui->checkParanoia->isChecked());
+                break;
+            }
         }
     }
 
@@ -308,26 +335,52 @@ void MainWindow::encodeFinished(bool checkBusy)
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        for (auto& j : mWorkQueue)
+        if (mbDAO)
         {
-            if (j.mStep == WorkStep::ENCODE)
+            if (mWorkQueue.at(0).mStep == WorkStep::ENCODE)
             {
-                j.mStep = WorkStep::ENCODED;
-
                 // atracdenc always misses 100% ;)
                 ui->progressExtEnc->setValue(100);
-                break;
+
+                // mark all tracks as encoded
+                for (auto& j : mWorkQueue)
+                {
+                    j.mStep = WorkStep::ENCODED;
+                }
+                transferFinished(true);
+                return;
+            }
+
+            if (mWorkQueue.at(0).mStep == WorkStep::RIPPED)
+            {
+                mWorkQueue[0].mStep = WorkStep::ENCODE;
+                ui->progressExtEnc->setValue(0);
+                mpXEnc->start(xencCmd, mWorkQueue, mpRipper->discLength());
             }
         }
-
-        for (auto& j : mWorkQueue)
+        else
         {
-            if (j.mStep == WorkStep::RIPPED)
+            for (auto& j : mWorkQueue)
             {
-                j.mStep = WorkStep::ENCODE;
-                ui->progressExtEnc->setValue(0);
-                mpXEnc->start(xencCmd, j.mpFile->fileName());
-                break;
+                if (j.mStep == WorkStep::ENCODE)
+                {
+                    j.mStep = WorkStep::ENCODED;
+
+                    // atracdenc always misses 100% ;)
+                    ui->progressExtEnc->setValue(100);
+                    break;
+                }
+            }
+
+            for (auto& j : mWorkQueue)
+            {
+                if (j.mStep == WorkStep::RIPPED)
+                {
+                    j.mStep = WorkStep::ENCODE;
+                    ui->progressExtEnc->setValue(0);
+                    mpXEnc->start(xencCmd, j.mpFile->fileName(), j.mLength);
+                    break;
+                }
             }
         }
 
@@ -396,8 +449,8 @@ void MainWindow::transferFinished(bool checkBusy)
                 delete j.mpFile;
             }
             mWorkQueue.clear();
-            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
             enableDialogItems(true);
+            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
         }
     }
 }
@@ -547,11 +600,13 @@ void MainWindow::enableDialogItems(bool ena)
             && (ui->treeView->model()->rowCount() > 0))
         {
             ui->pushTransfer->setEnabled(ena);
+            ui->pushDAO->setEnabled(ena);
         }
     }
     else
     {
         ui->pushTransfer->setEnabled(ena);
+        ui->pushDAO->setEnabled(ena);
     }
 }
 
@@ -596,8 +651,9 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
             count ++;
         }
     }
+    int all = (mbDAO && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED))) ? 1 : mWorkQueue.size();
     pLabel->clear();
-    pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(mWorkQueue.size()));
+    pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(all));
 }
 
 void MainWindow::eraseDisc()
@@ -607,4 +663,63 @@ void MainWindow::eraseDisc()
         enableDialogItems(false);
         mpNetMD->start({CNetMD::NetMDCmd::ERASE_DISC});
     }
+}
+
+void MainWindow::on_pushDAO_clicked()
+{
+    if (QMessageBox::question(this, tr("Question"), tr("Disc-at-Once mode only works with external encoder and LP2 mode. Do you want to start this process?")) != QMessageBox::Yes)
+    {
+        return;
+    }
+    enableDialogItems(false);
+    mbDAO = true;
+
+    ui->checkOTFEnc->setChecked(false);
+    ui->radioLP2->setChecked(true);
+
+    ui->tableViewCD->selectAll();
+    QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
+
+    time_t selectionTime = 0;
+    mWorkQueue.clear();
+
+    // Multiple rows can be selected
+    for(const auto& r : selected)
+    {
+        int16_t trackNo    = r.row() + 1;
+        QString trackTitle = r.data().toString();
+        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toLongLong();
+        selectionTime += trackTime;
+        mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
+    }
+
+    // DAO supported only in LP2 mode with external encoder
+    selectionTime /= 2;
+
+    if (selectionTime > mpMDmodel->discConf()->mFreeTime)
+    {
+        // not enough space left on device
+        time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
+        QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
+        QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
+        mWorkQueue.clear();
+        enableDialogItems(true);
+    }
+    else if (!mWorkQueue.isEmpty())
+    {
+        for (auto& j : mWorkQueue)
+        {
+            j.mpFile->open();
+            j.mpFile->close();
+        }
+        ripFinished();
+    }
+}
+
+void MainWindow::on_pushAbout_clicked()
+{
+    CAboutDialog* pAbout = new CAboutDialog(this);
+    pAbout->exec();
+    delete pAbout;
+    pAbout = nullptr;
 }

@@ -17,6 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 INCLUDEPATH += include
 
 SOURCES += \
+    caboutdialog.cpp \
     ccddb.cpp \
     ccddbentriesdialog.cpp \
     ccditemmodel.cpp \
@@ -33,6 +34,7 @@ SOURCES += \
     utils.cpp
 
 HEADERS += \
+    caboutdialog.h \
     ccddb.h \
     ccddbentriesdialog.h \
     ccditemmodel.h \
@@ -44,11 +46,13 @@ HEADERS += \
     cnamingdialog.h \
     cnetmd.h \
     cxenc.h \
+    defines.h \
     include/json.hpp \
     mainwindow.h \
     utils.h
 
 FORMS += \
+    caboutdialog.ui \
     ccddbentriesdialog.ui \
     cnamingdialog.ui \
     mainwindow.ui

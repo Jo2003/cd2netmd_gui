@@ -82,6 +82,16 @@
             <property name="text">
              <string>(&amp;Re)-load CD</string>
             </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/black/cd</normaloff>:/black/cd</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
            </widget>
           </item>
          </layout>
@@ -130,6 +140,16 @@
             <property name="text">
              <string>(Re)-load &amp;MD</string>
             </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/black/md</normaloff>:/black/md</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
            </widget>
           </item>
          </layout>
@@ -149,6 +169,9 @@
       </item>
       <item>
        <widget class="QCheckBox" name="checkParanoia">
+        <property name="statusTip">
+         <string>CDDA paranoia support. Reads exactly, but slow.</string>
+        </property>
         <property name="text">
          <string>CDDA Paranoia</string>
         </property>
@@ -177,7 +200,7 @@
       <item>
        <widget class="QCheckBox" name="checkOTFEnc">
         <property name="statusTip">
-         <string>Use On-the-flyy encoding (where supported)</string>
+         <string>Use On-the-fly encoding (where supported)</string>
         </property>
         <property name="text">
          <string>On-the-fly Encoding</string>
@@ -259,6 +282,26 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushAbout">
+        <property name="statusTip">
+         <string>Program Information</string>
+        </property>
+        <property name="text">
+         <string>&amp;About</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/black/about</normaloff>:/black/about</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushTransfer">
         <property name="enabled">
          <bool>false</bool>
@@ -267,7 +310,40 @@
          <string>Transfer all/selected tracks from CD to MD.</string>
         </property>
         <property name="text">
-         <string>Transfer</string>
+         <string>&amp;Transfer</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/black/transfer</normaloff>:/black/transfer</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushDAO">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="statusTip">
+         <string>Disc-at-once transfer (all tracks). Gapless LP2 mode.</string>
+        </property>
+        <property name="text">
+         <string>&amp;DAO Tranfer</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/black/transfer</normaloff>:/black/transfer</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
         </property>
        </widget>
       </item>
