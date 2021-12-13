@@ -34,7 +34,6 @@ We are using following projects:<br>
     <li><a href="https://github.com/dcherednik/atracdenc">atracdenc - ATRAC Decoder Encoder</a></li>
     <li><a href="https://github.com/Jo2003/netmd">linux-minidisc</a></li>
     <li><a href="https://www.qt.io/">Qt - One framework to rule them all</a></li>
-    <li>Icons from Wahyu Adam, Ralf Schmitzer, Phoenix Group, Fitrotul Hayat found at <a href="https://www.flaticon.com/de/" title="Flaticon">www.flaticon.com</a></div>
 </ul>
 Please support me through <a href="https://paypal.me/Jo2003">Paypal</a>!)";
     ui->textAbout->setHtml(text);

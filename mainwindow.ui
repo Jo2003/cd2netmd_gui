@@ -84,13 +84,16 @@
             </property>
             <property name="icon">
              <iconset resource="resources.qrc">
-              <normaloff>:/black/cd</normaloff>:/black/cd</iconset>
+              <normaloff>:/buttons/cd</normaloff>:/buttons/cd</iconset>
             </property>
             <property name="iconSize">
              <size>
-              <width>20</width>
-              <height>20</height>
+              <width>24</width>
+              <height>24</height>
              </size>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -142,13 +145,16 @@
             </property>
             <property name="icon">
              <iconset resource="resources.qrc">
-              <normaloff>:/black/md</normaloff>:/black/md</iconset>
+              <normaloff>:/main/md</normaloff>:/main/md</iconset>
             </property>
             <property name="iconSize">
              <size>
-              <width>20</width>
-              <height>20</height>
+              <width>24</width>
+              <height>24</height>
              </size>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -291,13 +297,16 @@
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/black/about</normaloff>:/black/about</iconset>
+          <normaloff>:/buttons/about</normaloff>:/buttons/about</iconset>
         </property>
         <property name="iconSize">
          <size>
-          <width>20</width>
-          <height>20</height>
+          <width>24</width>
+          <height>24</height>
          </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -314,13 +323,16 @@
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/black/transfer</normaloff>:/black/transfer</iconset>
+          <normaloff>:/buttons/transfer</normaloff>:/buttons/transfer</iconset>
         </property>
         <property name="iconSize">
          <size>
-          <width>20</width>
-          <height>20</height>
+          <width>24</width>
+          <height>24</height>
          </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -337,13 +349,16 @@
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
-          <normaloff>:/black/transfer</normaloff>:/black/transfer</iconset>
+          <normaloff>:/buttons/transfer</normaloff>:/buttons/transfer</iconset>
         </property>
         <property name="iconSize">
          <size>
-          <width>20</width>
-          <height>20</height>
+          <width>24</width>
+          <height>24</height>
          </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -433,6 +448,21 @@
    <header>cmdtreeview.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>lineCDTitle</tabstop>
+  <tabstop>tableViewCD</tabstop>
+  <tabstop>treeView</tabstop>
+  <tabstop>pushInitCD</tabstop>
+  <tabstop>pushLoadMD</tabstop>
+  <tabstop>checkParanoia</tabstop>
+  <tabstop>checkOTFEnc</tabstop>
+  <tabstop>radioSP</tabstop>
+  <tabstop>radioLP2</tabstop>
+  <tabstop>radioLP4</tabstop>
+  <tabstop>pushAbout</tabstop>
+  <tabstop>pushTransfer</tabstop>
+  <tabstop>pushDAO</tabstop>
+ </tabstops>
  <resources>
   <include location="resources.qrc"/>
  </resources>
