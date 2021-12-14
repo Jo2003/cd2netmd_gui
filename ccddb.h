@@ -18,28 +18,69 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 
+//------------------------------------------------------------------------------
+//! @brief      This class describes a CDDB helper..
+//------------------------------------------------------------------------------
 class CCDDB : public QObject
 {
     Q_OBJECT
     static constexpr const char* CDDB_SERVER = "https://gnudb.gnudb.org:443";
 
 public:
+    /// request type
     enum class REQ_WHAT : uint8_t {
-        REQ_UNKNOWN,
-        REQ_ENTRIES,
-        REQ_MATCH
+        REQ_UNKNOWN,    ///< unknown request
+        REQ_ENTRIES,    ///< request all entries
+        REQ_MATCH       ///< request matching entries
     };
 
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent  The parent object
+    //--------------------------------------------------------------------------
     explicit CCDDB(QObject *parent = nullptr);
 
+    //--------------------------------------------------------------------------
+    //! @brief      Gets the entries.
+    //!
+    //! @param[in]  queryPart  The query part
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
     int getEntries(const QString& queryPart);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Gets the matching entry.
+    //!
+    //! @param[in]  queryPart  The query part
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
     int getEntry(const QString& queryPart);
 
 private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      get server response
+    //!
+    //! @param      reply  The reply
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
     int catchResponse(QNetworkReply *reply);
 
 protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      parse the network reply
+    //!
+    //! @param[in]  type   The type
+    //! @param[in]  reply  The reply
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
     int parseReply(REQ_WHAT type, QString reply);
+    
     QNetworkAccessManager *mpNetwork;
 
 signals:

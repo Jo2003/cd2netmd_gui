@@ -21,12 +21,25 @@ namespace Ui {
 class CAboutDialog;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      This class describes an about dialog.
+//------------------------------------------------------------------------------
 class CAboutDialog : public QDialog
 {
     Q_OBJECT
 
 public:
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent  The parent object
+    //--------------------------------------------------------------------------
     explicit CAboutDialog(QWidget *parent = nullptr);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
     ~CAboutDialog();
 
 private:
