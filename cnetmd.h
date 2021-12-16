@@ -20,7 +20,14 @@
 class CNetMD : public CCliProcess
 {
     Q_OBJECT
+#ifdef Q_OS_WIN
     static constexpr const char* NETMD_CLI = "toolchain/netmdcli.exe";
+#elif defined Q_OS_MAC
+    static constexpr const char* NETMD_CLI = "toolchain/netmdcli";
+#else
+    // hopefully in path
+    static constexpr const char* NETMD_CLI = "netmdcli";
+#endif
 
 public:
     enum class NetMDCmd : uint8_t

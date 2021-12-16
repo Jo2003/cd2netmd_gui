@@ -31,3 +31,89 @@ int putNum(uint32_t num, QFile &f, size_t sz)
     }
     return 0;
 }
+
+QString utf8ToMd(const QString& from)
+{
+    QString tmpStr = from;
+    tmpStr.replace("Ä", "Ae");
+    tmpStr.replace("ä", "ae");
+    tmpStr.replace("Ö", "Oe");
+    tmpStr.replace("ö", "oe");
+    tmpStr.replace("Ü", "Ue");
+    tmpStr.replace("ü", "ue");
+    tmpStr.replace("ß", "ss");
+
+    iconv_t icv = iconv_open("US-ASCII//TRANSLIT//IGNORE", "UTF-8");
+    return QString::fromStdString(cddb_str_iconv(icv, static_cast<const char*>(tmpStr.toUtf8())));
+}
+
+//------------------------------------------------------------------------------
+//! @brief      convert string
+//!
+//! @param[in]  cd    conversion enum
+//! @param[in]  in    string to convert
+//! @param      out   converted string
+//!
+//! @return     converted string on success; unconverted in error case
+//------------------------------------------------------------------------------
+std::string cddb_str_iconv(iconv_t cd, const char *in)
+{
+    std::string ret = in;
+    size_t inlen, outlen;
+    int buflen, rc;
+    int len;                    /* number of chars in buffer */
+    char *buf;
+    char *inbuf = strdup(in);
+    char *inPtr = inbuf;
+
+    if (inbuf != nullptr)
+    {
+        inlen = strlen(inbuf);
+        buflen = 0;
+        buf = NULL;
+        do {
+            outlen = inlen * 2;
+            buflen += outlen;
+            /* iconv() below changes the buf pointer:
+             * - decrement to point at beginning of buffer before realloc
+             * - re-increment to point at first free position after realloc
+             */
+            len = buflen - outlen;
+            buf = (char*)realloc(buf - len, buflen) + len;
+            if (buf == NULL) {
+                /* XXX: report out of memory error */
+                free(inbuf);
+                return ret;
+            }
+            rc = iconv(cd, &inPtr, &inlen, &buf, &outlen);
+            if ((rc == -1) && (errno != E2BIG)) {
+                free(buf);
+                free(inbuf);
+                fprintf(stderr, "Error in character encoding!\n");
+                fflush(stderr);
+                return ret;       /* conversion failed */
+            }
+        } while (inlen != 0);
+        len = buflen - outlen;
+        buf -= len;                 /* reposition at begin of buffer */
+
+        /* make a copy just big enough for the result */
+        char *o = new char[len + 1];
+
+        if (o != nullptr)
+        {
+            memcpy(o, buf, len);
+            o[len] = '\0';
+            ret = o;
+            delete [] o;
+
+            free(inbuf);
+
+            return ret;
+        }
+
+        free(inbuf);
+    }
+
+    return ret;
+}

@@ -17,6 +17,7 @@
 #include "cmdtreemodel.h"
 #include <QIcon>
 #include <string>
+#include "utils.h"
 
 CMDTreeModel::CMDTreeModel(const QString& jsonContent, QObject *parent)
     :QAbstractItemModel(parent)
@@ -234,18 +235,21 @@ bool CMDTreeModel::setData(const QModelIndex &index, const QVariant &value, int 
     if (!index.isValid())
         return changed;
 
+    QString name;
+
     CTreeItem *item = static_cast<CTreeItem*>(index.internalPointer());
     if ((role == Qt::EditRole) && (index.column() == 0))
     {
+        name = utf8ToMd(value.toString());
         switch(item->itemRole())
         {
         case ItemRole::GROUP:
         case ItemRole::TRACK:
-            item->rawData()["name"] = value.toString().toStdString();
+            item->rawData()["name"] = name.toStdString();
             changed = true;
             break;
         case ItemRole::DISC:
-            item->rawData()["title"] = value.toString().toStdString();
+            item->rawData()["title"] = name.toStdString();
             changed = true;
             break;
         default:
@@ -255,7 +259,7 @@ bool CMDTreeModel::setData(const QModelIndex &index, const QVariant &value, int 
 
     if (changed)
     {
-        emit editTitle(item->itemRole(), value.toString(), item->trackNumber());
+        emit editTitle(item->itemRole(), name, item->trackNumber());
     }
 
     return changed;

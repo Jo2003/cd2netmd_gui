@@ -17,12 +17,25 @@
 #include "ccditemmodel.h"
 #include <QFont>
 #include <QIcon>
+#include "utils.h"
 
-CCDItemModel::CCDItemModel(const CCDItemModel::CDTitles &titles,
-                           const CCDItemModel::TrackTimes &times,
+CCDItemModel::CCDItemModel(const CDTitles &titles,
+                           const TrackTimes &times,
                            QObject *parent)
     :QAbstractTableModel(parent), mTitles(titles), mTTimes(times)
 {
+    CDTitles tmpTitles;
+
+    for (const auto& t : mTitles)
+    {
+        // convert to latin1
+        tmpTitles.append(utf8ToMd(t));
+    }
+
+    if (tmpTitles != mTitles)
+    {
+        mTitles = tmpTitles;
+    }
 }
 
 CCDItemModel::~CCDItemModel()

@@ -16,8 +16,26 @@
  */
 #pragma once
 #include <QFile>
+#include <QString>
 #include <cstdint>
+#include <iconv.h>
 
 int putNum(uint32_t num, QFile &f, size_t sz);
 
+///
+/// \brief UTF-8 to MiniDisc text
+/// \param from string to convert
+/// \return converted string
+///
+QString utf8ToMd(const QString& from);
 
+//------------------------------------------------------------------------------
+//! @brief      convert string
+//!
+//! @param[in]  cd    conversion enum
+//! @param[in]  in    string to convert
+//! @param      out   converted string
+//!
+//! @return     converted string on success; unconverted in error case
+//------------------------------------------------------------------------------
+std::string cddb_str_iconv(iconv_t cd, const char *in);

@@ -22,7 +22,14 @@
 class CXEnc : public CCliProcess
 {
     Q_OBJECT
+#ifdef Q_OS_WIN
     static constexpr const char* XENC_CLI = "toolchain/atracdenc.exe";
+#elif defined Q_OS_MAC
+    static constexpr const char* XENC_CLI = "toolchain/atracdenc";
+#else
+    // hopefully in path
+    static constexpr const char* XENC_CLI = "atracdenc";
+#endif
 
     /// Sony WAVE format
     static constexpr uint32_t WAVE_FORMAT_SONY_SCX = 624;

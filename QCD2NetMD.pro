@@ -60,7 +60,7 @@ FORMS += \
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
 
-LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -static-libgcc
+LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -static-libgcc -liconv
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
