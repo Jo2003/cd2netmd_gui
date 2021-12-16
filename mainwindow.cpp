@@ -123,6 +123,12 @@ void MainWindow::catchCDDBEntries(QStringList l)
 void MainWindow::catchCDDBEntry(QStringList l)
 {
     CCDItemModel::TrackTimes v = mpRipper->trackTimes();
+    time_t length = mpRipper->discLength();
+
+    ui->labCDTime->clear();
+    ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
+                           .arg((length % 3600) / 60, 2, 10, QChar('0'))
+                           .arg(length % 60, 2, 10, QChar('0')));
 
     // no CDDB result
     if (l.isEmpty())
