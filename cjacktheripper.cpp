@@ -22,24 +22,6 @@
 #include <stdexcept>
 #include "utils.h"
 
-static int writeFileHeader(QFile &wf, size_t byteCount)
-{
-    wf.write("RIFF", 4);
-    putNum(byteCount + 44 - 8, wf, 4);
-    wf.write("WAVEfmt ", 8);
-    putNum(16, wf, 4);
-    putNum(1, wf, 2);
-    putNum(2, wf, 2);
-    putNum(44100, wf, 4);
-    putNum(44100 * 2 * 2, wf, 4);
-    putNum(4, wf, 2);
-    putNum(16, wf, 2);
-    wf.write("data", 4);
-    putNum(byteCount, wf, 4);
-
-    return 0;
-}
-
 ///
 /// \brief CJackTheRipper::CJackTheRipper
 /// \param parent
@@ -225,7 +207,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            writeFileHeader(f, trkSz);
+            writeWaveHeader(f, trkSz);
 
             cdio_cddap_speed_set(mpCDAudio, 8);
 

@@ -20,6 +20,8 @@
 #include <cstdint>
 #include <iconv.h>
 
+int writeWaveHeader(QFile &wf, size_t byteCount);
+
 int putNum(uint32_t num, QFile &f, size_t sz);
 
 ///

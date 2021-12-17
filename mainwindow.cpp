@@ -284,7 +284,26 @@ void MainWindow::ripFinished()
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
-            mWorkQueue[0].mStep = WorkStep::RIPPED;
+            if (ui->checkSPDao->isChecked())
+            {
+                qDebug("Try to split waves!");
+                CWaveSplitter* pSplit = new CWaveSplitter(this);
+                if (pSplit)
+                {
+                    pSplit->splitWaves(mWorkQueue);
+
+                    for (auto& j : mWorkQueue)
+                    {
+                        j.mStep = WorkStep::ENCODED;
+                    }
+
+                    delete pSplit;
+                }
+            }
+            else
+            {
+                mWorkQueue[0].mStep = WorkStep::RIPPED;
+            }
         }
 
         if (mWorkQueue.at(0).mStep == WorkStep::NONE)
@@ -320,7 +339,7 @@ void MainWindow::ripFinished()
     countLabel(ui->labelCDRip, WorkStep::NONE, tr("CD-RIP"));
 
     // do we need encoding?
-    if (noEnc)
+    if (noEnc || ui->checkSPDao->isChecked())
     {
         // no encoding
         transferFinished(true);

@@ -211,6 +211,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="checkSPDao">
+        <property name="text">
+         <string>SP DAO</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="checkOTFEnc">
         <property name="statusTip">
          <string>Use On-the-fly encoding (where supported)</string>

@@ -16,6 +16,24 @@
  */
 #include "utils.h"
 
+int writeWaveHeader(QFile &wf, size_t byteCount)
+{
+    wf.write("RIFF", 4);                // 0
+    putNum(byteCount + 44 - 8, wf, 4);  // 4
+    wf.write("WAVEfmt ", 8);            // 8
+    putNum(16, wf, 4);                  // 16
+    putNum(1, wf, 2);                   // 20
+    putNum(2, wf, 2);                   // 22
+    putNum(44100, wf, 4);               // 24
+    putNum(44100 * 2 * 2, wf, 4);       // 28
+    putNum(4, wf, 2);                   // 32
+    putNum(16, wf, 2);                  // 34
+    wf.write("data", 4);                // 36
+    putNum(byteCount, wf, 4);           // 40
+
+    return 0;
+}
+
 int putNum(uint32_t num, QFile &f, size_t sz)
 {
     unsigned int i;

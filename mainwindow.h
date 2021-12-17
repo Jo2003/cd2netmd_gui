@@ -29,6 +29,7 @@
 #include "cmdtreemodel.h"
 #include "defines.h"
 #include "caboutdialog.h"
+#include "cwavesplitter.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

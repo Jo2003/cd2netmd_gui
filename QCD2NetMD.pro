@@ -28,6 +28,7 @@ SOURCES += \
     cmdtreeview.cpp \
     cnamingdialog.cpp \
     cnetmd.cpp \
+    cwavesplitter.cpp \
     cxenc.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -45,6 +46,7 @@ HEADERS += \
     cmdtreeview.h \
     cnamingdialog.h \
     cnetmd.h \
+    cwavesplitter.h \
     cxenc.h \
     defines.h \
     include/json.hpp \
