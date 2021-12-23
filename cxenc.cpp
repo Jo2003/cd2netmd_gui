@@ -28,6 +28,7 @@ CXEnc::CXEnc(QObject *parent)
 int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength)
 {
     QStringList params;
+    mLog.clear();
     mCurrCmd       = cmd;
     mLength        = trackLength;
     mAtracFileName = tmpFileName + ".aea";
@@ -197,5 +198,11 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
             splitAtrac3();
         }
     }
+
+    if (!mLog.isEmpty())
+    {
+        qDebug() << mLog;
+    }
+
     emit fileDone(false);
 }

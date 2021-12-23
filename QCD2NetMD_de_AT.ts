@@ -28,91 +28,99 @@
     </message>
 </context>
 <context>
+    <name>CJackTheRipper</name>
+    <message>
+        <location filename="cjacktheripper.cpp" line="156"/>
+        <source>&lt;untitled&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CMDTreeView</name>
     <message>
-        <location filename="cmdtreeview.cpp" line="52"/>
+        <location filename="cmdtreeview.cpp" line="53"/>
         <source>&amp;Add Group</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="54"/>
+        <location filename="cmdtreeview.cpp" line="55"/>
         <source>Add Tracks to a new Group.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="57"/>
+        <location filename="cmdtreeview.cpp" line="58"/>
         <source>&amp;Delete Group</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="59"/>
+        <location filename="cmdtreeview.cpp" line="60"/>
         <source>Delete the group, but the tracks.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="62"/>
+        <location filename="cmdtreeview.cpp" line="63"/>
         <source>Delete &amp;Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="64"/>
+        <location filename="cmdtreeview.cpp" line="65"/>
         <source>Delete a tracks. This can&apos;t be undone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="67"/>
+        <location filename="cmdtreeview.cpp" line="68"/>
         <source>Erase D&amp;isc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="69"/>
+        <location filename="cmdtreeview.cpp" line="70"/>
         <source>Erase the Disc. This can&apos;t be undone.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="84"/>
+        <location filename="cmdtreeview.cpp" line="85"/>
         <source>Please select a track for deletion!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="91"/>
+        <location filename="cmdtreeview.cpp" line="92"/>
         <source>Please select one track only for deletion!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="96"/>
-        <location filename="cmdtreeview.cpp" line="123"/>
-        <location filename="cmdtreeview.cpp" line="214"/>
+        <location filename="cmdtreeview.cpp" line="97"/>
+        <location filename="cmdtreeview.cpp" line="124"/>
+        <location filename="cmdtreeview.cpp" line="215"/>
         <source>Note!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="111"/>
+        <location filename="cmdtreeview.cpp" line="112"/>
         <source>Please select a group for deletion!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="118"/>
+        <location filename="cmdtreeview.cpp" line="119"/>
         <source>Please select one group only for deletion!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="151"/>
+        <location filename="cmdtreeview.cpp" line="152"/>
         <source>Please select tracks only!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="165"/>
+        <location filename="cmdtreeview.cpp" line="166"/>
         <source>Please select ungrouped tracks only!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="198"/>
+        <location filename="cmdtreeview.cpp" line="199"/>
         <source>Group Naming</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="cmdtreeview.cpp" line="198"/>
+        <location filename="cmdtreeview.cpp" line="199"/>
         <source>Group Name to add: </source>
         <translation type="unfinished"></translation>
     </message>
@@ -148,216 +156,221 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="80"/>
+        <location filename="mainwindow.ui" line="87"/>
         <source>Load first Audio CD found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="83"/>
+        <location filename="mainwindow.ui" line="90"/>
         <source>(&amp;Re)-load CD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="106"/>
+        <location filename="mainwindow.ui" line="113"/>
         <source>MiniDisc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="141"/>
+        <location filename="mainwindow.ui" line="148"/>
         <source>Load First MiniDisc found.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="144"/>
+        <location filename="mainwindow.ui" line="151"/>
         <source>(Re)-load &amp;MD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="172"/>
+        <location filename="mainwindow.ui" line="179"/>
         <source>CD Read Config: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="179"/>
+        <location filename="mainwindow.ui" line="186"/>
         <source>CDDA paranoia support. Reads exactly, but slow.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="182"/>
+        <location filename="mainwindow.ui" line="189"/>
         <source>CDDA Paranoia</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="202"/>
+        <location filename="mainwindow.ui" line="209"/>
         <source>Transfer Config: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="209"/>
+        <location filename="mainwindow.ui" line="216"/>
         <source>Use On-the-fly encoding (where supported)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="212"/>
+        <location filename="mainwindow.ui" line="219"/>
         <source>On-the-fly Encoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="219"/>
+        <location filename="mainwindow.ui" line="226"/>
         <source>Transfer in SP mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="222"/>
+        <location filename="mainwindow.ui" line="229"/>
         <source>SP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="235"/>
+        <location filename="mainwindow.ui" line="242"/>
         <source>Transfer in LP2 mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="238"/>
+        <location filename="mainwindow.ui" line="245"/>
         <source>LP2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="248"/>
+        <location filename="mainwindow.ui" line="255"/>
         <source>Transfer in LP4 mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="251"/>
+        <location filename="mainwindow.ui" line="258"/>
         <source>LP4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="293"/>
+        <location filename="mainwindow.ui" line="300"/>
         <source>Program Information</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="296"/>
+        <location filename="mainwindow.ui" line="303"/>
         <source>&amp;About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="319"/>
+        <location filename="mainwindow.ui" line="326"/>
         <source>Transfer all/selected tracks from CD to MD.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="322"/>
+        <location filename="mainwindow.ui" line="329"/>
         <source>&amp;Transfer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="345"/>
+        <location filename="mainwindow.ui" line="352"/>
         <source>Disc-at-once transfer (all tracks). Gapless LP2 mode.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="348"/>
+        <location filename="mainwindow.ui" line="355"/>
         <source>&amp;DAO Tranfer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="374"/>
+        <location filename="mainwindow.ui" line="381"/>
         <source>CD-RIP:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="392"/>
+        <location filename="mainwindow.ui" line="399"/>
         <source>External-Encoder:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="410"/>
+        <location filename="mainwindow.ui" line="417"/>
         <source>MD-Transfer:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="253"/>
-        <location filename="mainwindow.cpp" line="704"/>
+        <location filename="mainwindow.cpp" line="129"/>
+        <source>Disc Time: %1:%2:%3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="259"/>
+        <location filename="mainwindow.cpp" line="710"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="253"/>
-        <location filename="mainwindow.cpp" line="704"/>
+        <location filename="mainwindow.cpp" line="259"/>
+        <location filename="mainwindow.cpp" line="710"/>
         <source>Not enough space left on MD to transfer CD title. You need %1 more.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="314"/>
+        <location filename="mainwindow.cpp" line="320"/>
         <source>CD-RIP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="387"/>
+        <location filename="mainwindow.cpp" line="393"/>
         <source>External-Encoder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="431"/>
+        <location filename="mainwindow.cpp" line="437"/>
         <source>MD-Transfer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="453"/>
+        <location filename="mainwindow.cpp" line="459"/>
         <source>Success</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="453"/>
+        <location filename="mainwindow.cpp" line="459"/>
         <source>All (selected) tracks are transfered to MiniDisc!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="530"/>
-        <location filename="mainwindow.cpp" line="661"/>
-        <location filename="mainwindow.cpp" line="670"/>
+        <location filename="mainwindow.cpp" line="536"/>
+        <location filename="mainwindow.cpp" line="667"/>
+        <location filename="mainwindow.cpp" line="676"/>
         <source>Question</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="531"/>
+        <location filename="mainwindow.cpp" line="537"/>
         <source>Do you really want to delete MD track %1? This can&apos;t be undone!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="560"/>
+        <location filename="mainwindow.cpp" line="566"/>
         <source>CD-RIP: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="561"/>
+        <location filename="mainwindow.cpp" line="567"/>
         <source>External-Encoder: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="562"/>
+        <location filename="mainwindow.cpp" line="568"/>
         <source>MD-Tranfer: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="633"/>
+        <location filename="mainwindow.cpp" line="639"/>
         <source>Free: %1:%2:%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="656"/>
+        <location filename="mainwindow.cpp" line="662"/>
         <source>%1: %2/%3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="661"/>
+        <location filename="mainwindow.cpp" line="667"/>
         <source>Do you really want to erase the MD? This can&apos;t be undone!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="670"/>
+        <location filename="mainwindow.cpp" line="676"/>
         <source>Disc-at-Once mode only works with external encoder and LP2 mode. Do you want to start this process?</source>
         <translation type="unfinished"></translation>
     </message>
