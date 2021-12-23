@@ -16,6 +16,7 @@
  */
 #include <QRegExp>
 #include "ccliprocess.h"
+#include "defines.h"
 
 CCliProcess::CCliProcess(QObject *parent)
     :QProcess(parent)

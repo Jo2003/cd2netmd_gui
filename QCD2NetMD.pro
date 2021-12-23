@@ -9,6 +9,7 @@ CONFIG += c++11
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS \
+           QT_MESSAGELOGCONTEXT \
            NO_PROGRAM
 
 # You can also make your code fail to compile if it uses deprecated APIs.

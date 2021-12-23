@@ -18,6 +18,7 @@
 #include <QFont>
 #include <QIcon>
 #include "helpers.h"
+#include "defines.h"
 
 CCDItemModel::CCDItemModel(const CDTitles &titles,
                            const TrackTimes &times,

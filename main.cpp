@@ -17,11 +17,60 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QDir>
+#include <QDateTime>
+#include <QtGlobal>
+
+static QFile g_logFile(QString("%1/cd2netmd_gui.log").arg(QDir::tempPath()));
+
+void logger(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    QString t = QDateTime::currentDateTime().toLocalTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+    QString message;
+    QTextStream mss(&message);
+    QTextStream oss(&g_logFile);
+
+    if (context.file && context.function)
+    {
+        mss << context.file << ":" << context.line << "|" << context.function << "|";
+    }
+
+    mss << msg;
+
+    message.replace("\r\n", "\n");
+    message.replace("\n\n", "\n");
+    message = message.trimmed();
+
+    switch (type)
+    {
+    case QtDebugMsg:
+        oss << t << "|DEBUG|" << message << "\n";
+        break;
+    case QtInfoMsg:
+        oss << t << "|INFO|" << message << "\n";
+        break;
+    case QtWarningMsg:
+        oss << t << "|WARNING|" << message << "\n";
+        break;
+    case QtCriticalMsg:
+        oss << t << "|CRITICAL|" << message << "\n";
+        break;
+    case QtFatalMsg:
+        oss << t << "|FATAL|" << message << "\n";
+        abort();
+    }
+}
 
 int main(int argc, char *argv[])
 {
+    int exitCode = 0;
+    g_logFile.open(QIODevice::Text | QIODevice::Truncate | QIODevice::WriteOnly);
+    qInstallMessageHandler(logger);
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
-    return a.exec();
+    exitCode = a.exec();
+    g_logFile.close();
+    return exitCode;
 }

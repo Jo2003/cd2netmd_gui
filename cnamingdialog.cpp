@@ -16,6 +16,7 @@
  */
 #include "cnamingdialog.h"
 #include "ui_cnamingdialog.h"
+#include "defines.h"
 
 CNamingDialog::CNamingDialog(QWidget *parent, const QString &wtitle, const QString &descr) :
     QDialog(parent),

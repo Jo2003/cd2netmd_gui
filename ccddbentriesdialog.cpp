@@ -18,6 +18,7 @@
 #include "ui_ccddbentriesdialog.h"
 #include <QStringListModel>
 #include <QAbstractButton>
+#include "defines.h"
 
 CCDDBEntriesDialog::CCDDBEntriesDialog(const QStringList &entries, QWidget *parent) :
     QDialog(parent), mEntries(entries),

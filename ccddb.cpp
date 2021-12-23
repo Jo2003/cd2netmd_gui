@@ -17,6 +17,7 @@
 #include "ccddb.h"
 #include <QNetworkReply>
 #include <QRegExp>
+#include "defines.h"
 
 CCDDB::CCDDB(QObject *parent) : QObject(parent)
 {

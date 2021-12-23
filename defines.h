@@ -18,6 +18,7 @@
 #include <QVector>
 #include <QTemporaryFile>
 #include <cstdint>
+#include <QtDebug>
 
 namespace c2n {
 

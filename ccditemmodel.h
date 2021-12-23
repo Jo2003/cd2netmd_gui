@@ -20,28 +20,97 @@
 #include <QStringList>
 #include <QVector>
 
-///
-/// \brief The CCDItemModel class
-///
+//------------------------------------------------------------------------------
+//! @brief      This class describes a cd item model.
+//------------------------------------------------------------------------------
 class CCDItemModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
+    /// so called typedefs
     using CDTitles   = QStringList;
     using TrackTimes = QVector<time_t>;
 
+    //--------------------------------------------------------------------------
+    //! @brief      delete default constructor
+    //--------------------------------------------------------------------------
     CCDItemModel() = delete;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]  titles  The titles
+    //! @param[in]  times   The times
+    //! @param      parent  The parent
+    //--------------------------------------------------------------------------
     explicit CCDItemModel(const CDTitles& titles, const TrackTimes& times, QObject *parent = nullptr);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
     virtual ~CCDItemModel();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get the row count
+    //!
+    //! @param[in]  parent  The parent
+    //!
+    //! @return     row count
+    //--------------------------------------------------------------------------
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get the column count
+    //!
+    //! @param[in]  parent  The parent
+    //!
+    //! @return     column count
+    //--------------------------------------------------------------------------
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get item data
+    //!
+    //! @param[in]  index  The index
+    //! @param[in]  role   The role
+    //!
+    //! @return     item data
+    //--------------------------------------------------------------------------
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the data.
+    //!
+    //! @param[in]  index  The index
+    //! @param[in]  value  The value
+    //! @param[in]  role   The role
+    //!
+    //! @return     true if OK, else error
+    //--------------------------------------------------------------------------
     bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole) override;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get item flags
+    //!
+    //! @param[in]  index  The index
+    //!
+    //! @return     item flags
+    //--------------------------------------------------------------------------
     Qt::ItemFlags flags(const QModelIndex & index) const override;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get header data
+    //!
+    //! @param[in]  section      The section
+    //! @param[in]  orientation  The orientation
+    //! @param[in]  role         The role
+    //!
+    //! @return     header data
+    //--------------------------------------------------------------------------
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 protected:
-    CDTitles   mTitles;
-    TrackTimes mTTimes;
+    CDTitles   mTitles; ///< buffer CD titles
+    TrackTimes mTTimes; ///< buffer track times
 };

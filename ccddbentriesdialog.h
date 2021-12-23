@@ -22,21 +22,52 @@ namespace Ui {
 class CCDDBEntriesDialog;
 }
 
+//------------------------------------------------------------------------------
+//! @brief      This class describes a ccddb entries dialog.
+//------------------------------------------------------------------------------
 class CCDDBEntriesDialog : public QDialog
 {
     Q_OBJECT
 
 public:
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]  entries  The entries
+    //! @param      parent   The parent
+    //--------------------------------------------------------------------------
     explicit CCDDBEntriesDialog(const QStringList& entries, QWidget *parent = nullptr);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
     ~CCDDBEntriesDialog();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get request
+    //!
+    //! @return     The request string.
+    //--------------------------------------------------------------------------
     QString request();
 
 protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      to do when dialog is shown
+    //!
+    //! @param      e pointer to show event
+    //--------------------------------------------------------------------------
     void showEvent(QShowEvent *e) override;
-    QStringList mEntries;
-    QString mRequest;
+    
+    QStringList mEntries; ///< buffer entries
+    QString mRequest;     ///< buffer request
 
 private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      Called when button box clicked.
+    //!
+    //! @param      button  The clicked button
+    //--------------------------------------------------------------------------
     void on_buttonBox_clicked(QAbstractButton *button);
 
 private:

@@ -18,21 +18,52 @@
 #include <QObject>
 #include <QProcess>
 
+//------------------------------------------------------------------------------
+//! @brief      This class describes a cli process.
+//------------------------------------------------------------------------------
 class CCliProcess : public QProcess
 {
     Q_OBJECT
 public:
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent  The parent
+    //--------------------------------------------------------------------------
     CCliProcess(QObject* parent = nullptr);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      run the process
+    //!
+    //! @param[in]  program    The program
+    //! @param[in]  arguments  The arguments
+    //! @param[in]  mode       The mode
+    //--------------------------------------------------------------------------
     void run(const QString &program, const QStringList &arguments, QIODevice::OpenMode mode = ReadWrite);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      check if process is running (busy)
+    //!
+    //! @return     true -> busy; false -> free
+    //--------------------------------------------------------------------------
     bool busy() const;
 
 private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      extract percentage from log file
+    //--------------------------------------------------------------------------
     void extractPercent();
 
 signals:
+    //--------------------------------------------------------------------------
+    //! @brief      signal progress in percent
+    //!
+    //! @param[in]  <unnamed>  percent value
+    //--------------------------------------------------------------------------
     void progress(int);
 
 protected:
+    /// log content
     QString mLog;
 };
 

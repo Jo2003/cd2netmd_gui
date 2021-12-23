@@ -34,6 +34,9 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+//------------------------------------------------------------------------------
+//! @brief      This class describes a main window.
+//------------------------------------------------------------------------------
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -41,50 +44,200 @@ class MainWindow : public QMainWindow
     using WorkStep      = c2n::WorkStep;
 
 public:
+    //--------------------------------------------------------------------------
+    //! @brief      creates the object
+    //!
+    //! @param      parent  The parent
+    //--------------------------------------------------------------------------
     MainWindow(QWidget *parent = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
     ~MainWindow();
 
 protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      get the transfer configuration
+    //!
+    //! @param[out] netMdCmd   The net md command
+    //! @param[out] xencCmd    The xenc command
+    //! @param[out] trackMode  The track mode
+    //--------------------------------------------------------------------------
     void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd, QString& trackMode);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Adds a md track.
+    //!
+    //! @param[in]  number  The number
+    //! @param[in]  title   The title
+    //! @param[in]  mode    The mode
+    //! @param[in]  length  The length
+    //--------------------------------------------------------------------------
     void addMDTrack(int number, const QString &title, const QString &mode, time_t length);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the md title.
+    //!
+    //! @param[in]  title  The title
+    //--------------------------------------------------------------------------
     void setMDTitle(const QString& title);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Enables the dialog items.
+    //!
+    //! @param[in]  ena   enable or disable
+    //--------------------------------------------------------------------------
     void enableDialogItems(bool ena);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      recreate MD content tree view
+    //!
+    //! @param[in]  json  The json
+    //--------------------------------------------------------------------------
     void recreateTreeView(const QString& json);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      update count label
+    //!
+    //! @param      pLabel  The label
+    //! @param[in]  step    The step
+    //! @param[in]  text    The text
+    //--------------------------------------------------------------------------
     void countLabel(QLabel *pLabel, WorkStep step, const QString& text);
 
 private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      get the list of matching CDDB entries
+    //!
+    //! @param[in]  l     entries
+    //--------------------------------------------------------------------------
     void catchCDDBEntries(QStringList l);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get the one matching CDDB entry
+    //!
+    //! @param[in]  l     track titles
+    //--------------------------------------------------------------------------
     void catchCDDBEntry(QStringList l);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get json data from MD
+    //!
+    //! @param[in]  <unnamed>  json data as string
+    //--------------------------------------------------------------------------
     void catchJson(QString);
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push initialize cd clicked.
+    //--------------------------------------------------------------------------
     void on_pushInitCD_clicked();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push load md clicked.
+    //--------------------------------------------------------------------------
     void on_pushLoadMD_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      MD titling
+    //!
+    //! @param[in]  role   The role
+    //! @param[in]  title  The title
+    //! @param[in]  no     number
+    //--------------------------------------------------------------------------
     void mdTitling(CMDTreeModel::ItemRole role, QString title, int no);
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push transfer clicked.
+    //--------------------------------------------------------------------------
     void on_pushTransfer_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      rip of one track finsihed
+    //--------------------------------------------------------------------------
     void ripFinished();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      one encode finished.
+    //!
+    //! @param[in]  checkBusy  The check busy
+    //--------------------------------------------------------------------------
     void encodeFinished(bool checkBusy = false);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      one transfer finished
+    //!
+    //! @param[in]  checkBusy  The check busy
+    //--------------------------------------------------------------------------
     void transferFinished(bool checkBusy = false);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Adds a md group.
+    //!
+    //! @param[in]  title  The title
+    //! @param[in]  first  The first
+    //! @param[in]  last   The last
+    //--------------------------------------------------------------------------
     void addMDGroup(const QString& title, int16_t first, int16_t last);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      delete one MD group
+    //!
+    //! @param[in]  number  The group number
+    //--------------------------------------------------------------------------
     void delMDGroup(int16_t number);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      delete track
+    //!
+    //! @param[in]  <unnamed>  track number
+    //--------------------------------------------------------------------------
     void delTrack(int16_t);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      erase MD
+    //--------------------------------------------------------------------------
     void eraseDisc();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push dao clicked.
+    //--------------------------------------------------------------------------
     void on_pushDAO_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push about clicked.
+    //--------------------------------------------------------------------------
     void on_pushAbout_clicked();
 
 private:
+    /// GUI pointer
     Ui::MainWindow *ui;
+
+    /// CD Ripper pointer
     CJackTheRipper *mpRipper;
+    
+    /// NetMD handling pointer
     CNetMD         *mpNetMD;
+    
+    /// external encoder pointer
     CXEnc          *mpXEnc;
+    
+    /// tree model for MD
     CMDTreeModel   *mpMDmodel;
+    
+    /// job list
     TransferQueue   mWorkQueue;
+    
+    /// busy animation
     QMovie         *mpWaitAni;
+    
+    /// MD device info
     QLabel         *mpMDDevice;
+    
+    /// CD device info
     QLabel         *mpCDDevice;
+    
+    /// is DAO handling active?
     bool            mbDAO;
 };

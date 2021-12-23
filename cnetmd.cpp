@@ -16,6 +16,7 @@
  */
 #include "cnetmd.h"
 #include <QDir>
+#include "defines.h"
 
 CNetMD::CNetMD(QObject *parent)
     : QThread(parent), mCurrJob(NetMDCmd::UNKNWON), mpJsonFile(nullptr), mpLogFile(nullptr)
@@ -199,12 +200,16 @@ void CNetMD::procEnded(bool)
             {
                 emit jsonOut(R"({"title":"no disc found","t_used":0,"t_free":0,"otf_enc":0,"trk_count":0,"t_total":0,"device":"unknown","tracks":[],"groups":[]})");
             }
-            qDebug("%s", static_cast<const char*>(json.toUtf8()));
+            qDebug() << json;
         }
     }
     else if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC) || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
     {
         start({NetMDCmd::DISCINFO});
     }
-    qDebug("%s", static_cast<const char*>(mLog.toUtf8()));
+
+    if (!mLog.isEmpty())
+    {
+        qDebug() << mLog;
+    }
 }

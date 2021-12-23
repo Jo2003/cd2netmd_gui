@@ -35,48 +35,168 @@ class CJackTheRipper : public QObject
 {
     Q_OBJECT
 public:
-    explicit CJackTheRipper(QObject *parent = nullptr);
-    virtual ~CJackTheRipper();
-    virtual int init();
-    virtual int cleanup();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent  The parent
+    //--------------------------------------------------------------------------
+    explicit CJackTheRipper(QObject *parent = nullptr);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
+    virtual ~CJackTheRipper();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Initializes the object.
+    //!
+    //! @return     0 -> ok
+    //--------------------------------------------------------------------------
+    int init();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      cleanup time
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
+    int cleanup();
+
+    //--------------------------------------------------------------------------
+    //! @brief      extract audio track(s)
+    //!
+    //! @param[in]  trackNo   The track no; -1 for all
+    //! @param[in]  fName     The file name to store the content
+    //! @param[in]  paranoia  use CDDA paranoia if true
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
     int extractTrack(int trackNo, const QString& fName, bool paranoia);
 
+    //--------------------------------------------------------------------------
+    //! @brief      get CDDB pointer
+    //!
+    //! @return     pointer to internal CDDB class
+    //--------------------------------------------------------------------------
     CCDDB *cddb();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      export track times
+    //!
+    //! @return     track times as vector
+    //--------------------------------------------------------------------------
     QVector<time_t> trackTimes();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get disc length ion seconds
+    //!
+    //! @return     disc length
+    //--------------------------------------------------------------------------
     uint32_t discLength();
 
+    //--------------------------------------------------------------------------
+    //! @brief      parse CD Text
+    //!
+    //! @param      pCDT     The cd text object
+    //! @param[in]  t        track number
+    //! @param[out] ttitles  The ttitles vector
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
     int parseCDText(cdtext_t* pCDT, track_t t, QStringList& ttitles);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      check if ripper is busy
+    //!
+    //! @return     true if busy
+    //--------------------------------------------------------------------------
     bool busy() const;
+    
+    //--------------------------------------------------------------------------
+    //! @brief      thread function for ripping
+    //!
+    //! @param[in]  track     The track number
+    //! @param[in]  fName     The file name
+    //! @param[in]  paranoia  The paranoia flag
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
     int ripThread(int track, const QString& fName, bool paranoia);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      get device info
+    //!
+    //! @return     The info string.
+    //--------------------------------------------------------------------------
     QString deviceInfo();
 
 public slots:
+
+    //--------------------------------------------------------------------------
+    //! @brief      check if media was changed
+    //!
+    //! @return     true if changed
+    //--------------------------------------------------------------------------
     bool mediaChanged();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Gets the progress
+    //!
+    //! @param[in]  percent  The percent
+    //--------------------------------------------------------------------------
     void getProgress(int percent);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      create CDDB request string or extract CD-Text if there
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
     int cddbReqString();
+    
+    //--------------------------------------------------------------------------
+    //! @brief      set ripper to not busy
+    //--------------------------------------------------------------------------
     void noBusy();
 
 protected:
-    CdIo_t* mpCDIO;
-    cdrom_drive_t* mpCDAudio;
-    cdrom_paranoia_t* mpCDParanoia;
-    QTimer mtChkChd;
+    CdIo_t* mpCDIO;                     ///< CD device pointer
+    cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
+    cdrom_paranoia_t* mpCDParanoia;     ///< CD Paranoia pointer
+    QTimer mtChkChd;                    ///< check for media change
 
 signals:
+
+    //--------------------------------------------------------------------------
+    //! @brief      media was changed
+    //--------------------------------------------------------------------------
     void mediaChgd();
+
+    //--------------------------------------------------------------------------
+    //! @brief      progress in percent
+    //!
+    //! @param[in]  i     percent
+    //--------------------------------------------------------------------------
     void progress(int i);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      signal match from CDDB
+    //!
+    //! @param[in]  l     title list
+    //--------------------------------------------------------------------------
     void match(QStringList l);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      thread finished
+    //--------------------------------------------------------------------------
     void finished();
 
 private:
-    QString mCDDBRequest;
-    std::thread*  mpRipThread;
-    std::thread*  mpInitThread;
-    CCDDB* mpCddb;
-    QVector<time_t> mTrackTimes;
-    uint32_t        mDiscLength;
-    bool mBusy;
+    QString mCDDBRequest;           ///< CDDB request
+    std::thread*  mpRipThread;      ///< rip thread pointer
+    CCDDB* mpCddb;                  ///< CDDB pointer
+    QVector<time_t> mTrackTimes;    ///< track times buffer
+    uint32_t        mDiscLength;    ///< store disc length
+    bool mBusy;                     ///< busy flag
 };
 
 ///
@@ -87,7 +207,19 @@ class CCDInitThread : public QThread
     Q_OBJECT
 
 public:
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent        The parent
+    //! @param      ppCDIO        The pp cdio
+    //! @param      ppCDAudio     The pp cd audio
+    //! @param      ppCDParanoia  The pp cd paranoia
+    //--------------------------------------------------------------------------
     CCDInitThread(QObject* parent, CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio, cdrom_paranoia_t** ppCDParanoia);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      thread function
+    //--------------------------------------------------------------------------
     void run() override;
 
 protected:
@@ -96,5 +228,8 @@ protected:
     cdrom_paranoia_t** mppCDParanoia;
 
 signals:
+    //--------------------------------------------------------------------------
+    //! @brief      thread finished
+    //--------------------------------------------------------------------------
     void finished();
 };

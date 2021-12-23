@@ -21,6 +21,7 @@
 #include <QVector>
 #include <stdexcept>
 #include "helpers.h"
+#include "defines.h"
 
 static int writeFileHeader(QFile &wf, size_t byteCount)
 {
@@ -46,7 +47,7 @@ static int writeFileHeader(QFile &wf, size_t byteCount)
 ///
 CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
-      mpCDParanoia(nullptr), mpRipThread(nullptr), mpInitThread(nullptr),
+      mpCDParanoia(nullptr), mpRipThread(nullptr),
       mpCddb(nullptr), mDiscLength(0), mBusy(false)
 {
     mpCddb = new CCDDB(this);
@@ -260,7 +261,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
     }
     catch (const std::exception& e)
     {
-        qDebug("%s", e.what());
+        qWarning() << e.what();
         ret = -1;
     }
     noBusy();

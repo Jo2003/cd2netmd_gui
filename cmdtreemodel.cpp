@@ -18,6 +18,7 @@
 #include <QIcon>
 #include <string>
 #include "helpers.h"
+#include "defines.h"
 
 CMDTreeModel::CMDTreeModel(const QString& jsonContent, QObject *parent)
     :QAbstractItemModel(parent)

@@ -19,11 +19,21 @@
 #include <QTableView>
 #include <QResizeEvent>
 
+//------------------------------------------------------------------------------
+//! @brief      cd table visualization of the data that model contains.
+//------------------------------------------------------------------------------
 class CCDTableView : public QTableView
 {
     Q_OBJECT
 public:
+    /// using parents constructor
     using QTableView::QTableView;
+
 protected:
+    //--------------------------------------------------------------------------
+    //! @brief      resize columns when size was changed
+    //!
+    //! @param      e     pointer to resize event
+    //--------------------------------------------------------------------------
     void resizeEvent(QResizeEvent *e) override;
 };

@@ -21,30 +21,49 @@
 #include <cstdio>
 #include <QTimer>
 
+//------------------------------------------------------------------------------
+//! @brief      This class describes net md handling.
+//------------------------------------------------------------------------------
 class CNetMD : public QThread
 {
     Q_OBJECT
 
+    /// give the child a name
     static constexpr const char * NETMDCLI = "netmdcli";
 public:
+    /// actions to be done on NetMD
     enum class NetMDCmd : uint8_t
     {
-        DISCINFO,
-        WRITE_TRACK_SP,
-        WRITE_TRACK_LP2,
-        WRITE_TRACK_LP4,
-        ADD_GROUP,
-        RENAME_DISC,
-        RENAME_TRACK,
-        RENAME_GROUP,
-        DEL_GROUP,
-        ERASE_DISC,
-        DEL_TRACK,
-        UNKNWON
+        DISCINFO,           ///< get disc info
+        WRITE_TRACK_SP,     ///< transfer a track as it is (PCM -> SP, LP2 -> LP2, LP4 -> LP4)
+        WRITE_TRACK_LP2,    ///< on the fly transfer / encode PCM -> LP2
+        WRITE_TRACK_LP4,    ///< on the fly transfer / encode PCM -> LP4
+        ADD_GROUP,          ///< add new group
+        RENAME_DISC,        ///< rename MD
+        RENAME_TRACK,       ///< rename track 
+        RENAME_GROUP,       ///< rename group
+        DEL_GROUP,          ///< delete group
+        ERASE_DISC,         ///< erase disc
+        DEL_TRACK,          ///< delete track
+        UNKNWON             ///< something different
     };
 
+    //--------------------------------------------------------------------------
+    //! @brief      startup data structure
+    //--------------------------------------------------------------------------
     struct NetMDStartup
     {
+        //----------------------------------------------------------------------
+        //! @brief      Constructs a new instance.
+        //!
+        //! @param[in]  cmd    The command
+        //! @param[in]  trk    The trk
+        //! @param[in]  title  The title
+        //! @param[in]  grp    The group
+        //! @param[in]  first  The first
+        //! @param[in]  last   The last
+        //! @param[in]  group  The group
+        //----------------------------------------------------------------------
         NetMDStartup(NetMDCmd cmd, const QString& trk = "",
                      const QString& title = "", const QString& grp = "",
                      int16_t first = -1, int16_t last = -1, int16_t group = -1)
@@ -52,40 +71,104 @@ public:
               miFirst(first), miLast(last), miGroup(group)
         {}
 
-        NetMDCmd mCmd;
-        QString  msTrack;
-        QString  msTitle;
-        QString  msGroup;
-        int16_t  miFirst;
-        int16_t  miLast;
-        int16_t  miGroup;
+        NetMDCmd mCmd;      ///< command
+        QString  msTrack;   ///< track title 
+        QString  msTitle;   ///< disc title
+        QString  msGroup;   ///< group title
+        int16_t  miFirst;   ///< first track
+        int16_t  miLast;    ///< last track
+        int16_t  miGroup;   ///< group id
     };
 
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent  The parent
+    //--------------------------------------------------------------------------
     explicit CNetMD(QObject *parent = nullptr);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
     virtual ~CNetMD();
 
+    //--------------------------------------------------------------------------
+    //! @brief      store data, start thread
+    //!
+    //! @param[in]  startup  The startup structure
+    //--------------------------------------------------------------------------
     void start(NetMDStartup startup);
 
+    //--------------------------------------------------------------------------
+    //! @brief      thread function
+    //--------------------------------------------------------------------------
     void run() override;
 
+    //--------------------------------------------------------------------------
+    //! @brief      is thread running
+    //!
+    //! @return     true if running (busy)
+    //--------------------------------------------------------------------------
     bool busy();
 
 private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      the thread ended
+    //!
+    //! @param[in]  <unnamed>
+    //--------------------------------------------------------------------------
     void procEnded(bool);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      extract percent from log
+    //--------------------------------------------------------------------------
     void extractPercent();
 
 signals:
+    
+    //--------------------------------------------------------------------------
+    //! @brief      signal json data
+    //!
+    //! @param[in]  <unnamed>  json data as string
+    //--------------------------------------------------------------------------
     void jsonOut(QString);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      signal that thread finished
+    //!
+    //! @param[in]  <unnamed>  false 
+    //--------------------------------------------------------------------------
     void finished(bool);
+    
+    //--------------------------------------------------------------------------
+    //! @brief      signal thread progress in percent
+    //!
+    //! @param[in]  <unnamed>  percent
+    //--------------------------------------------------------------------------
     void progress(int);
 
 protected:
+    /// current job description
     NetMDStartup mCurrJob;
+    
+    /// file name for json buffer
     QString   mNameFJson;
+    
+    /// log file name
     QString   mNameFLog;
+    
+    /// json file pointer
     FILE* mpJsonFile;
+    
+    /// log file pointer
     FILE* mpLogFile;
+    
+    /// log file
     QFile mfLog;
+    
+    /// log content
     QString mLog;
+    
+    /// cyclic log parce trigger
     QTimer mTReadLog;
 };

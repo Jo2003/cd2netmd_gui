@@ -19,6 +19,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include "cnamingdialog.h"
+#include "defines.h"
 
 CMDTreeView::CMDTreeView(QWidget *parent)
     :QTreeView(parent)

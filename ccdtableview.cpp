@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  */
 #include "ccdtableview.h"
+#include "defines.h"
 
 void CCDTableView::resizeEvent(QResizeEvent *e)
 {
