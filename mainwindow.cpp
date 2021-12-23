@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     {
         connect(mpNetMD, &CNetMD::progress, ui->progressMDTransfer, &QProgressBar::setValue);
         connect(mpNetMD, &CNetMD::jsonOut, this, &MainWindow::catchJson);
-        connect(mpNetMD, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &MainWindow::transferFinished);
+        connect(mpNetMD, &CNetMD::finished, this, &MainWindow::transferFinished);
     }
 
     if ((mpXEnc = new CXEnc(this)) != nullptr)

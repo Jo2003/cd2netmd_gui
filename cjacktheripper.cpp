@@ -20,7 +20,7 @@
 #include <cdio/cdtext.h>
 #include <QVector>
 #include <stdexcept>
-#include "utils.h"
+#include "helpers.h"
 
 static int writeFileHeader(QFile &wf, size_t byteCount)
 {

@@ -15,20 +15,17 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-#include "ccliprocess.h"
+#include <QThread>
+#include <QFile>
+#include <netmdcli.h>
+#include <cstdio>
+#include <QTimer>
 
-class CNetMD : public CCliProcess
+class CNetMD : public QThread
 {
     Q_OBJECT
-#ifdef Q_OS_WIN
-    static constexpr const char* NETMD_CLI = "toolchain/netmdcli.exe";
-#elif defined Q_OS_MAC
-    static constexpr const char* NETMD_CLI = "toolchain/netmdcli";
-#else
-    // hopefully in path
-    static constexpr const char* NETMD_CLI = "netmdcli";
-#endif
 
+    static constexpr const char * NETMDCLI = "netmdcli";
 public:
     enum class NetMDCmd : uint8_t
     {
@@ -65,15 +62,30 @@ public:
     };
 
     explicit CNetMD(QObject *parent = nullptr);
+    virtual ~CNetMD();
 
-    int start(NetMDStartup startup);
+    void start(NetMDStartup startup);
+
+    void run() override;
+
+    bool busy();
 
 private slots:
-    void procEnded(int, QProcess::ExitStatus);
+    void procEnded(bool);
+    void extractPercent();
 
 signals:
     void jsonOut(QString);
+    void finished(bool);
+    void progress(int);
 
 protected:
-    NetMDCmd  mCurrCmd;
+    NetMDStartup mCurrJob;
+    QString   mNameFJson;
+    QString   mNameFLog;
+    FILE* mpJsonFile;
+    FILE* mpLogFile;
+    QFile mfLog;
+    QString mLog;
+    QTimer mTReadLog;
 };

@@ -1,0 +1,3 @@
+[submodule "externals/netmd"]
+	path = externals/netmd
+	url = https://github.com/Jo2003/netmd.git

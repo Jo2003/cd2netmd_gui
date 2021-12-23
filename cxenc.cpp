@@ -16,7 +16,7 @@
  */
 #include <QFileInfo>
 #include "cxenc.h"
-#include "utils.h"
+#include "helpers.h"
 #include <cmath>
 
 CXEnc::CXEnc(QObject *parent)
