@@ -92,7 +92,7 @@ FORMS += \
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
 
-LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -static-libgcc -liconv -lgcrypt -lusb-1.0 -lgpg-error -ljson-c
+LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -static-libgcc -lgcrypt -lusb-1.0 -lgpg-error -ljson-c
 win32: LIBS += -lws2_32
 
 # Default rules for deployment.

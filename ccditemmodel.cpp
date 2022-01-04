@@ -17,7 +17,6 @@
 #include "ccditemmodel.h"
 #include <QFont>
 #include <QIcon>
-#include "helpers.h"
 #include "defines.h"
 
 CCDItemModel::CCDItemModel(const CDTitles &titles,
@@ -25,18 +24,6 @@ CCDItemModel::CCDItemModel(const CDTitles &titles,
                            QObject *parent)
     :QAbstractTableModel(parent), mTitles(titles), mTTimes(times)
 {
-    CDTitles tmpTitles;
-
-    for (const auto& t : mTitles)
-    {
-        // convert to latin1
-        tmpTitles.append(utf8ToMd(t));
-    }
-
-    if (tmpTitles != mTitles)
-    {
-        mTitles = tmpTitles;
-    }
 }
 
 CCDItemModel::~CCDItemModel()

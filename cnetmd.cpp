@@ -17,6 +17,7 @@
 #include "cnetmd.h"
 #include <QDir>
 #include "defines.h"
+#include "helpers.h"
 
 CNetMD::CNetMD(QObject *parent)
     : QThread(parent), mCurrJob(NetMDCmd::UNKNWON), mpJsonFile(nullptr), mpLogFile(nullptr)
@@ -73,25 +74,25 @@ void CNetMD::run()
         args << "json_gui";
         break;
     case NetMDCmd::WRITE_TRACK_SP:
-        args << "send" << mCurrJob.msTrack << mCurrJob.msTitle;
+        args << "send" << mCurrJob.msTrack << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::WRITE_TRACK_LP2:
-        args << "-d" << "lp2" << "send" << mCurrJob.msTrack << mCurrJob.msTitle;
+        args << "-d" << "lp2" << "send" << mCurrJob.msTrack << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::WRITE_TRACK_LP4:
         args << "-d" << "lp4" << "send" << mCurrJob.msTrack << mCurrJob.msTitle;
         break;
     case NetMDCmd::ADD_GROUP:
-        args << "add_group" << mCurrJob.msGroup << QString::number(mCurrJob.miFirst) << QString::number(mCurrJob.miLast);
+        args << "add_group" << utf8ToMd(mCurrJob.msGroup) << QString::number(mCurrJob.miFirst) << QString::number(mCurrJob.miLast);
         break;
     case NetMDCmd::RENAME_DISC:
-        args << "rename_disc" << mCurrJob.msTitle;
+        args << "rename_disc" << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::RENAME_TRACK:
-        args << "rename" << QString::number(mCurrJob.miFirst - 1) << mCurrJob.msTrack;
+        args << "rename" << QString::number(mCurrJob.miFirst - 1) << utf8ToMd(mCurrJob.msTrack);
         break;
     case NetMDCmd::RENAME_GROUP:
-        args << "retitle" << QString::number(mCurrJob.miGroup) << mCurrJob.msGroup;
+        args << "retitle" << QString::number(mCurrJob.miGroup) << utf8ToMd(mCurrJob.msGroup);
         break;
     case NetMDCmd::ERASE_DISC:
         args << "erase" << "force";
@@ -109,6 +110,7 @@ void CNetMD::run()
 
     if (ret == 0)
     {
+        qDebug() << "netmdcli arguments: " << args;
         mpJsonFile = fopen(static_cast<const char*>(mNameFJson.toUtf8()), "w+");
         mpLogFile  = fopen(static_cast<const char*>(mNameFLog.toUtf8()), "a");
 
@@ -187,7 +189,8 @@ void CNetMD::procEnded(bool)
         QFile fjson(mNameFJson);
         if (fjson.open(QIODevice::ReadOnly))
         {
-            QString json = QString::fromUtf8(fjson.readAll());
+            // mind SHIFT-JIS encoding!
+            QString json = mdToUtf8(fjson.readAll());
             int start = json.indexOf(QChar('{'));
             int end   = json.lastIndexOf(QChar('}'));
 

@@ -97,13 +97,14 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      parse CD Text
     //!
-    //! @param      pCDT     The cd text object
-    //! @param[in]  t        track number
-    //! @param[out] ttitles  The ttitles vector
+    //! @param      pCDT       The cd text object
+    //! @param[in]  firstTrack first track number
+    //! @param[in]  lastTrack  nunmber of last track
+    //! @param[out] ttitles    The ttitles vector
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int parseCDText(cdtext_t* pCDT, track_t t, QStringList& ttitles);
+    int parseCDText(cdtext_t* pCDT, track_t firstTrack, track_t lastTrack, QStringList& ttitles);
     
     //--------------------------------------------------------------------------
     //! @brief      check if ripper is busy

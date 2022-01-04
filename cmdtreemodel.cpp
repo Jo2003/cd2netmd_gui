@@ -241,7 +241,10 @@ bool CMDTreeModel::setData(const QModelIndex &index, const QVariant &value, int 
     CTreeItem *item = static_cast<CTreeItem*>(index.internalPointer());
     if ((role == Qt::EditRole) && (index.column() == 0))
     {
-        name = utf8ToMd(value.toString());
+        name = value.toString();
+
+        deUmlaut(name);
+
         switch(item->itemRole())
         {
         case ItemRole::GROUP:

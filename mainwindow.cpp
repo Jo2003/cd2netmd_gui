@@ -20,6 +20,7 @@
 #include <QStringListModel>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include "helpers.h"
 
 using namespace c2n;
 
@@ -463,6 +464,9 @@ void MainWindow::transferFinished(bool checkBusy)
 
 void MainWindow::addMDTrack(int number, const QString &title, const QString &mode, time_t length)
 {
+    QString t = title;
+    deUmlaut(t);
+
     QString timeString = QString("%1:%2:%3")
             .arg((length % 3600) / 60, 2, 10, QChar('0'))
             .arg(length % 60, 2, 10, QChar('0'))
@@ -483,7 +487,7 @@ void MainWindow::addMDTrack(int number, const QString &title, const QString &mod
 
     nlohmann::json trk;
     trk["no"]      = number;
-    trk["name"]    = title.toStdString();
+    trk["name"]    = t.toStdString();
     trk["bitrate"] = mode.toStdString();
     trk["time"]    = timeString.toStdString();
     mdJson["tracks"].push_back(trk);
@@ -497,10 +501,12 @@ void MainWindow::addMDTrack(int number, const QString &title, const QString &mod
 
 void MainWindow::addMDGroup(const QString &title, int16_t first, int16_t last)
 {
-    mpNetMD->start({CNetMD::NetMDCmd::ADD_GROUP, "", "", title, first, last});
+    QString t = title;
+    deUmlaut(t);
+    mpNetMD->start({CNetMD::NetMDCmd::ADD_GROUP, "", "", t, first, last});
 
     nlohmann::json group;
-    group["name"]  = title.toStdString();
+    group["name"]  = t.toStdString();
     group["first"] = first;
     group["last"]  = first == last ? -1 : last;
 
@@ -545,8 +551,10 @@ void MainWindow::delTrack(int16_t track)
 
 void MainWindow::setMDTitle(const QString &title)
 {
+    QString t = title;
+    deUmlaut(t);
     nlohmann::json mdJson = mpMDmodel->exportJson();
-    mdJson["title"] = title.toStdString();
+    mdJson["title"] = t.toStdString();
     recreateTreeView(QString::fromStdString(mdJson.dump()));
 }
 

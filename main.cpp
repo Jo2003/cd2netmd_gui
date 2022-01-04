@@ -21,6 +21,7 @@
 #include <QDir>
 #include <QDateTime>
 #include <QtGlobal>
+#include <QTextCodec>
 
 static QFile g_logFile(QString("%1/cd2netmd_gui.log").arg(QDir::tempPath()));
 
@@ -38,8 +39,9 @@ void logger(QtMsgType type, const QMessageLogContext &context, const QString &ms
 
     mss << msg;
 
-    message.replace("\r\n", "\n");
     message.replace("\n\n", "\n");
+    message.replace("\r\n", "\n");
+
     message = message.trimmed();
 
     switch (type)
@@ -67,6 +69,7 @@ int main(int argc, char *argv[])
     int exitCode = 0;
     g_logFile.open(QIODevice::Text | QIODevice::Truncate | QIODevice::WriteOnly);
     qInstallMessageHandler(logger);
+    // qDebug() << QTextCodec::availableCodecs();
     QApplication a(argc, argv);
     MainWindow w;
     w.show();

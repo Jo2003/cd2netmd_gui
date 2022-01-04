@@ -35,6 +35,8 @@ int CCDDB::getEntries(const QString &queryPart)
              + "/~cddb/cddb.cgi?cmd=cddb+query+" + queryPart
              + "&hello=me@you.org+localhost+MyRipper+0.1.0&proto=6");
 
+    qDebug() << "Request entries: " << reqUrl;
+
     QNetworkRequest req(reqUrl);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain; charset=utf-8");
     req.setAttribute(QNetworkRequest::User, static_cast<int>(REQ_WHAT::REQ_ENTRIES));
@@ -47,6 +49,8 @@ int CCDDB::getEntry(const QString &queryPart)
     QUrl reqUrl(QString(CDDB_SERVER)
              + "/~cddb/cddb.cgi?cmd=cddb+read+" + queryPart
              + "&hello=me@you.org+localhost+MyRipper+0.1.0&proto=6");
+
+    qDebug() << "Request matching entry: " << reqUrl;
 
     QNetworkRequest req(reqUrl);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain; charset=utf-8");

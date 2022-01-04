@@ -15,6 +15,89 @@
  * You should have received a copy of the GNU General Public License
  */
 #include "helpers.h"
+#include <QTextCodec>
+#include "defines.h"
+
+static QByteArray s_Encoded;
+
+static QMap<QString, QString> s_UmlautEnc = {
+    {"à", "a"},
+    {"À", "A"},
+    {"á", "a"},
+    {"Á", "A"},
+    {"â", "a"},
+    {"Â", "A"},
+    {"å", "a"},
+    {"Ã", "A"},
+    {"ä", "ae"},
+    {"Ä", "Ae"},
+
+    {"æ", "ae"},
+    {"Æ", "Ae"},
+
+    {"ç", "c"},
+    {"Ç", "C"},
+
+    {"ê", "e"},
+    {"Ê", "E"},
+    {"é", "e"},
+    {"É", "E"},
+    {"ë", "e"},
+    {"Ë", "E"},
+    {"è", "e"},
+    {"È", "E"},
+
+    {"ï", "i"},
+    {"Ï", "I"},
+    {"í", "i"},
+    {"Í", "I"},
+    {"î", "i"},
+    {"Î", "I"},
+    {"ì", "i"},
+    {"Ì", "I"},
+
+    {"ñ", "n"},
+    {"Ñ", "N"},
+
+    {"œ", "oe"},
+    {"Œ", "Oe"},
+
+    {"ö", "oe"},
+    {"Ö", "Oe"},
+    {"ô", "o"},
+    {"Ô", "O"},
+    {"ò", "o"},
+    {"Ò", "O"},
+    {"ó", "o"},
+    {"Ó", "O"},
+    {"õ", "o"},
+    {"Õ", "O"},
+    {"ø", "oe"},
+    {"Ø", "Oe"},
+
+    {"š", "s"},
+    {"Š", "S"},
+
+    {"ú", "u"},
+    {"Ú", "U"},
+    {"ù", "u"},
+    {"Ù", "U"},
+    {"ü", "ue"},
+    {"Ü", "Ue"},
+    {"û", "u"},
+    {"Û", "U"},
+
+    {"ý", "y"},
+    {"Ý", "Y"},
+    {"ÿ", "y"},
+    {"Ÿ", "Y"},
+
+    {"ž", "z"},
+    {"Ž", "Z"},
+
+    {"Ð", "D"},
+    {"ß", "ss"}
+};
 
 int putNum(uint32_t num, QFile &f, size_t sz)
 {
@@ -32,88 +115,53 @@ int putNum(uint32_t num, QFile &f, size_t sz)
     return 0;
 }
 
-QString utf8ToMd(const QString& from)
+QString &deUmlaut(QString &s)
 {
-    QString tmpStr = from;
-    tmpStr.replace("Ä", "Ae");
-    tmpStr.replace("ä", "ae");
-    tmpStr.replace("Ö", "Oe");
-    tmpStr.replace("ö", "oe");
-    tmpStr.replace("Ü", "Ue");
-    tmpStr.replace("ü", "ue");
-    tmpStr.replace("ß", "ss");
-
-    iconv_t icv = iconv_open("US-ASCII//TRANSLIT//IGNORE", "UTF-8");
-    return QString::fromStdString(cddb_str_iconv(icv, static_cast<const char*>(tmpStr.toUtf8())));
+    for (const auto& k : s_UmlautEnc.keys())
+    {
+        s.replace(k, s_UmlautEnc.value(k));
+    }
+    return s;
 }
 
-//------------------------------------------------------------------------------
-//! @brief      convert string
-//!
-//! @param[in]  cd    conversion enum
-//! @param[in]  in    string to convert
-//! @param      out   converted string
-//!
-//! @return     converted string on success; unconverted in error case
-//------------------------------------------------------------------------------
-std::string cddb_str_iconv(iconv_t cd, const char *in)
+
+const char *utf8ToMd(const QString& from)
 {
-    std::string ret = in;
-    size_t inlen, outlen;
-    int buflen, rc;
-    int len;                    /* number of chars in buffer */
-    char *buf;
-    char *inbuf = strdup(in);
-    char *inPtr = inbuf;
+    QString tmpStr = from;
 
-    if (inbuf != nullptr)
+    // encode all accents / umlaut to safe tokens
+    deUmlaut(tmpStr);
+
+    QTextCodec *pCodec = QTextCodec::codecForName("Shift_JIS");
+    QTextEncoder *pEnc = pCodec->makeEncoder(QTextCodec::IgnoreHeader);
+    if (pEnc)
     {
-        inlen = strlen(inbuf);
-        buflen = 0;
-        buf = NULL;
-        do {
-            outlen = inlen * 2;
-            buflen += outlen;
-            /* iconv() below changes the buf pointer:
-             * - decrement to point at beginning of buffer before realloc
-             * - re-increment to point at first free position after realloc
-             */
-            len = buflen - outlen;
-            buf = (char*)realloc(buf - len, buflen) + len;
-            if (buf == NULL) {
-                /* XXX: report out of memory error */
-                free(inbuf);
-                return ret;
-            }
-            rc = iconv(cd, &inPtr, &inlen, &buf, &outlen);
-            if ((rc == -1) && (errno != E2BIG)) {
-                free(buf);
-                free(inbuf);
-                fprintf(stderr, "Error in character encoding!\n");
-                fflush(stderr);
-                return ret;       /* conversion failed */
-            }
-        } while (inlen != 0);
-        len = buflen - outlen;
-        buf -= len;                 /* reposition at begin of buffer */
-
-        /* make a copy just big enough for the result */
-        char *o = new char[len + 1];
-
-        if (o != nullptr)
-        {
-            memcpy(o, buf, len);
-            o[len] = '\0';
-            ret = o;
-            delete [] o;
-
-            free(inbuf);
-
-            return ret;
-        }
-
-        free(inbuf);
+        s_Encoded = pEnc->fromUnicode(tmpStr);
+        delete pEnc;
     }
+    else
+    {
+        s_Encoded = tmpStr.toLatin1();
+    }
+    qDebug() << "From: " << from << "to: " << s_Encoded;
 
+    return static_cast<const char*>(s_Encoded);
+}
+
+QString mdToUtf8(const QByteArray& ba)
+{
+    QString ret;
+    QTextCodec *pCodec = QTextCodec::codecForName("Shift_JIS");
+    QTextDecoder *pDec = pCodec->makeDecoder(QTextCodec::IgnoreHeader);
+
+    if (pDec)
+    {
+        ret = pDec->toUnicode(ba);
+        delete pDec;
+    }
+    else
+    {
+        ret = QString::fromLatin1(ba);
+    }
     return ret;
 }

@@ -148,32 +148,77 @@ uint32_t CJackTheRipper::discLength()
     return mDiscLength;
 }
 
-int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t t, QStringList &ttitles)
+int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t firstTrack, track_t lastTrack, QStringList &ttitles)
 {
     int ret = -1;
     if (pCDT)
     {
-        QString track = tr("<untitled>");
-        QString stok;
+        ret = 0;
+        const char* tok;
+        QString track, performer, title;
 
-        const char* tok = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, t);
+        // disc title at index 0
+        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, 0);
 
         if (tok)
         {
-            stok  = QString(tok).trimmed();
-            track = QString("%1 - ").arg(stok);
+            performer = QString(tok).trimmed();
+            track     = QString("%1 - ").arg(performer);
         }
 
-        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, t);
+        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, 0);
         if (tok)
         {
-            stok   = QString(tok).trimmed();
-            track += stok;
+            title = QString(tok).trimmed();
+            if (title.indexOf(performer) != -1)
+            {
+                track = title;
+            }
+            else
+            {
+                track += title;
+            }
         }
 
+        if (track.isEmpty())
+        {
+            track = tr("<untitled>");
+        }
         ttitles.append(track);
 
-        ret = 0;
+        // process other tracks
+        for (track_t t = firstTrack; t <= lastTrack; t++)
+        {
+            track = performer = title = "";
+            tok   = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, t);
+
+            if (tok)
+            {
+                performer = QString(tok).trimmed();
+                track     = QString("%1 - ").arg(performer);
+            }
+
+            tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, t);
+            if (tok)
+            {
+                title = QString(tok).trimmed();
+                if (title.indexOf(performer) != -1)
+                {
+                    track = title;
+                }
+                else
+                {
+                    track += title;
+                }
+            }
+
+            if (track.isEmpty())
+            {
+                track = tr("<untitled>");
+            }
+
+            ttitles.append(track);
+        }
     }
     return ret;
 }
@@ -287,9 +332,7 @@ QString CJackTheRipper::deviceInfo()
 
 int CJackTheRipper::cddbReqString()
 {
-    QString req;
-
-    track_t  firstTrack;
+    track_t  firstTrack, lastTrack;
     track_t  noTracks;
     uint32_t checkSum = 0, tmp = 0;
     uint32_t offset = 0, lastOffset;
@@ -305,35 +348,33 @@ int CJackTheRipper::cddbReqString()
         int secs   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) / CDIO_CD_FRAMES_PER_SEC;
         noTracks   = cdio_get_num_tracks(mpCDIO);
         firstTrack = cdio_get_first_track_num(mpCDIO);
+        lastTrack  = cdio_get_last_track_num(mpCDIO);
+
+        qInfo() << "First track: " << firstTrack << "Last track: " << lastTrack;
 
         // check for CDText
-        cdtext_t *cdtext = cdio_get_cdtext(mpCDIO);
+        parseCDText(cdio_get_cdtext(mpCDIO), firstTrack, lastTrack, trackTitles);
 
-        for (int j = 0; j < noTracks; j++)
+        for (track_t t = firstTrack; t <= lastTrack; t++)
         {
             lastOffset = offset;
 
             // frame offset
-            offset = cdio_get_track_lba(mpCDIO, j + firstTrack);
+            offset = cdio_get_track_lba(mpCDIO, t);
 
             tracks.append(offset);
 
-            if (j == 0)
+            if (t == firstTrack)
             {
                 // first pregap
                 secs -= offset / CDIO_CD_FRAMES_PER_SEC;
-
-                // disc title at index 0
-                parseCDText(cdtext, j, trackTitles);
             }
             else
             {
                 mTrackTimes.append((offset - lastOffset) / CDIO_CD_FRAMES_PER_SEC);
-
-                // track title at track number (1 ... trackcount)
-                parseCDText(cdtext, j + 1, trackTitles);
             }
 
+            if (trackTitles.isEmpty())
             {
                 // checksum
                 tmp = offset / CDIO_CD_FRAMES_PER_SEC;
@@ -351,25 +392,30 @@ int CJackTheRipper::cddbReqString()
         // add last track time
         mTrackTimes.append(secs - (offset / CDIO_CD_FRAMES_PER_SEC));
 
-        uint32_t discId = checkSum << 24 | secs << 8 | noTracks;
-
-        req = QString("%1+%2").arg(discId, 8, 16, QChar('0')).arg(noTracks);
-
-        for (const lba_t& a : tracks)
-        {
-            req += QString("+%1").arg(a);
-        }
-
-        req += QString("+%1").arg(secs);
-        mCDDBRequest = req;
-
         if (trackTitles.isEmpty())
         {
+            QString  req;
+            uint32_t discId = checkSum << 24 | secs << 8 | noTracks;
+
+            req = QString("%1+%2").arg(discId, 8, 16, QChar('0')).arg(noTracks);
+
+            for (const lba_t& a : tracks)
+            {
+                req += QString("+%1").arg(a);
+            }
+
+            req += QString("+%1").arg(secs);
+            mCDDBRequest = req;
+
+            qInfo() << "No CD-Text, do CDDB request: " << req;
+
             // no CDText -> ask CDDB
             mpCddb->getEntries(req);
         }
         else
         {
+            qInfo() << "CD-Text entries found!";
+            mCDDBRequest = "";
             emit match(trackTitles);
         }
     }
