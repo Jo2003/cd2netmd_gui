@@ -115,7 +115,7 @@ int CJackTheRipper::cleanup()
 
 int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoia)
 {
-    qDebug("Extract track %d to %s ...", trackNo, static_cast<const char*>(fName.toUtf8()));
+    qInfo("Extract track %d to %s ...", trackNo, static_cast<const char*>(fName.toUtf8()));
     if (mpRipThread != nullptr)
     {
         mpRipThread->join();
@@ -219,6 +219,8 @@ int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t firstTrack, track_t last
 
             ttitles.append(track);
         }
+
+        qInfo() << "Titles extracted from CD-Text: " << ttitles;
     }
     return ret;
 }
@@ -241,16 +243,16 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         cdio_paranoia_modeset(mpCDParanoia, paranoia ? (PARANOIA_MODE_FULL ^ PARANOIA_MODE_NEVERSKIP) : PARANOIA_MODE_DISABLE);
 
-        lsn_t disctStart   = cdio_cddap_disc_firstsector(mpCDAudio);
-        track_t firstTrack = cdio_cddap_sector_gettrack(mpCDAudio, disctStart);
-        track_t trackCount = cdio_cddap_tracks(mpCDAudio);
+        lsn_t   disctStart = cdio_cddap_disc_firstsector(mpCDAudio);
+        track_t firstTrack = cdio_get_first_track_num(mpCDIO);
+        track_t lastTrack  = cdio_get_last_track_num(mpCDIO);
 
         lsn_t trkStart = 0;
         lsn_t trkEnd   = 0;
 
         if (track != -1)
         {
-            if ((track < firstTrack) || ((track + firstTrack) > (trackCount + firstTrack)))
+            if ((track < firstTrack) || (track > lastTrack))
             {
                 throw std::runtime_error("Track is not part of disc!");
             }
@@ -324,6 +326,7 @@ QString CJackTheRipper::deviceInfo()
         if (cdio_get_hwinfo (mpCDIO, &hwInf))
         {
             ret = QString("%1 %2 %3").arg(hwInf.psz_vendor).arg(hwInf.psz_model).arg(hwInf.psz_revision);
+            qInfo() << "Found CD Device " << ret;
         }
     }
 

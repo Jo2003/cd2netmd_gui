@@ -110,7 +110,7 @@ void CNetMD::run()
 
     if (ret == 0)
     {
-        qDebug() << "netmdcli arguments: " << args;
+        qInfo() << "netmdcli arguments: " << args;
         mpJsonFile = fopen(static_cast<const char*>(mNameFJson.toUtf8()), "w+");
         mpLogFile  = fopen(static_cast<const char*>(mNameFLog.toUtf8()), "a");
 

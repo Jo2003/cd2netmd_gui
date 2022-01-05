@@ -29,6 +29,7 @@
 #include "cmdtreemodel.h"
 #include "defines.h"
 #include "caboutdialog.h"
+#include "settingsdlg.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -57,6 +58,13 @@ public:
     ~MainWindow();
 
 protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      app is about to close
+    //!
+    //! @param[in]  e pointer to clode event
+    //--------------------------------------------------------------------------
+    void closeEvent(QCloseEvent* e) override;
 
     //--------------------------------------------------------------------------
     //! @brief      get the transfer configuration
@@ -108,6 +116,11 @@ protected:
     void countLabel(QLabel *pLabel, WorkStep step, const QString& text);
 
 private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      load settings
+    //--------------------------------------------------------------------------
+    void loadSettings();
+
     //--------------------------------------------------------------------------
     //! @brief      get the list of matching CDDB entries
     //!
@@ -210,6 +223,11 @@ private slots:
     //--------------------------------------------------------------------------
     void on_pushAbout_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push settings clicked.
+    //--------------------------------------------------------------------------
+    void on_pushSettings_clicked();
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
@@ -229,9 +247,6 @@ private:
     /// job list
     TransferQueue   mWorkQueue;
     
-    /// busy animation
-    QMovie         *mpWaitAni;
-    
     /// MD device info
     QLabel         *mpMDDevice;
     
@@ -240,4 +255,7 @@ private:
     
     /// is DAO handling active?
     bool            mbDAO;
+
+    /// settings dialog class
+    SettingsDlg    *mpSettings;
 };

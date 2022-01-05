@@ -46,6 +46,8 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength)
         return -1;
     }
 
+    qInfo() << XENC_CLI << params;
+
     run(XENC_CLI, params);
     return 0;
 }
@@ -148,10 +150,12 @@ int CXEnc::splitAtrac3()
                     waveFile.write(fAtrac.readAll());
                 }
                 waveFile.close();
+                qInfo() << "Copied " << sz << "B ATRAC3 data to " << t.mpFile->fileName();
             }
         }
 
         fAtrac.close();
+        qInfo() << "Delete temp. file" << fAtrac.fileName();
         fAtrac.remove();
     }
     return 0;
@@ -187,9 +191,11 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
                     do { read += fAtrac.read(buff + read, ATRAC3_HEADER_SIZE - read); } while(read < ATRAC3_HEADER_SIZE);
                     waveFile.write(fAtrac.readAll());
                     waveFile.close();
+                    qInfo() << "Copied " << sz << "B ATRAC3 data to " << waveFile.fileName();
                 }
 
                 fAtrac.close();
+                qInfo() << "Delete temp. file" << fAtrac.fileName();
                 fAtrac.remove();
             }
         }
