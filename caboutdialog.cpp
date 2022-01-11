@@ -26,16 +26,19 @@ CAboutDialog::CAboutDialog(QWidget *parent) :
     ui->labelName->setText(QString("%1 %2 %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
     QString text =
 R"(<b>CD to NetMD GUI - a tool like Sonys NetMD Simply Burner</b><br>
-Project site: <a href="https://github.com/Jo2003/cd2netmd_gui">github.com</a><br>
-We are using following projects:<br>
+Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a><br>
+Thanks for following projects:<br>
 <ul>
-    <li><a href="https://www.gnu.org/software/libcdio/">libcdio</a> with CDDA paranoia extension.</li>
-    <li><a href="https://github.com/nlohmann/json">json.hpp - JSON for modern C++</a></li>
-    <li><a href="https://github.com/dcherednik/atracdenc">atracdenc - ATRAC Decoder Encoder</a></li>
-    <li><a href="https://github.com/Jo2003/netmd">linux-minidisc</a></li>
-    <li><a href="https://www.qt.io/">Qt - One framework to rule them all</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.gnu.org/software/libcdio/">libcdio</a> with CDDA paranoia extension.</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/nlohmann/json">json.hpp - JSON for modern C++</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/dcherednik/atracdenc">atracdenc - ATRAC Decoder Encoder</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/netmd">linux-minidisc</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/cybercase/webminidisc">webminidisc - the idea behind all of that</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt - One framework to rule them all</a></li>
 </ul>
-Please support me through <a href="https://paypal.me/Jo2003">Paypal</a>!)";
+Special thanks to my personal tester <b>Lars W.</b> - so far the first and only person who paid me a beer (or two)!
+<br /> <br />
+Please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!)";
     ui->textAbout->setHtml(text);
 }
 

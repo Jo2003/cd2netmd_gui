@@ -18,7 +18,19 @@
     <normaloff>:/main/md</normaloff>:/main/md</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout" stretch="20,1,1">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="10,0,0">
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>8</number>
+    </property>
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
@@ -174,53 +186,6 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>CD Read Config: </string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkParanoia">
-        <property name="statusTip">
-         <string>CDDA paranoia support. Reads exactly, but slow.</string>
-        </property>
-        <property name="text">
-         <string>CDDA Paranoia</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="Line" name="line">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>24</height>
-         </size>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Transfer Config: </string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="checkOTFEnc">
-        <property name="statusTip">
-         <string>Use On-the-fly encoding (where supported)</string>
-        </property>
-        <property name="text">
-         <string>On-the-fly Encoding</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QRadioButton" name="radioSP">
         <property name="statusTip">
          <string>Transfer in SP mode</string>
@@ -276,25 +241,6 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="labAnimation">
-        <property name="minimumSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="pushAbout">
         <property name="statusTip">
          <string>Program Information</string>
@@ -305,6 +251,29 @@
         <property name="icon">
          <iconset resource="resources.qrc">
           <normaloff>:/buttons/about</normaloff>:/buttons/about</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushSettings">
+        <property name="statusTip">
+         <string>Program Settings</string>
+        </property>
+        <property name="text">
+         <string>&amp;Settings</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/buttons/settings</normaloff>:/buttons/settings</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -427,6 +396,25 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QLabel" name="labAnimation">
+        <property name="minimumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -461,14 +449,6 @@
   <tabstop>treeView</tabstop>
   <tabstop>pushInitCD</tabstop>
   <tabstop>pushLoadMD</tabstop>
-  <tabstop>checkParanoia</tabstop>
-  <tabstop>checkOTFEnc</tabstop>
-  <tabstop>radioSP</tabstop>
-  <tabstop>radioLP2</tabstop>
-  <tabstop>radioLP4</tabstop>
-  <tabstop>pushAbout</tabstop>
-  <tabstop>pushTransfer</tabstop>
-  <tabstop>pushDAO</tabstop>
  </tabstops>
  <resources>
   <include location="resources.qrc"/>

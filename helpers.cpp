@@ -17,6 +17,7 @@
 #include "helpers.h"
 #include <QTextCodec>
 #include "defines.h"
+#include "mdtitle.h"
 
 static QByteArray s_Encoded;
 
@@ -124,7 +125,6 @@ QString &deUmlaut(QString &s)
     return s;
 }
 
-
 const char *utf8ToMd(const QString& from)
 {
     QString tmpStr = from;
@@ -132,8 +132,10 @@ const char *utf8ToMd(const QString& from)
     // encode all accents / umlaut to safe tokens
     deUmlaut(tmpStr);
 
+    tmpStr = sanitizeHalfWidthTitle(tmpStr);
+
     QTextCodec *pCodec = QTextCodec::codecForName("Shift_JIS");
-    QTextEncoder *pEnc = pCodec->makeEncoder(QTextCodec::IgnoreHeader);
+    QTextEncoder *pEnc = pCodec->makeEncoder();
     if (pEnc)
     {
         s_Encoded = pEnc->fromUnicode(tmpStr);
@@ -143,7 +145,6 @@ const char *utf8ToMd(const QString& from)
     {
         s_Encoded = tmpStr.toLatin1();
     }
-    qDebug() << "From: " << from << "to: " << s_Encoded;
 
     return static_cast<const char*>(s_Encoded);
 }
@@ -152,7 +153,7 @@ QString mdToUtf8(const QByteArray& ba)
 {
     QString ret;
     QTextCodec *pCodec = QTextCodec::codecForName("Shift_JIS");
-    QTextDecoder *pDec = pCodec->makeDecoder(QTextCodec::IgnoreHeader);
+    QTextDecoder *pDec = pCodec->makeDecoder();
 
     if (pDec)
     {

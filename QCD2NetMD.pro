@@ -51,7 +51,9 @@ SOURCES += \
     cxenc.cpp \
     main.cpp \
     mainwindow.cpp \
-    helpers.cpp
+    helpers.cpp \
+    mdtitle.cpp \
+    settingsdlg.cpp
 
 HEADERS += \
     externals/netmd/libnetmd/CMDiscHeader.h \
@@ -81,13 +83,16 @@ HEADERS += \
     defines.h \
     include/json.hpp \
     mainwindow.h \
-    helpers.h
+    helpers.h \
+    mdtitle.h \
+    settingsdlg.h
 
 FORMS += \
     caboutdialog.ui \
     ccddbentriesdialog.ui \
     cnamingdialog.ui \
-    mainwindow.ui
+    mainwindow.ui \
+    settingsdlg.ui
 
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
@@ -101,4 +106,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    resources.qrc
+    resources.qrc \
+    qdarkstyle/dark/style_dk.qrc \
+    qdarkstyle/light/style_lt.qrc

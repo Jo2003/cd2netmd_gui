@@ -20,6 +20,8 @@
 #include <QStringListModel>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSettings>
+#include <QTimer>
 #include "helpers.h"
 
 using namespace c2n;
@@ -27,9 +29,11 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mpWaitAni(nullptr), mbDAO(false)
+      mbDAO(false), mpSettings(nullptr)
 {
     ui->setupUi(this);
+
+    mpSettings = new SettingsDlg(this);
 
     if ((mpRipper = new CJackTheRipper(this)) != nullptr)
     {
@@ -52,7 +56,6 @@ MainWindow::MainWindow(QWidget *parent)
         connect(mpXEnc, &CXEnc::progress, ui->progressExtEnc, &QProgressBar::setValue);
         connect(mpXEnc, &CXEnc::fileDone, this, &MainWindow::encodeFinished);
     }
-    mpWaitAni = new QMovie(":/main/wait", QByteArray(), this);
 
     connect(ui->treeView, &CMDTreeView::addGroup, this, &MainWindow::addMDGroup);
     connect(ui->treeView, &CMDTreeView::delGroup, this, &MainWindow::delMDGroup);
@@ -64,11 +67,20 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
+
+    QTimer::singleShot(10, this, &MainWindow::loadSettings);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *e)
+{
+    QSettings set;
+    set.setValue("mainwindow", geometry());
+    QMainWindow::closeEvent(e);
 }
 
 void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xencCmd, QString &trackMode)
@@ -85,7 +97,7 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
     }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
-        if (ui->checkOTFEnc->isChecked())
+        if (mpSettings->onthefly())
         {
             netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_LP2;
         }
@@ -97,7 +109,7 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
     }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP4")
     {
-        if (ui->checkOTFEnc->isChecked())
+        if (mpSettings->onthefly())
         {
             netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_LP4;
         }
@@ -114,6 +126,7 @@ void MainWindow::catchCDDBEntries(QStringList l)
     CCDDBEntriesDialog* pDlg = new CCDDBEntriesDialog(l, this);
     if (pDlg->exec() == QDialog::Accepted)
     {
+        qInfo() << "Request CDDB match: " << pDlg->request();
         mpRipper->cddb()->getEntry(pDlg->request());
         delete pDlg;
         return;
@@ -175,13 +188,11 @@ void MainWindow::catchJson(QString j)
     recreateTreeView(j);
     if (mpMDmodel->discConf()->mOTFEnc == 0)
     {
-        ui->checkOTFEnc->setChecked(false);
-        ui->checkOTFEnc->setEnabled(false);
+        mpSettings->enaDisaOtf(false, false);
     }
     else
     {
-        ui->checkOTFEnc->setEnabled(true);
-        ui->checkOTFEnc->setChecked(true);
+        mpSettings->enaDisaOtf(true, true);
     }
     enableDialogItems(true);
 }
@@ -292,7 +303,7 @@ void MainWindow::ripFinished()
         {
             mWorkQueue[0].mStep = WorkStep::RIP;
             ui->progressRip->setValue(0);
-            mpRipper->extractTrack(-1, mWorkQueue.at(0).mpFile->fileName(), ui->checkParanoia->isChecked());
+            mpRipper->extractTrack(-1, mWorkQueue.at(0).mpFile->fileName(), mpSettings->paranoia());
         }
     }
     else
@@ -312,7 +323,7 @@ void MainWindow::ripFinished()
             {
                 j.mStep = WorkStep::RIP;
                 ui->progressRip->setValue(0);
-                mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName(), ui->checkParanoia->isChecked());
+                mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName(), mpSettings->paranoia());
                 break;
             }
         }
@@ -451,8 +462,10 @@ void MainWindow::transferFinished(bool checkBusy)
                 mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
                 setMDTitle(ui->lineCDTitle->text());
             }
+
             for (auto& j : mWorkQueue)
             {
+                qInfo() << "Delete temp. file" << j.mpFile->fileName();
                 delete j.mpFile;
             }
             mWorkQueue.clear();
@@ -576,12 +589,12 @@ void MainWindow::enableDialogItems(bool ena)
         ui->labMDTransfer->setText(tr("MD-Tranfer: "));
 
         ui->labAnimation->clear();
-        ui->labAnimation->setMovie(mpWaitAni);
-        mpWaitAni->start();
+        ui->labAnimation->setMovie(mpSettings->waitAni());
+        mpSettings->waitAni()->start();
     }
     else
     {
-        mpWaitAni->stop();
+        mpSettings->waitAni()->stop();
         ui->labAnimation->clear();
     }
 
@@ -591,20 +604,20 @@ void MainWindow::enableDialogItems(bool ena)
     ui->radioSP->setEnabled(ena);
     ui->radioLP2->setEnabled(ena);
     ui->radioLP4->setEnabled(ena);
+    ui->pushSettings->setEnabled(ena);
     if (ena)
     {
         if ((mpMDmodel != nullptr) && mpMDmodel->discConf()->mOTFEnc)
         {
-            ui->checkOTFEnc->setEnabled(ena);
+            mpSettings->enaDisaOtf(mpSettings->onthefly(), ena);
         }
     }
     else
     {
-        ui->checkOTFEnc->setEnabled(ena);
+        mpSettings->enaDisaOtf(mpSettings->onthefly(), ena);
     }
     ui->pushLoadMD->setEnabled(ena);
     ui->pushInitCD->setEnabled(ena);
-    ui->checkParanoia->setEnabled(ena);
 
     if (ena)
     {
@@ -652,6 +665,7 @@ void MainWindow::recreateTreeView(const QString &json)
 
     mpMDDevice->clear();
     mpMDDevice->setText(mpMDmodel->discConf()->mDevice);
+    qInfo() << "Found NetMD device " << mpMDmodel->discConf()->mDevice;
     mpMDDevice->show();
 }
 
@@ -668,6 +682,15 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
     int all = (mbDAO && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED))) ? 1 : mWorkQueue.size();
     pLabel->clear();
     pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(all));
+}
+
+void MainWindow::loadSettings()
+{
+    QSettings set;
+    if (set.contains("mainwindow"))
+    {
+        setGeometry(set.value("mainwindow").toRect());
+    }
 }
 
 void MainWindow::eraseDisc()
@@ -688,7 +711,7 @@ void MainWindow::on_pushDAO_clicked()
     enableDialogItems(false);
     mbDAO = true;
 
-    ui->checkOTFEnc->setChecked(false);
+    mpSettings->enaDisaOtf(false, true);
     ui->radioLP2->setChecked(true);
 
     ui->tableViewCD->selectAll();
@@ -737,3 +760,9 @@ void MainWindow::on_pushAbout_clicked()
     delete pAbout;
     pAbout = nullptr;
 }
+
+void MainWindow::on_pushSettings_clicked()
+{
+    mpSettings->show();
+}
+

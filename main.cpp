@@ -21,16 +21,44 @@
 #include <QDir>
 #include <QDateTime>
 #include <QtGlobal>
-#include <QTextCodec>
+#include "defines.h"
 
-static QFile g_logFile(QString("%1/cd2netmd_gui.log").arg(QDir::tempPath()));
+static QFile s_logFile(QString("%1/cd2netmd_gui.log").arg(QDir::tempPath()));
+c2n::LogLevel g_LogFilter = c2n::LogLevel::INFO;
+
+bool log(QtMsgType type)
+{
+    bool ret = false;
+    switch(type)
+    {
+    case QtDebugMsg:
+        ret = (g_LogFilter == c2n::LogLevel::DEBUG);
+        break;
+    case QtInfoMsg:
+        ret = (g_LogFilter <= c2n::LogLevel::INFO);
+        break;
+    case QtWarningMsg:
+        ret = (g_LogFilter <= c2n::LogLevel::WARN);
+        break;
+    case QtCriticalMsg:
+        ret = (g_LogFilter <= c2n::LogLevel::CRITICAL);
+        break;
+    case QtFatalMsg:
+        ret = (g_LogFilter <= c2n::LogLevel::FATAL);
+        break;
+    }
+    return ret;
+}
 
 void logger(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
+    if (!log(type))
+        return;
+
     QString t = QDateTime::currentDateTime().toLocalTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
     QString message;
     QTextStream mss(&message);
-    QTextStream oss(&g_logFile);
+    QTextStream oss(&s_logFile);
 
     if (context.file && context.function)
     {
@@ -67,13 +95,15 @@ void logger(QtMsgType type, const QMessageLogContext &context, const QString &ms
 int main(int argc, char *argv[])
 {
     int exitCode = 0;
-    g_logFile.open(QIODevice::Text | QIODevice::Truncate | QIODevice::WriteOnly);
+    s_logFile.open(QIODevice::Text | QIODevice::Truncate | QIODevice::WriteOnly);
     qInstallMessageHandler(logger);
-    // qDebug() << QTextCodec::availableCodecs();
     QApplication a(argc, argv);
+    QCoreApplication::setOrganizationName("Jo2003");
+    QCoreApplication::setOrganizationDomain("coujo.de");
+    QCoreApplication::setApplicationName(c2n::PROGRAM_NAME);
     MainWindow w;
     w.show();
     exitCode = a.exec();
-    g_logFile.close();
+    s_logFile.close();
     return exitCode;
 }
