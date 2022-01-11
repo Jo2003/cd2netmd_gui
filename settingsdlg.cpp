@@ -123,6 +123,7 @@ void SettingsDlg::loadSettings()
     if (set.contains("loglevel"))
     {
         ui->cbxLogLevel->setCurrentIndex(set.value("loglevel").toUInt());
+        g_LogFilter = static_cast<c2n::LogLevel>(set.value("loglevel").toUInt());
     }
     else
     {

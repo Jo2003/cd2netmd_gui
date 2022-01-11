@@ -52,6 +52,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     helpers.cpp \
+    mdtitle.cpp \
     settingsdlg.cpp
 
 HEADERS += \
@@ -83,6 +84,7 @@ HEADERS += \
     include/json.hpp \
     mainwindow.h \
     helpers.h \
+    mdtitle.h \
     settingsdlg.h
 
 FORMS += \

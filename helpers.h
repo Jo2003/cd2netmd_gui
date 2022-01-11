@@ -19,6 +19,13 @@
 #include <QString>
 #include <cstdint>
 
+///
+/// \brief put number to file
+/// \param num number to put
+/// \param f file to put to
+/// \param sz size of bytes to write
+/// \return 0 -> ok; else -> -1
+///
 int putNum(uint32_t num, QFile &f, size_t sz);
 
 ///
