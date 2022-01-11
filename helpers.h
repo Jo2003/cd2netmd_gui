@@ -17,7 +17,7 @@
 #pragma once
 #include <QFile>
 #include <QString>
-#include <cstdint>
+#include <QByteArray>
 
 ///
 /// \brief put number to file
@@ -31,9 +31,9 @@ int putNum(uint32_t num, QFile &f, size_t sz);
 ///
 /// \brief UTF-8 to MiniDisc text
 /// \param from string to convert
-/// \return converted string
+/// \return converted string in byte array
 ///
-const char* utf8ToMd(const QString& from);
+QByteArray utf8ToMd(const QString& from);
 
 ///
 /// \brief mini disc text to utf-8

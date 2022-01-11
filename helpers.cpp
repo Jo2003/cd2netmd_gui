@@ -19,8 +19,6 @@
 #include "defines.h"
 #include "mdtitle.h"
 
-static QByteArray s_Encoded;
-
 static QMap<QString, QString> s_UmlautEnc = {
     {"à", "a"},
     {"À", "A"},
@@ -125,9 +123,10 @@ QString &deUmlaut(QString &s)
     return s;
 }
 
-const char *utf8ToMd(const QString& from)
+QByteArray utf8ToMd(const QString& from)
 {
     QString tmpStr = from;
+    QByteArray baEncoded;
 
     // encode all accents / umlaut to safe tokens
     deUmlaut(tmpStr);
@@ -138,15 +137,15 @@ const char *utf8ToMd(const QString& from)
     QTextEncoder *pEnc = pCodec->makeEncoder();
     if (pEnc)
     {
-        s_Encoded = pEnc->fromUnicode(tmpStr);
+        baEncoded = pEnc->fromUnicode(tmpStr);
         delete pEnc;
     }
     else
     {
-        s_Encoded = tmpStr.toLatin1();
+        baEncoded = tmpStr.toLatin1();
     }
 
-    return static_cast<const char*>(s_Encoded);
+    return baEncoded;
 }
 
 QString mdToUtf8(const QByteArray& ba)

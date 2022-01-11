@@ -65,7 +65,7 @@ void CNetMD::start(NetMDStartup startup)
 void CNetMD::run()
 {
     int ret = 0;
-    QVector<const char*> args;
+    QVector<QByteArray> args;
 
     args << "-v";
 
@@ -80,41 +80,41 @@ void CNetMD::run()
         args << "json_gui";
         break;
     case NetMDCmd::WRITE_TRACK_SP:
-        args << "send" << mCurrJob.msTrack.toLocal8Bit()
+        args << "send" << mCurrJob.msTrack.toUtf8()
              << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::WRITE_TRACK_LP2:
-        args << "-d" << "lp2" << "send" << mCurrJob.msTrack.toLocal8Bit()
+        args << "-d" << "lp2" << "send" << mCurrJob.msTrack.toUtf8()
              << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::WRITE_TRACK_LP4:
-        args << "-d" << "lp4" << "send" << mCurrJob.msTrack.toLocal8Bit()
+        args << "-d" << "lp4" << "send" << mCurrJob.msTrack.toUtf8()
              << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::ADD_GROUP:
         args << "add_group" << utf8ToMd(mCurrJob.msGroup)
-             << QString::number(mCurrJob.miFirst).toLocal8Bit()
-             << QString::number(mCurrJob.miLast).toLocal8Bit();
+             << QString::number(mCurrJob.miFirst).toUtf8()
+             << QString::number(mCurrJob.miLast).toUtf8();
         break;
     case NetMDCmd::RENAME_DISC:
         args << "rename_disc" << utf8ToMd(mCurrJob.msTitle);
         break;
     case NetMDCmd::RENAME_TRACK:
-        args << "rename" << QString::number(mCurrJob.miFirst - 1).toLocal8Bit()
+        args << "rename" << QString::number(mCurrJob.miFirst - 1).toUtf8()
              << utf8ToMd(mCurrJob.msTrack);
         break;
     case NetMDCmd::RENAME_GROUP:
-        args << "retitle" << QString::number(mCurrJob.miGroup).toLocal8Bit()
+        args << "retitle" << QString::number(mCurrJob.miGroup).toUtf8()
              << utf8ToMd(mCurrJob.msGroup);
         break;
     case NetMDCmd::ERASE_DISC:
         args << "erase" << "force";
         break;
     case NetMDCmd::DEL_GROUP:
-        args << "deletegroup" << QString::number(mCurrJob.miGroup).toLocal8Bit();
+        args << "deletegroup" << QString::number(mCurrJob.miGroup).toUtf8();
         break;
     case NetMDCmd::DEL_TRACK:
-        args << "del_track" << QString::number(mCurrJob.miFirst).toLocal8Bit();
+        args << "del_track" << QString::number(mCurrJob.miFirst).toUtf8();
         break;
     default:
         ret = -1;
@@ -139,7 +139,7 @@ void CNetMD::run()
 
         for (auto& a : args)
         {
-            *p = strdup(a);
+            *p = strdup(static_cast<const char*>(a));
             p++;
         }
 
@@ -216,7 +216,7 @@ void CNetMD::procEnded(bool)
             {
                 emit jsonOut(R"({"title":"no disc found","t_used":0,"t_free":0,"otf_enc":0,"trk_count":0,"t_total":0,"device":"unknown","tracks":[],"groups":[]})");
             }
-            qDebug() << json;
+            qDebug() << static_cast<const char*>(json.toUtf8());
         }
     }
     else if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC) || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
@@ -226,6 +226,6 @@ void CNetMD::procEnded(bool)
 
     if (!mLog.isEmpty())
     {
-        qDebug() << mLog;
+        qDebug() << static_cast<const char*>(mLog.toUtf8());
     }
 }
