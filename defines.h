@@ -58,4 +58,5 @@ enum LogLevel
 
 }
 
+extern const QString g_logFileName;
 extern c2n::LogLevel g_LogFilter;

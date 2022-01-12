@@ -22,6 +22,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QDir>
+#include <QDesktopServices>
 #include "defines.h"
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
@@ -148,5 +149,15 @@ void SettingsDlg::on_pushCleanup_clicked()
         QFile::remove(compName);
     }
     qInfo() << "Temp file cleanup dome!";
+}
+
+void SettingsDlg::on_pushViewLog_clicked()
+{
+    QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(g_logFileName)));
+}
+
+void SettingsDlg::on_pushOK_clicked()
+{
+    accept();
 }
 

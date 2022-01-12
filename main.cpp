@@ -23,7 +23,8 @@
 #include <QtGlobal>
 #include "defines.h"
 
-static QFile s_logFile(QString("%1/cd2netmd_gui.log").arg(QDir::tempPath()));
+const QString g_logFileName = QString("%1/cd2netmd_gui.log").arg(QDir::tempPath());
+static QFile  s_logFile(g_logFileName);
 c2n::LogLevel g_LogFilter = c2n::LogLevel::INFO;
 
 bool log(QtMsgType type)
