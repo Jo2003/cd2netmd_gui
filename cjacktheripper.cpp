@@ -252,6 +252,11 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         if (track != -1)
         {
+            if (cdio_get_track_format(mpCDIO, track) != TRACK_FORMAT_AUDIO)
+            {
+                throw std::runtime_error("Track is no audio track!");
+            }
+
             if ((track < firstTrack) || (track > lastTrack))
             {
                 throw std::runtime_error("Track is not part of disc!");
