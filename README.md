@@ -2,7 +2,7 @@
 A tool like Sonys NetMD Simple Burner to transfer audio from CD to NetMD. It is written in C++ using the Qt framework.
 Right now it supports Windows 7 64bit and newer. Mac and Linux versions are maybe created later.
 
-![cd2netmd_gui](https://github.com/Jo2003/cd2netmd_gui/releases/download/v0.1.7.5/cd2netmd_gui_dark.png)
+![cd2netmd_gui](https://github.com/Jo2003/cd2netmd_gui/releases/download/v.0.1.7.5/cd2netmd_gui_dark.png)
 
 ## Features ##
 - reads CD using libcdio
