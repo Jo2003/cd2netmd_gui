@@ -43,7 +43,8 @@ public:
        int mOTFEnc;     ///< On-The-Fly encoding support
        int mTrkCount;   ///< track count
        int mTotTime;    ///< total disc time
-       int mFreeTime;   ///< free dosc time
+       int mFreeTime;   ///< free disc time
+       int mDiscFlags;  ///< disc flags
        QString mDevice; ///< device name
     };
 

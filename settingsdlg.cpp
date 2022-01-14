@@ -41,6 +41,8 @@ SettingsDlg::~SettingsDlg()
     set.setValue("loglevel", ui->cbxLogLevel->currentIndex());
     set.setValue("paranoia", ui->checkParanoia->isChecked());
     set.setValue("otf", ui->checkOTFEnc->isChecked());
+    set.setValue("sp_title", ui->checkSPTitle->isChecked());
+    set.setValue("lp_group", ui->checkLPGroup->isChecked());
     delete ui;
 }
 
@@ -63,6 +65,16 @@ void SettingsDlg::enaDisaOtf(bool check, bool ena)
 QMovie *SettingsDlg::waitAni()
 {
     return mpWaitAni;
+}
+
+bool SettingsDlg::spMdTitle() const
+{
+    return ui->checkSPTitle->isChecked();
+}
+
+bool SettingsDlg::lpTrackGroup() const
+{
+    return ui->checkLPGroup->isChecked();
 }
 
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
@@ -129,6 +141,24 @@ void SettingsDlg::loadSettings()
     else
     {
         ui->cbxLogLevel->setCurrentIndex(static_cast<int>(c2n::LogLevel::INFO));
+    }
+
+    if (set.contains("sp_title"))
+    {
+        ui->checkSPTitle->setChecked(set.value("sp_title").toBool());
+    }
+    else
+    {
+        ui->checkSPTitle->setChecked(true);
+    }
+
+    if (set.contains("lp_group"))
+    {
+        ui->checkLPGroup->setChecked(set.value("lp_group").toBool());
+    }
+    else
+    {
+        ui->checkLPGroup->setChecked(true);
     }
 }
 

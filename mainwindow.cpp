@@ -194,6 +194,20 @@ void MainWindow::catchJson(QString j)
     {
         mpSettings->enaDisaOtf(true, true);
     }
+
+    if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
+    {
+        // read only disc
+        QMessageBox::information(this, tr("Information"), tr("The MD in your drive isn't writeable.\n"
+                                                             "Replace it with a writeable disc and reload the MD!"));
+    }
+    else if (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)
+    {
+        // write lock
+        QMessageBox::information(this, tr("Information"), tr("The MD in your drive is write locked.\n"
+                                                             "Remove the write lock and reload the MD!"));
+    }
+
     enableDialogItems(true);
 }
 
@@ -452,15 +466,21 @@ void MainWindow::transferFinished(bool checkBusy)
         {
             if (trackMode != "SP")
             {
-                addMDGroup(ui->lineCDTitle->text(),
-                           static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount - mWorkQueue.size() + 1),
-                           static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount));
+                if (mpSettings->lpTrackGroup())
+                {
+                    addMDGroup(ui->lineCDTitle->text(),
+                               static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount - mWorkQueue.size() + 1),
+                               static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount));
+                }
             }
             else
             {
-                // set disc title
-                mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
-                setMDTitle(ui->lineCDTitle->text());
+                if (mpSettings->spMdTitle())
+                {
+                    // set disc title
+                    mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
+                    setMDTitle(ui->lineCDTitle->text());
+                }
             }
 
             for (auto& j : mWorkQueue)
@@ -624,7 +644,9 @@ void MainWindow::enableDialogItems(bool ena)
         if ((ui->tableViewCD->model() != nullptr)
             && (ui->tableViewCD->model()->rowCount() > 0)
             && (ui->treeView->model() != nullptr)
-            && (ui->treeView->model()->rowCount() > 0))
+            && (ui->treeView->model()->rowCount() > 0)
+            && (mpMDmodel && (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
+            && (mpMDmodel && !(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)))
         {
             ui->pushTransfer->setEnabled(ena);
             ui->pushDAO->setEnabled(ena);

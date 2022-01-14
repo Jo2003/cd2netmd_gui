@@ -44,6 +44,12 @@ class MainWindow : public QMainWindow
     using TransferQueue = c2n::TransferQueue;
     using WorkStep      = c2n::WorkStep;
 
+    enum eDiscFlags
+    {
+        WRITEABLE  = (1 << 4),
+        WRITE_LOCK = (1 << 6)
+    };
+
 public:
     //--------------------------------------------------------------------------
     //! @brief      creates the object
