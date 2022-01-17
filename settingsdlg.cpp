@@ -43,6 +43,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("otf", ui->checkOTFEnc->isChecked());
     set.setValue("sp_title", ui->checkSPTitle->isChecked());
     set.setValue("lp_group", ui->checkLPGroup->isChecked());
+    set.setValue("cddb", ui->checkCDDB->isChecked());
     delete ui;
 }
 
@@ -75,6 +76,11 @@ bool SettingsDlg::spMdTitle() const
 bool SettingsDlg::lpTrackGroup() const
 {
     return ui->checkLPGroup->isChecked();
+}
+
+bool SettingsDlg::cddb() const
+{
+    return ui->checkCDDB->isChecked();
 }
 
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
@@ -159,6 +165,15 @@ void SettingsDlg::loadSettings()
     else
     {
         ui->checkLPGroup->setChecked(true);
+    }
+
+    if (set.contains("cddb"))
+    {
+        ui->checkCDDB->setChecked(set.value("cddb").toBool());
+    }
+    else
+    {
+        ui->checkCDDB->setChecked(true);
     }
 }
 

@@ -48,7 +48,7 @@ static int writeFileHeader(QFile &wf, size_t byteCount)
 CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
       mpCDParanoia(nullptr), mpRipThread(nullptr),
-      mpCddb(nullptr), mDiscLength(0), mBusy(false)
+      mpCddb(nullptr), mDiscLength(0), mBusy(false), mbCDDB(false)
 {
     mpCddb = new CCDDB(this);
 }
@@ -66,10 +66,13 @@ CJackTheRipper::~CJackTheRipper()
 
 ///
 /// \brief CJackTheRipper::init
+/// \param[in]  cddb if true, do cddb request
 /// \return 0 -> ok; -1 -> error
 ///
-int CJackTheRipper::init()
+int CJackTheRipper::init(bool cddb)
 {
+    mbCDDB = cddb;
+
     cleanup();
     CCDInitThread *pInit = new CCDInitThread(this, &mpCDIO, &mpCDAudio, &mpCDParanoia);
 
@@ -400,7 +403,7 @@ int CJackTheRipper::cddbReqString()
         // add last track time
         mTrackTimes.append(secs - (offset / CDIO_CD_FRAMES_PER_SEC));
 
-        if (trackTitles.isEmpty())
+        if (trackTitles.isEmpty() && mbCDDB)
         {
             QString  req;
             uint32_t discId = checkSum << 24 | secs << 8 | noTracks;
@@ -419,6 +422,11 @@ int CJackTheRipper::cddbReqString()
 
             // no CDText -> ask CDDB
             mpCddb->getEntries(req);
+        }
+        else if (trackTitles.isEmpty() && !mbCDDB)
+        {
+            qInfo() << "No CD-Text and no CDDB request -> reply empty result!";
+            emit match(trackTitles);
         }
         else
         {

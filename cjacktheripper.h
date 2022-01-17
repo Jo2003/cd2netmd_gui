@@ -51,9 +51,10 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      Initializes the object.
     //!
+    //! @param[in]  cddb if true, do cddb request
     //! @return     0 -> ok
     //--------------------------------------------------------------------------
-    int init();
+    int init(bool cddb);
     
     //--------------------------------------------------------------------------
     //! @brief      cleanup time
@@ -198,6 +199,7 @@ private:
     QVector<time_t> mTrackTimes;    ///< track times buffer
     uint32_t        mDiscLength;    ///< store disc length
     bool mBusy;                     ///< busy flag
+    bool mbCDDB;
 };
 
 ///

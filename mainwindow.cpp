@@ -214,7 +214,7 @@ void MainWindow::catchJson(QString j)
 void MainWindow::on_pushInitCD_clicked()
 {
     enableDialogItems(false);
-    mpRipper->init();
+    mpRipper->init(mpSettings->cddb());
 }
 
 void MainWindow::on_pushLoadMD_clicked()
