@@ -75,7 +75,7 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
     else if ((role == Qt::UserRole) && (col == 1))
     {
         // return track time in seconds
-        return mTTimes.at(row);
+        return static_cast<int>(mTTimes.at(row));
     }
 
     return QVariant();

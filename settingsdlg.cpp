@@ -23,6 +23,7 @@
 #include <QTimer>
 #include <QDir>
 #include <QDesktopServices>
+#include <QUrl>
 #include "defines.h"
 
 SettingsDlg::SettingsDlg(QWidget *parent) :

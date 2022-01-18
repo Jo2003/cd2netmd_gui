@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QStringList>
 #include <QVector>
+#include <QVariant>
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a cd item model.

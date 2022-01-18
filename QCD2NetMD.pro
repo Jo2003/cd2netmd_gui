@@ -25,6 +25,10 @@ win32{
     RC_FILE = program.rc
 }
 
+linux{
+    INCLUDEPATH += /usr/lib/gcc/x86_64-linux-gnu/9/include
+}
+
 SOURCES += \
     externals/netmd/libnetmd/CMDiscHeader.cpp \
     externals/netmd/libnetmd/common.c \
