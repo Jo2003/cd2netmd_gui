@@ -81,6 +81,8 @@ add_executable(cd2netmd_gui
     qdarkstyle/light/style_lt.qrc
 )
 
+target_compile_options(cd2netmd_gui PRIVATE -W -Wall -Wformat-overflow=0 -Wno-unused-result -Wformat=0)
+
 target_link_libraries(cd2netmd_gui 
     Qt5::Widgets 
     Qt5::Core 
