@@ -65,7 +65,7 @@ EOF
     cat << EOF >> "${BUILD_FOLDER}/DEBIAN/control"
 Depends: libsndfile1 (>= 1.0.28), libflac8 (>= 1.3.2), libogg0 (>= 1.3.2), libvorbis0a (>= 1.3.5), libvorbisenc2 (>= 1.3.5), libcdio17 (>= 1.0.0), libcdio-cdda2 (>= 10.2), libcdio-paranoia2 (>= 10.2), libgcrypt20 (>= 1.8.1), libusb-1.0-0 (>= 2:1.0.21), libjson-c3 (>= 0.12.1), libqt5widgets5 (>= 5.9.5), libqt5gui5 (>= 5.9.5), libqt5network5 (>= 5.9.5), libqt5core5a (>= 5.9.5), libgpg-error0 (>= 1.27), libssl1.1 (>= 1.1.1)
 EOF
-fi
+
 
 cat << EOF >> "${BUILD_FOLDER}/DEBIAN/control"
 Maintainer: Jo2003 <olenka.joerg@gmail.com>

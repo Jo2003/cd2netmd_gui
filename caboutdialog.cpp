@@ -36,7 +36,7 @@ Thanks for following projects:<br>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/cybercase/webminidisc">webminidisc - the idea behind all of that</a></li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt - One framework to rule them all</a></li>
 </ul>
-Special thanks to my personal tester <b>Lars W.</b> - so far the first and only person who paid me a beer (or two)!
+Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!
 <br /> <br />
 Please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!)";
     ui->textAbout->setHtml(text);

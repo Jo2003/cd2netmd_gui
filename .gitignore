@@ -69,3 +69,4 @@ Thumbs.db
 install/*
 release/*
 debug/*
+packages/*
