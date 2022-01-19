@@ -25,7 +25,7 @@ find_library(JSON_C NAMES json-c libjson-c Hint /usr/lib/x86_64-linux-gnu)
 find_library(GCRYPT NAMES gcrypt libgcrypt Hint /usr/lib/x86_64-linux-gnu)
 find_library(LIB_USB NAMES usb-1.0 libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
 find_library(GPG_ERR NAMES gpg-error libgpg-error libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
-find_library(THREAD NAMES pthread libpthread libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
+find_library(THREAD NAMES pthread libpthread Hint /usr/lib/x86_64-linux-gnu)
 
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g")
 SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
