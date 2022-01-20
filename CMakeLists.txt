@@ -18,10 +18,6 @@ find_package(Qt5 COMPONENTS Core REQUIRED)
 find_package(Qt5 COMPONENTS Gui REQUIRED)
 find_package(Qt5 COMPONENTS Network REQUIRED)
 
-find_library(CDIO NAMES cdio libcdio Hint /usr/lib/x86_64-linux-gnu)
-find_library(CDIO_CDDA NAMES cdio_cdda libcdio-cdda Hint /usr/lib/x86_64-linux-gnu)
-find_library(CDIO_PARANOIA NAMES cdio_paranoia libcdio-paranoia Hint /usr/lib/x86_64-linux-gnu)
-find_library(JSON_C NAMES json-c libjson-c Hint /usr/lib/x86_64-linux-gnu)
 find_library(GCRYPT NAMES gcrypt libgcrypt Hint /usr/lib/x86_64-linux-gnu)
 find_library(LIB_USB NAMES usb-1.0 libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
 find_library(GPG_ERR NAMES gpg-error libgpg-error libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
@@ -36,6 +32,8 @@ include_directories(
     include
     externals/netmd/libnetmd
     externals/netmd/netmdcli
+    linux_deps/include
+    .
 )
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -88,10 +86,10 @@ target_link_libraries(cd2netmd_gui
     Qt5::Core 
     Qt5::Network 
     Qt5::Gui 
-    ${CDIO} 
-    ${CDIO_CDDA} 
-    ${CDIO_PARANOIA} 
-    ${JSON_C}
+    ${CMAKE_SOURCE_DIR}/linux_deps/lib/libcdio.a
+    ${CMAKE_SOURCE_DIR}/linux_deps/lib/libcdio_cdda.a
+    ${CMAKE_SOURCE_DIR}/linux_deps/lib/libcdio_paranoia.a
+    ${CMAKE_SOURCE_DIR}/linux_deps/lib/libjson-c.a
     ${LIB_USB}
     ${GCRYPT}
     ${GPG_ERR}
