@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  */
 #include <QFileInfo>
+#include <QRegExp>
+#include <QApplication>
 #include "cxenc.h"
 #include "helpers.h"
 #include <cmath>
@@ -45,10 +47,24 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength)
     default:
         return -1;
     }
-
+	
+#ifdef Q_OS_MAC
+	// app folder
+    QString sAppDir = QApplication::applicationDirPath();
+	
+    // find bundle dir ...
+    QRegExp rx("^(.*)/MacOS");
+    if (rx.indexIn(sAppDir) > -1)
+    {
+       // found section --> create path names ...
+       QString encTool = QString("%1/%2").arg(sAppDir).arg(XENC_CLI);
+	   qInfo() << encTool << params;
+	   run(encTool, params);
+   }
+#else
     qInfo() << XENC_CLI << params;
-
     run(XENC_CLI, params);
+#endif
     return 0;
 }
 

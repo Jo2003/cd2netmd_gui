@@ -29,7 +29,7 @@ class CXEnc : public CCliProcess
 #ifdef Q_OS_WIN
     static constexpr const char* XENC_CLI = "toolchain/atracdenc.exe";
 #elif defined Q_OS_MAC
-    static constexpr const char* XENC_CLI = "toolchain/atracdenc";
+    static constexpr const char* XENC_CLI = "atracdenc";
 #else
     // hopefully in path
     static constexpr const char* XENC_CLI = "atracdenc";

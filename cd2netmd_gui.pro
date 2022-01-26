@@ -19,6 +19,14 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 INCLUDEPATH += include \
                externals/netmd/libnetmd \
                externals/netmd/netmdcli
+			   
+mac{			   
+    INCLUDEPATH += /usr/local/Cellar/libusb/1.0.24/include \
+                   /usr/local/Cellar/libgcrypt/1.9.4_1/include \
+                   /usr/local/Cellar/libgpg-error/1.43/include \
+                   /usr/local/include
+	LIBS += -L/usr/local/lib -lusb
+}
 
 win32{
     INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
@@ -101,8 +109,9 @@ FORMS += \
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
 
-LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -static-libgcc -lgcrypt -lusb-1.0 -lgpg-error -ljson-c
+LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -lgcrypt -lusb-1.0 -lgpg-error -ljson-c
 win32: LIBS += -lws2_32
+!mac: LIBS += -static-libgcc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
