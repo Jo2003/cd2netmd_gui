@@ -25,7 +25,7 @@ mac{
                    /usr/local/Cellar/libgcrypt/1.9.4_1/include \
                    /usr/local/Cellar/libgpg-error/1.43/include \
                    /usr/local/include
-	LIBS += -L/usr/local/lib -lusb
+	LIBS += -L/usr/local/lib
 }
 
 win32{
