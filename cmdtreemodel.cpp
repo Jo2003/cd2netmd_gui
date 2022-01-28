@@ -23,12 +23,7 @@
 CMDTreeModel::CMDTreeModel(const QString& jsonContent, QObject *parent)
     :QAbstractItemModel(parent)
 {
-    QString tmpContent = jsonContent;
-    if (tmpContent.isEmpty())
-    {
-        tmpContent = R"({"title":"Error in NetMD communication!","t_used":0,"t_free":0,"otf_enc":0,"trk_count":0,"t_total":0,"device":"unknown","tracks":[],"groups":[]})";
-    }
-    mMDJson   = nlohmann::json::parse(tmpContent.toStdString());
+    mMDJson   = nlohmann::json::parse(jsonContent.toStdString());
     mRootData = nlohmann::json::parse(R"(["Name", "Mode", "Time"])");
 
     // root item with column names

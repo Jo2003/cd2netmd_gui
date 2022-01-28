@@ -30,7 +30,10 @@ class CNetMD : public QThread
 
     /// give the child a name
     static constexpr const char * NETMDCLI = "netmdcli";
+
 public:
+    static constexpr const char* EMPTY_JSON_RESP = R"({"title": "No disc / NetMD device found!", "otf_enc": 0, "device": "unknown", "trk_count": 0, "disc_flags": "0x00", "t_used": 0, "t_total": 0, "t_free": 0, "groups": [], "tracks": []})";
+
     /// actions to be done on NetMD
     enum class NetMDCmd : uint8_t
     {
