@@ -61,6 +61,8 @@ cat << EOF > ${TMPFILE}
 		<string>NSApplication</string>
 		<key>NSHighResolutionCapable</key>
 		<string>True</string>
+		<key>LSMinimumSystemVersion</key>
+		<string>10.13</string>
 	</dict>
 </plist>
 EOF
