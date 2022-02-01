@@ -15,9 +15,6 @@
  * You should have received a copy of the GNU General Public License
  */
 #include "cjacktheripper.h"
-#include <cdio/logging.h>
-#include <cdio/cd_types.h>
-#include <cdio/cdtext.h>
 #include <QVector>
 #include <stdexcept>
 #include "helpers.h"
@@ -64,17 +61,21 @@ CJackTheRipper::~CJackTheRipper()
     cleanup();
 }
 
-///
-/// \brief CJackTheRipper::init
-/// \param[in]  cddb if true, do cddb request
-/// \return 0 -> ok; -1 -> error
-///
-int CJackTheRipper::init(bool cddb)
+//--------------------------------------------------------------------------
+//! @brief      Initializes from CD image / CD drive
+//!
+//! @param[in]  cddb if true, do cddb request
+//! @param[in]  tp driver id type (optional)
+//! @param[in]  name image file name (optional)
+//!
+//! @return     0 -> ok
+//--------------------------------------------------------------------------
+int CJackTheRipper::init(bool cddb, driver_id_t tp, const QString& name)
 {
     mbCDDB = cddb;
 
     cleanup();
-    CCDInitThread *pInit = new CCDInitThread(this, &mpCDIO, &mpCDAudio, &mpCDParanoia);
+    CCDInitThread *pInit = new CCDInitThread(this, &mpCDIO, &mpCDAudio, &mpCDParanoia, tp, name);
 
     if (pInit)
     {
@@ -480,25 +481,52 @@ void CJackTheRipper::getProgress(int percent)
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-CCDInitThread::CCDInitThread(QObject *parent, CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio, cdrom_paranoia_t** ppCDParanoia)
-    :QThread(parent), mppCDIO(ppCDIO), mppCDAudio(ppCDAudio), mppCDParanoia(ppCDParanoia)
+//--------------------------------------------------------------------------
+//! @brief      Constructs a new instance.
+//!
+//! @param      parent        The parent
+//! @param      ppCDIO        The pp cdio
+//! @param      ppCDAudio     The pp cd audio
+//! @param      ppCDParanoia  The pp cd paranoia
+//! @param      drv          optional driver type
+//! @param      imgFile       optional CD image file
+//--------------------------------------------------------------------------
+CCDInitThread::CCDInitThread(QObject* parent, CdIo_t** ppCDIO, cdrom_drive_t** ppCDAudio,
+                             cdrom_paranoia_t** ppCDParanoia, driver_id_t drv, const QString& imgFile)
+    :QThread(parent), mppCDIO(ppCDIO), mppCDAudio(ppCDAudio), mppCDParanoia(ppCDParanoia),
+     mImgFile(imgFile), mDrvId(drv)
 {
 }
 
 void CCDInitThread::run()
 {
-    char **ppsz_cd_drives = cdio_get_devices_with_cap(nullptr, CDIO_FS_AUDIO, false);
+    char **ppsz_cd_drives = nullptr;
 
-    if (ppsz_cd_drives && *ppsz_cd_drives)
+    if (mImgFile.isEmpty())
     {
-        *mppCDIO    = cdio_open(*ppsz_cd_drives, DRIVER_UNKNOWN);
+        ppsz_cd_drives = cdio_get_devices_with_cap(nullptr, CDIO_FS_AUDIO, false);
+        if (ppsz_cd_drives && *ppsz_cd_drives)
+        {
+            mImgFile = *ppsz_cd_drives;
+            cdio_free_device_list(ppsz_cd_drives);
+        }
+    }
+
+    if (!mImgFile.isEmpty())
+    {
+        *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), mDrvId);
         *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
 
-        cdio_free_device_list(ppsz_cd_drives);
-
-        if (cdio_cddap_open(*mppCDAudio) == 0)
+        if (*mppCDAudio)
         {
-            *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+            if (cdio_cddap_open(*mppCDAudio) == 0)
+            {
+                *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+            }
+        }
+        else
+        {
+            qWarning() << "Can't identify CDDA / image!";
         }
     }
 

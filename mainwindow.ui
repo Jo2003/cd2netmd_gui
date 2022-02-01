@@ -122,6 +122,22 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="pushLoadImg">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>28</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Load CD &amp;Image</string>
+            </property>
+            <property name="flat">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
        </layout>
@@ -461,7 +477,7 @@
      <x>0</x>
      <y>0</y>
      <width>1165</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

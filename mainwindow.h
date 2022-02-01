@@ -234,6 +234,8 @@ private slots:
     //--------------------------------------------------------------------------
     void on_pushSettings_clicked();
 
+    void on_pushLoadImg_clicked();
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;

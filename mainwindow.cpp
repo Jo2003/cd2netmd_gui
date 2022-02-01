@@ -22,6 +22,7 @@
 #include <QJsonObject>
 #include <QSettings>
 #include <QTimer>
+#include <QFileDialog>
 #include "helpers.h"
 
 using namespace c2n;
@@ -786,5 +787,35 @@ void MainWindow::on_pushAbout_clicked()
 void MainWindow::on_pushSettings_clicked()
 {
     mpSettings->show();
+}
+
+void MainWindow::on_pushLoadImg_clicked()
+{
+    QString selfilter;
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CD Image File"), "", tr("cdrdao image (*.toc);;Cue / bin file (*.cue);;Nero CD Image File (*.nrg)"), &selfilter);
+    driver_id_t tp;
+
+    if (!fileName.isEmpty())
+    {
+        if (selfilter == tr("cdrdao image (*.toc)"))
+        {
+            tp = DRIVER_CDRDAO;
+        }
+        else if (selfilter == tr("Cue / bin file (*.cue)"))
+        {
+            tp = DRIVER_BINCUE;
+        }
+        else if (selfilter == tr("Nero CD Image File (*.nrg)"))
+        {
+            tp = DRIVER_NRG;
+        }
+        else
+        {
+            QMessageBox::critical(this, tr("Not supported!"), tr("Sorry! Chosen CD image file isn't supported!"));
+            return;
+        }
+
+        mpRipper->init(mpSettings->cddb(), tp, fileName);
+    }
 }
 
