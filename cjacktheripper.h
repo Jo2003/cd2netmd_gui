@@ -166,6 +166,13 @@ public slots:
     //--------------------------------------------------------------------------
     void noBusy();
 
+    //--------------------------------------------------------------------------
+    //! @brief      parse cue sheet file if not yet recognized
+    //!
+    //! @return 0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int parseCueFile();
+
 protected:
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
@@ -206,6 +213,8 @@ private:
     uint32_t        mDiscLength;    ///< store disc length
     bool mBusy;                     ///< busy flag
     bool mbCDDB;
+    QString mImgFile;
+    driver_id_t mDrvId = DRIVER_UNKNOWN;
 };
 
 ///

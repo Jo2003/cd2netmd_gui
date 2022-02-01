@@ -16,27 +16,10 @@
  */
 #include "cjacktheripper.h"
 #include <QVector>
+#include <libcue.h>
 #include <stdexcept>
 #include "helpers.h"
 #include "defines.h"
-
-static int writeFileHeader(QFile &wf, size_t byteCount)
-{
-    wf.write("RIFF", 4);
-    putNum(byteCount + 44 - 8, wf, 4);
-    wf.write("WAVEfmt ", 8);
-    putNum(16, wf, 4);
-    putNum(1, wf, 2);
-    putNum(2, wf, 2);
-    putNum(44100, wf, 4);
-    putNum(44100 * 2 * 2, wf, 4);
-    putNum(4, wf, 2);
-    putNum(16, wf, 2);
-    wf.write("data", 4);
-    putNum(byteCount, wf, 4);
-
-    return 0;
-}
 
 ///
 /// \brief CJackTheRipper::CJackTheRipper
@@ -72,7 +55,9 @@ CJackTheRipper::~CJackTheRipper()
 //--------------------------------------------------------------------------
 int CJackTheRipper::init(bool cddb, driver_id_t tp, const QString& name)
 {
-    mbCDDB = cddb;
+    mbCDDB   = cddb;
+    mDrvId   = tp;
+    mImgFile = name;
 
     cleanup();
     CCDInitThread *pInit = new CCDInitThread(this, &mpCDIO, &mpCDAudio, &mpCDParanoia, tp, name);
@@ -288,7 +273,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            writeFileHeader(f, trkSz);
+            writeWaveHeader(f, trkSz);
 
             cdio_cddap_speed_set(mpCDAudio, 8);
 
@@ -342,8 +327,109 @@ QString CJackTheRipper::deviceInfo()
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      parse cue sheet file if not yet recognized
+//!
+//! @return 0 -> ok; -1 -> error
+//--------------------------------------------------------------------------
+int CJackTheRipper::parseCueFile()
+{
+    int ret = -1;
+    QFile cuefile(mImgFile);
+    if (cuefile.open(QIODevice::ReadOnly))
+    {
+        Cd* cd = cue_parse_string(static_cast<const char*>(cuefile.readAll()));
+
+        if (cd != nullptr)
+        {
+            ret = 0;
+
+            QStringList trackTitles;
+            int noTracks = cd_get_ntrack(cd);
+            const char* tok;
+            QString track, performer, title;
+
+            // disc title
+            Cdtext* cdt = cd_get_cdtext(cd);
+            tok = cdtext_get_cue(PTI_PERFORMER, cdt);
+
+            if (tok)
+            {
+                performer = QString(tok).trimmed();
+                track     = QString("%1 - ").arg(performer);
+            }
+
+            tok = cdtext_get_cue(PTI_TITLE, cdt);
+            if (tok)
+            {
+                title = QString(tok).trimmed();
+                if (title.indexOf(performer) != -1)
+                {
+                    track = title;
+                }
+                else
+                {
+                    track += title;
+                }
+            }
+
+            if (track.isEmpty())
+            {
+                track = tr("<untitled>");
+            }
+            trackTitles.append(track);
+
+            // process other tracks
+            for (int i  = 1; i <= noTracks; i++)
+            {
+                track = performer = title = "";
+                Track* t = cd_get_track(cd, i);
+                cdt = track_get_cdtext(t);
+
+                tok = cdtext_get_cue(PTI_PERFORMER, cdt);
+
+                if (tok)
+                {
+                    performer = QString(tok).trimmed();
+                    track     = QString("%1 - ").arg(performer);
+                }
+
+                tok = cdtext_get_cue(PTI_TITLE, cdt);
+                if (tok)
+                {
+                    title = QString(tok).trimmed();
+                    if (title.indexOf(performer) != -1)
+                    {
+                        track = title;
+                    }
+                    else
+                    {
+                        track += title;
+                    }
+                }
+
+                if (track.isEmpty())
+                {
+                    track = tr("<untitled>");
+                }
+
+                trackTitles.append(track);
+            }
+
+            qInfo() << "Titles extracted from CUE file: " << trackTitles;
+            cd_delete(cd);
+        }
+    }
+    return ret;
+}
+
 int CJackTheRipper::cddbReqString()
 {
+    if ((mDrvId == DRIVER_BINCUE) && (mpCDAudio == nullptr))
+    {
+        return parseCueFile();
+    }
+
     track_t  firstTrack, lastTrack;
     track_t  noTracks;
     uint32_t checkSum = 0, tmp = 0;
@@ -526,7 +612,7 @@ void CCDInitThread::run()
         }
         else
         {
-            qWarning() << "Can't identify CDDA / image!";
+            qWarning() << "Can't yet identify CDDA / image!";
         }
     }
 

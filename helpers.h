@@ -19,6 +19,16 @@
 #include <QString>
 #include <QByteArray>
 
+//------------------------------------------------------------------------------
+//! @brief      Writes a wave header.
+//!
+//! @param      wf         wave file
+//! @param[in]  byteCount  The byte count
+//!
+//! @return     0
+//------------------------------------------------------------------------------
+int writeWaveHeader(QFile &wf, size_t byteCount);
+
 ///
 /// \brief put number to file
 /// \param num number to put

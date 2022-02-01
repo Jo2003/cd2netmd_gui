@@ -31,6 +31,7 @@ mac{
 win32{
     INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
     RC_FILE = program.rc
+    LIBS += -L./libs/win -lcue
 }
 
 linux{
@@ -65,7 +66,8 @@ SOURCES += \
     mainwindow.cpp \
     helpers.cpp \
     mdtitle.cpp \
-    settingsdlg.cpp
+    settingsdlg.cpp \
+    cwavesplitter.cpp
 
 HEADERS += \
     externals/netmd/libnetmd/CMDiscHeader.h \
@@ -97,7 +99,8 @@ HEADERS += \
     mainwindow.h \
     helpers.h \
     mdtitle.h \
-    settingsdlg.h
+    settingsdlg.h \
+    cwavesplitter.h
 
 FORMS += \
     caboutdialog.ui \
