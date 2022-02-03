@@ -14,6 +14,7 @@
  *
  * You should have received a copy of the GNU General Public License
  */
+#include <QFont>
 #include "caboutdialog.h"
 #include "defines.h"
 #include "ui_caboutdialog.h"
@@ -40,6 +41,11 @@ Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me 
 <br /> <br />
 Please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!)";
     ui->textAbout->setHtml(text);
+#ifdef Q_OS_MAC
+    QFont f = ui->textAbout->font();
+    f.setPointSize(f.pointSize() + 2);
+    ui->textAbout->setFont(f);
+#endif
 }
 
 CAboutDialog::~CAboutDialog()

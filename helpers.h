@@ -19,16 +19,6 @@
 #include <QString>
 #include <QByteArray>
 
-//------------------------------------------------------------------------------
-//! @brief      Writes a wave header.
-//!
-//! @param      wf         wave file
-//! @param[in]  byteCount  The byte count
-//!
-//! @return     0
-//------------------------------------------------------------------------------
-int writeWaveHeader(QFile &wf, size_t byteCount);
-
 ///
 /// \brief put number to file
 /// \param num number to put
@@ -58,3 +48,22 @@ QString mdToUtf8(const QByteArray& ba);
 /// \return ref. to converted string
 ///
 QString& deUmlaut(QString& s);
+
+//------------------------------------------------------------------------------
+//! @brief      extract title from file name
+//!
+//! @param[in]  fName file name
+//!
+//! @return     title
+//------------------------------------------------------------------------------
+QString titleFromFileName(const QString& fName);
+
+//--------------------------------------------------------------------------
+//! @brief      get uint from array
+//!
+//! @param[in]  start char[] start of array
+//! @param[in]  sz int number of bytes to use
+//!
+//! @return     uint64_t
+//--------------------------------------------------------------------------
+uint64_t arrayToUint(const char start[], int sz);

@@ -62,12 +62,13 @@ SOURCES += \
     cnamingdialog.cpp \
     cnetmd.cpp \
     cxenc.cpp \
+    cflac.cpp \
     main.cpp \
     mainwindow.cpp \
     helpers.cpp \
     mdtitle.cpp \
     settingsdlg.cpp \
-    cwavesplitter.cpp
+    caudiotools.cpp
 
 HEADERS += \
     externals/netmd/libnetmd/CMDiscHeader.h \
@@ -94,13 +95,14 @@ HEADERS += \
     cnamingdialog.h \
     cnetmd.h \
     cxenc.h \
+    cflac.h \
     defines.h \
     include/json.hpp \
     mainwindow.h \
     helpers.h \
     mdtitle.h \
     settingsdlg.h \
-    cwavesplitter.h
+    caudiotools.h
 
 FORMS += \
     caboutdialog.ui \

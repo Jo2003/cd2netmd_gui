@@ -16,6 +16,7 @@
  */
 #include "helpers.h"
 #include <QTextCodec>
+#include <QFileInfo>
 #include "defines.h"
 #include "mdtitle.h"
 
@@ -166,20 +167,35 @@ QString mdToUtf8(const QByteArray& ba)
     return ret;
 }
 
-int writeWaveHeader(QFile &wf, size_t byteCount)
+//------------------------------------------------------------------------------
+//! @brief      extract title from file name
+//!
+//! @param[in]  fName file name
+//!
+//! @return     title
+//------------------------------------------------------------------------------
+QString titleFromFileName(const QString& fName)
 {
-    wf.write("RIFF", 4);                // 0
-    putNum(byteCount + 44 - 8, wf, 4);  // 4
-    wf.write("WAVEfmt ", 8);            // 8
-    putNum(16, wf, 4);                  // 16
-    putNum(1, wf, 2);                   // 20
-    putNum(2, wf, 2);                   // 22
-    putNum(44100, wf, 4);               // 24
-    putNum(44100 * 2 * 2, wf, 4);       // 28
-    putNum(4, wf, 2);                   // 32
-    putNum(16, wf, 2);                  // 34
-    wf.write("data", 4);                // 36
-    putNum(byteCount, wf, 4);           // 40
+    QFileInfo fi(fName);
+    QString ret = fi.baseName();
+    ret.replace(QChar('_'), QChar(' '));
+    return ret;
+}
 
-    return 0;
+//--------------------------------------------------------------------------
+//! @brief      get uint from array
+//!
+//! @param[in]  start char[] start of array
+//! @param[in]  sz int number of bytes to use
+//!
+//! @return     uint64_t
+//--------------------------------------------------------------------------
+uint64_t arrayToUint(const char start[], int sz)
+{
+    uint64_t result = 0;
+    for (int i = 0; i < sz; i++)
+    {
+        result = (result << 8) + static_cast<uint8_t>(start[i]);
+    }
+    return result;
 }

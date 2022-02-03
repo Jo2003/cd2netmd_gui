@@ -16,10 +16,14 @@
  */
 #include "cjacktheripper.h"
 #include <QVector>
+#include <QFileInfo>
 #include <libcue.h>
 #include <stdexcept>
+#include <QDir>
+#include "cflac.h"
 #include "helpers.h"
 #include "defines.h"
+#include "caudiotools.h"
 
 ///
 /// \brief CJackTheRipper::CJackTheRipper
@@ -31,6 +35,7 @@ CJackTheRipper::CJackTheRipper(QObject *parent)
       mpCddb(nullptr), mDiscLength(0), mBusy(false), mbCDDB(false)
 {
     mpCddb = new CCDDB(this);
+    mpFlac = new CFlac(this);
 }
 
 ///
@@ -58,6 +63,7 @@ int CJackTheRipper::init(bool cddb, driver_id_t tp, const QString& name)
     mbCDDB   = cddb;
     mDrvId   = tp;
     mImgFile = name;
+    mCueMap.clear();
 
     cleanup();
     CCDInitThread *pInit = new CCDInitThread(this, &mpCDIO, &mpCDAudio, &mpCDParanoia, tp, name);
@@ -111,14 +117,19 @@ int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoi
         delete mpRipThread;
     }
 
-    mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName, paranoia);
-
-    if (mpRipThread)
+    if (mCueMap.isEmpty())
     {
-        mBusy = true;
-        return 0;
+        mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName, paranoia);
+        if (mpRipThread)
+        {
+            mBusy = true;
+            return 0;
+        }
     }
-
+    else
+    {
+        return copyShopThread(trackNo, fName);
+    }
     return -1;
 }
 
@@ -273,7 +284,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            writeWaveHeader(f, trkSz);
+            CAudioTools::writeWaveHeader(f, trkSz);
 
             cdio_cddap_speed_set(mpCDAudio, 8);
 
@@ -310,6 +321,103 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      thread function for copy stuff (cue sheet)
+//!
+//! @param[in]  track     The track number
+//! @param[in]  fName     The file name
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CJackTheRipper::copyShopThread(int track, const QString& fName)
+{
+    int ret = 0;
+
+    if (track == -1)
+    {
+        // DaO
+        // some audio tracks may share the same audio file
+        QStringList sources;
+        QVector<TrackAudioFormat> srcFormat;
+        for (const auto& c : mCueMap)
+        {
+            if (!sources.contains(c.mSrcFileName))
+            {
+                sources << c.mSrcFileName;
+                srcFormat.append(c.mAFormat);
+            }
+        }
+
+        ret = conCatWave(sources, srcFormat, fName);
+    }
+    else if (mCueMap.contains(track))
+    {
+        int percents[] = {0, 25, 50, 75};
+        uint8_t percentPos = 0;
+        bool done = false;
+
+        auto updPercent = [&]()->void
+        {
+            if (++percentPos >= (sizeof(percents) / sizeof(int)))
+            {
+                percentPos = 0;
+            }
+            emit progress(percents[percentPos]);
+        };
+
+        SCueInfo& cinfo = mCueMap[track];
+
+        try
+        {
+            if (cinfo.mAFormat == TrackAudioFormat::WAVE)
+            {
+                cinfo.mWavFileName = cinfo.mSrcFileName;
+            }
+            else if (cinfo.mAFormat == TrackAudioFormat::FLAC)
+            {
+                QFileInfo fi(cinfo.mSrcFileName);
+                cinfo.mWavFileName = QString("%1/%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
+                if (!QFile::exists(cinfo.mWavFileName))
+                {
+                    mpFlac->start(cinfo.mSrcFileName, cinfo.mWavFileName);
+                    for (int j = 0; j < 150; j++)
+                    {
+                        updPercent();
+                        if ((done = mpFlac->waitForFinished(2000)) == true)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (!done)
+                    {
+                        throw std::runtime_error(R"(Can't decode flac in needed time frame.)");
+                    }
+                }
+            }
+            updPercent();
+            if (CAudioTools::extractRange(cinfo.mWavFileName, fName, cinfo.mlStart, cinfo.mlLength) != 0)
+            {
+                throw std::runtime_error(R"(Can't extract wave data.)");
+            }
+        }
+        catch (const std::exception& e)
+        {
+            qDebug() << e.what();
+            ret = -1;
+        }
+    }
+    else
+    {
+        ret = -1;
+    }
+
+    emit progress(100);
+    noBusy();
+    emit finished();
+    return ret;
+}
+
 QString CJackTheRipper::deviceInfo()
 {
     QString ret;
@@ -324,6 +432,11 @@ QString CJackTheRipper::deviceInfo()
         }
     }
 
+    if (!mCueMap.isEmpty() && ret.isEmpty())
+    {
+        ret = "Cue Sheet";
+    }
+
     return ret;
 }
 
@@ -335,7 +448,14 @@ QString CJackTheRipper::deviceInfo()
 int CJackTheRipper::parseCueFile()
 {
     int ret = -1;
+    SCueInfo cueInfo;
+    QStringList trackTitles;
+    mTrackTimes.clear();
+    mDiscLength = 0;
     QFile cuefile(mImgFile);
+    QFileInfo fi(mImgFile);
+    QString lastSrcFile;
+
     if (cuefile.open(QIODevice::ReadOnly))
     {
         Cd* cd = cue_parse_string(static_cast<const char*>(cuefile.readAll()));
@@ -344,7 +464,6 @@ int CJackTheRipper::parseCueFile()
         {
             ret = 0;
 
-            QStringList trackTitles;
             int noTracks = cd_get_ntrack(cd);
             const char* tok;
             QString track, performer, title;
@@ -386,6 +505,71 @@ int CJackTheRipper::parseCueFile()
                 Track* t = cd_get_track(cd, i);
                 cdt = track_get_cdtext(t);
 
+                long length = track_get_length(t);
+                cueInfo.mlStart = track_get_start(t);
+                cueInfo.mSrcFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
+
+                if ((lastSrcFile != cueInfo.mSrcFileName) || (length == -1))
+                {
+                    lastSrcFile = cueInfo.mSrcFileName;
+
+                    QFile fMedia(cueInfo.mSrcFileName);
+                    if (fMedia.open(QIODevice::ReadOnly))
+                    {
+                        size_t audioSz = 0;
+                        int flacLength = 0;
+                        if (!CAudioTools::checkWaveFile(fMedia, audioSz))
+                        {
+                            // wave file ...
+                            if (length == -1)
+                            {
+                                long start = track_get_start(t);
+                                start *= CDIO_CD_FRAMESIZE_RAW; // CD DA block size
+                                length = (audioSz - start) / CDIO_CD_FRAMESIZE_RAW;
+                            }
+                            cueInfo.mAFormat = TrackAudioFormat::WAVE;
+                        }
+                        else if(CAudioTools::isFlac(fMedia, flacLength))
+                        {
+                            // flac file
+                            if (length == -1)
+                            {
+                                long start = track_get_start(t);
+                                length = flacLength * CDIO_CD_FRAMES_PER_SEC - start;
+                            }
+                            cueInfo.mAFormat = TrackAudioFormat::FLAC;
+                        }
+                        else
+                        {
+                            // unsupported audio (or whatever)
+                            cd_delete(cd);
+                            mTrackTimes.clear();
+                            mDiscLength = 0;
+                            mCueMap.clear();
+                            qWarning() << "Unsupported audio format in CUE sheet!";
+                            emit match(QStringList() << "Unsupported audio format in CUE sheet!");
+                            return -1;
+                        }
+                    }
+                    else
+                    {
+                        // can't open media file
+                        cd_delete(cd);
+                        mTrackTimes.clear();
+                        mDiscLength = 0;
+                        mCueMap.clear();
+                        qWarning() << "Can't open media file for CUE sheet!";
+                        emit match(QStringList() << "Can't open media file for CUE sheet!");
+                        return -1;
+                    }
+                }
+
+                cueInfo.mlLength = length;
+                mCueMap.insert(i, cueInfo);
+
+                mTrackTimes.append(length / CDIO_CD_FRAMES_PER_SEC);
+                mDiscLength += length / CDIO_CD_FRAMES_PER_SEC;
+
                 tok = cdtext_get_cue(PTI_PERFORMER, cdt);
 
                 if (tok)
@@ -408,10 +592,18 @@ int CJackTheRipper::parseCueFile()
                     }
                 }
 
+                // in case no title is stored, use file name
+                if (track.isEmpty())
+                {
+                    track = titleFromFileName({track_get_filename(t)});
+                }
+
                 if (track.isEmpty())
                 {
                     track = tr("<untitled>");
                 }
+
+                qDebug() << i << track << track_get_start(t) << track_get_length(t);
 
                 trackTitles.append(track);
             }
@@ -419,7 +611,16 @@ int CJackTheRipper::parseCueFile()
             qInfo() << "Titles extracted from CUE file: " << trackTitles;
             cd_delete(cd);
         }
+        else
+        {
+            qWarning() << "Error parsing CUE file" << mImgFile;
+        }
     }
+    else
+    {
+        qWarning() << "Can't open CUE file" << mImgFile;
+    }
+    emit match(trackTitles);
     return ret;
 }
 
@@ -565,6 +766,150 @@ void CJackTheRipper::getProgress(int percent)
     emit progress(percent);
 }
 
+//--------------------------------------------------------------------------
+//! @brief      concatinate audio files
+//!
+//! @param[in]  sources source audio files
+//! @param[in]  srcFormat format of audio files
+//! @param[in]  trgFileName name of target file
+//!
+//! @return 0 -> ok; -1 -> error
+//--------------------------------------------------------------------------
+int CJackTheRipper::conCatWave(const QStringList& sources,
+                               const QVector<TrackAudioFormat>& srcFormat,
+                               const QString& trgFileName)
+{
+    int ret = 0;
+    QString tempTemplate = QString("%1/cd2netmd_gui_concat_temp_%%1.wav").arg(QDir::tempPath());
+    QStringList toConCat;
+    int percents[] = {0, 25, 50, 75};
+    uint8_t percentPos = 0;
+    bool done = false;
+
+    auto updPercent = [&]()->void
+    {
+        if (++percentPos >= (sizeof(percents) / sizeof(int)))
+        {
+            percentPos = 0;
+        }
+        emit progress(percents[percentPos]);
+    };
+
+    try
+    {
+        for (int i = 0; i < sources.count(); i++)
+        {
+            if (srcFormat[i] == TrackAudioFormat::WAVE)
+            {
+                toConCat << sources[i];
+            }
+            else
+            {
+                QString tmpName = QString(tempTemplate).arg(i);
+                toConCat << tmpName;
+                qDebug() << "Convert" << sources[i] << "to" << tmpName;
+                mpFlac->start(sources[i], tmpName);
+                for (int j = 0; j < 150; j++)
+                {
+                    updPercent();
+                    if ((done = mpFlac->waitForFinished(2000)) == true)
+                    {
+                        break;
+                    }
+                }
+
+                if (!done)
+                {
+                    throw std::runtime_error(R"(Can't decode flac in needed time frame.)");
+                }
+            }
+        }
+
+        size_t sz      = 0;
+        size_t wholeSz = 0;
+
+        QFile tmpTrg(trgFileName + ".raw");
+        if (tmpTrg.open(QIODevice::Truncate | QIODevice::ReadWrite))
+        {
+            for (const auto& s : toConCat)
+            {
+                qDebug() << "Append" << s << "to" << tmpTrg.fileName();
+                QFile src(s);
+                if (src.open(QIODevice::ReadOnly))
+                {
+                    if (!CAudioTools::stripWaveHeader(src, sz))
+                    {
+                        updPercent();
+                        tmpTrg.write(src.readAll());
+                        wholeSz += sz;
+                    }
+                    else
+                    {
+                        throw std::runtime_error(R"(Can't strip wave header.)");
+                    }
+                }
+                else
+                {
+                    throw std::runtime_error(R"(Can't open wave file.)");
+                }
+            }
+
+            QFile trg(trgFileName);
+            if (trg.open(QIODevice::WriteOnly))
+            {
+                qDebug() << "Create" << trgFileName << "from" << tmpTrg.fileName();
+                updPercent();
+                CAudioTools::writeWaveHeader(trg, wholeSz);
+                tmpTrg.seek(0);
+                trg.write(tmpTrg.readAll());
+            }
+            else
+            {
+                throw std::runtime_error(R"(Can't open target file.)");
+            }
+
+            tmpTrg.close();
+            tmpTrg.remove();
+        }
+        else
+        {
+            throw std::runtime_error(R"(Can't open raw target file.)");
+        }
+
+        // remove temp files
+        for (int i = 0; i < sources.count(); i++)
+        {
+            if (sources[i] != toConCat[i])
+            {
+                qDebug() << "Remove temp file" << toConCat[i];
+                QFile::remove(toConCat[i]);
+            }
+        }
+        updPercent();
+    }
+    catch (const std::exception& e)
+    {
+        qDebug() << e.what();
+        ret = -1;
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      remove temporary files
+//--------------------------------------------------------------------------
+void CJackTheRipper::removeTemp()
+{
+    for (const auto& c : mCueMap)
+    {
+        if (c.mWavFileName != c.mSrcFileName)
+        {
+            QFile::remove(c.mWavFileName);
+        }
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------
@@ -600,7 +945,7 @@ void CCDInitThread::run()
 
     if (!mImgFile.isEmpty())
     {
-        *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), mDrvId);
+        *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), /* mDrvId */DRIVER_UNKNOWN);
         *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
 
         if (*mppCDAudio)
@@ -616,5 +961,239 @@ void CCDInitThread::run()
         }
     }
 
+    emit finished();
+}
+
+////////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------------
+//! @brief      Constructs a new instance.
+//!
+//! @param      parent        The parent
+//! @param      cueMap        ref. to cue map
+//! @param      track         The track number
+//! @param      fName         The target file name
+//--------------------------------------------------------------------------
+CCopyShopThread::CCopyShopThread(QObject* parent, CueMap& cueMap, int track, const QString& fName)
+    :QThread(parent), mCueMap(cueMap), mTrack(track), mName(fName)
+{
+    mpFlac = new CFlac(this);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      concatinate audio files
+//!
+//! @param[in]  sources source audio files
+//! @param[in]  srcFormat format of audio files
+//! @param[in]  trgFileName name of target file
+//!
+//! @return 0 -> ok; -1 -> error
+//--------------------------------------------------------------------------
+int CCopyShopThread::conCatWave(const QStringList& sources,
+                               const QVector<TrackAudioFormat>& srcFormat,
+                               const QString& trgFileName)
+{
+    int ret = 0;
+    QString tempTemplate = QString("%1/cd2netmd_gui_concat_temp_%%1.wav").arg(QDir::tempPath());
+    QStringList toConCat;
+    int percents[] = {0, 25, 50, 75};
+    uint8_t percentPos = 0;
+    bool done = false;
+
+    auto updPercent = [&]()->void
+    {
+        if (++percentPos >= (sizeof(percents) / sizeof(int)))
+        {
+            percentPos = 0;
+        }
+        emit progress(percents[percentPos]);
+    };
+
+    try
+    {
+        for (int i = 0; i < sources.count(); i++)
+        {
+            if (srcFormat[i] == TrackAudioFormat::WAVE)
+            {
+                toConCat << sources[i];
+            }
+            else
+            {
+                QString tmpName = QString(tempTemplate).arg(i);
+                toConCat << tmpName;
+                qDebug() << "Convert" << sources[i] << "to" << tmpName;
+                mpFlac->start(sources[i], tmpName);
+                for (int j = 0; j < 150; j++)
+                {
+                    updPercent();
+                    if ((done = mpFlac->waitForFinished(2000)) == true)
+                    {
+                        break;
+                    }
+                }
+
+                if (!done)
+                {
+                    throw std::runtime_error(R"(Can't decode flac in needed time frame.)");
+                }
+            }
+        }
+
+        size_t sz      = 0;
+        size_t wholeSz = 0;
+
+        QFile tmpTrg(trgFileName + ".raw");
+        if (tmpTrg.open(QIODevice::Truncate | QIODevice::ReadWrite))
+        {
+            for (const auto& s : toConCat)
+            {
+                qDebug() << "Append" << s << "to" << tmpTrg.fileName();
+                QFile src(s);
+                if (src.open(QIODevice::ReadOnly))
+                {
+                    if (!CAudioTools::stripWaveHeader(src, sz))
+                    {
+                        updPercent();
+                        tmpTrg.write(src.readAll());
+                        wholeSz += sz;
+                    }
+                    else
+                    {
+                        throw std::runtime_error(R"(Can't strip wave header.)");
+                    }
+                }
+                else
+                {
+                    throw std::runtime_error(R"(Can't open wave file.)");
+                }
+            }
+
+            QFile trg(trgFileName);
+            if (trg.open(QIODevice::WriteOnly))
+            {
+                qDebug() << "Create" << trgFileName << "from" << tmpTrg.fileName();
+                updPercent();
+                CAudioTools::writeWaveHeader(trg, wholeSz);
+                tmpTrg.seek(0);
+                trg.write(tmpTrg.readAll());
+            }
+            else
+            {
+                throw std::runtime_error(R"(Can't open target file.)");
+            }
+
+            tmpTrg.close();
+            tmpTrg.remove();
+        }
+        else
+        {
+            throw std::runtime_error(R"(Can't open raw target file.)");
+        }
+
+        // remove temp files
+        for (int i = 0; i < sources.count(); i++)
+        {
+            if (sources[i] != toConCat[i])
+            {
+                qDebug() << "Remove temp file" << toConCat[i];
+                QFile::remove(toConCat[i]);
+            }
+        }
+        updPercent();
+    }
+    catch (const std::exception& e)
+    {
+        qDebug() << e.what();
+        ret = -1;
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      thread function
+//--------------------------------------------------------------------------
+void CCopyShopThread::run()
+{
+    if (mTrack == -1)
+    {
+        // DaO
+        // some audio tracks may share the same audio file
+        QStringList sources;
+        QVector<TrackAudioFormat> srcFormat;
+        for (const auto& c : mCueMap)
+        {
+            if (!sources.contains(c.mSrcFileName))
+            {
+                sources << c.mSrcFileName;
+                srcFormat.append(c.mAFormat);
+            }
+        }
+
+        conCatWave(sources, srcFormat, mName);
+    }
+    else if (mCueMap.contains(mTrack))
+    {
+        int percents[] = {0, 25, 50, 75};
+        uint8_t percentPos = 0;
+        bool done = false;
+
+        auto updPercent = [&]()->void
+        {
+            if (++percentPos >= (sizeof(percents) / sizeof(int)))
+            {
+                percentPos = 0;
+            }
+            emit progress(percents[percentPos]);
+        };
+
+        SCueInfo& cinfo = mCueMap[mTrack];
+
+        try
+        {
+            if (cinfo.mAFormat == TrackAudioFormat::WAVE)
+            {
+                cinfo.mWavFileName = cinfo.mSrcFileName;
+            }
+            else if (cinfo.mAFormat == TrackAudioFormat::FLAC)
+            {
+                QFileInfo fi(cinfo.mSrcFileName);
+                cinfo.mWavFileName = QString("%1/%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
+                qDebug() << "Decode" << cinfo.mSrcFileName << "to" << cinfo.mWavFileName;
+                if (!QFile::exists(cinfo.mWavFileName))
+                {
+                    mpFlac->start(cinfo.mSrcFileName, cinfo.mWavFileName);
+                    for (int j = 0; j < 150; j++)
+                    {
+                        updPercent();
+                        if ((done = mpFlac->waitForFinished(2000)) == true)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (!done)
+                    {
+                        throw std::runtime_error(R"(Can't decode flac in needed time frame.)");
+                    }
+                }
+            }
+            updPercent();
+            if (CAudioTools::extractRange(cinfo.mWavFileName, mName, cinfo.mlStart, cinfo.mlLength) != 0)
+            {
+                throw std::runtime_error(R"(Can't extract wave data.)");
+            }
+        }
+        catch (const std::exception& e)
+        {
+            qDebug() << e.what();
+        }
+    }
+    else
+    {
+        qWarning() << "Track" << mTrack << "not included in cue file!";
+    }
+
+    emit progress(100);
     emit finished();
 }

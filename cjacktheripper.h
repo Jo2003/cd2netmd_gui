@@ -16,6 +16,7 @@
  */
 #pragma once
 #include <QObject>
+#include <QMap>
 #include <QTimer>
 #include <QString>
 #include <QFile>
@@ -26,10 +27,8 @@
 #include <cdio/cd_types.h>
 #include <cdio/cdtext.h>
 #include <cdio/paranoia/paranoia.h>
-
+#include "cflac.h"
 #include "ccddb.h"
-
-class CRipThread;
 
 ///
 /// \brief The CJackTheRipper class a CD ripper class able of CD paranoia
@@ -38,6 +37,23 @@ class CJackTheRipper : public QObject
 {
     Q_OBJECT
 public:
+    enum TrackAudioFormat
+    {
+        UNKNOWN,
+        WAVE,
+        FLAC
+    };
+
+    struct SCueInfo
+    {
+        QString mSrcFileName;
+        QString mWavFileName;
+        long mlStart;
+        long mlLength;
+        TrackAudioFormat mAFormat;
+    };
+
+    using CueMap = QMap<int, SCueInfo>;
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
@@ -130,6 +146,16 @@ public:
     //! @return     0 on success
     //--------------------------------------------------------------------------
     int ripThread(int track, const QString& fName, bool paranoia);
+
+    //--------------------------------------------------------------------------
+    //! @brief      thread function for copy stuff (cue sheet)
+    //!
+    //! @param[in]  track     The track number
+    //! @param[in]  fName     The file name
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
+    int copyShopThread(int track, const QString& fName);
     
     //--------------------------------------------------------------------------
     //! @brief      get device info
@@ -137,6 +163,11 @@ public:
     //! @return     The info string.
     //--------------------------------------------------------------------------
     QString deviceInfo();
+
+    //--------------------------------------------------------------------------
+    //! @brief      remove temporary files
+    //--------------------------------------------------------------------------
+    void removeTemp();
 
 public slots:
 
@@ -174,10 +205,25 @@ public slots:
     int parseCueFile();
 
 protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      concatinate audio files
+    //!
+    //! @param[in]  sources source audio files
+    //! @param[in]  srcFormat format of audio files
+    //! @param[in]  trgFileName name of target file
+    //!
+    //! @return 0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int conCatWave(const QStringList& sources,
+                   const QVector<TrackAudioFormat>& srcFormat,
+                   const QString& trgFileName);
+
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
     cdrom_paranoia_t* mpCDParanoia;     ///< CD Paranoia pointer
     QTimer mtChkChd;                    ///< check for media change
+    CFlac* mpFlac;
 
 signals:
 
@@ -215,6 +261,7 @@ private:
     bool mbCDDB;
     QString mImgFile;
     driver_id_t mDrvId = DRIVER_UNKNOWN;
+    CueMap mCueMap;
 };
 
 ///
@@ -259,4 +306,64 @@ signals:
     //! @brief      thread finished
     //--------------------------------------------------------------------------
     void finished();
+};
+
+//--------------------------------------------------------------------------
+//! @brief      thread class for cue copy actions
+//--------------------------------------------------------------------------
+class CCopyShopThread : public QThread
+{
+    Q_OBJECT
+
+    using CueMap = CJackTheRipper::CueMap;
+    using TrackAudioFormat = CJackTheRipper::TrackAudioFormat;
+    using SCueInfo = CJackTheRipper::SCueInfo;
+
+public:
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param      parent        The parent
+    //! @param      cueMap        ref. to cue map
+    //! @param      track         The track number
+    //! @param      fName         The target file name
+    //--------------------------------------------------------------------------
+    CCopyShopThread(QObject* parent, CueMap& cueMap, int track, const QString& fName);
+
+    //--------------------------------------------------------------------------
+    //! @brief      thread function
+    //--------------------------------------------------------------------------
+    void run() override;
+
+signals:
+    //--------------------------------------------------------------------------
+    //! @brief      thread finished
+    //--------------------------------------------------------------------------
+    void finished();
+
+    //--------------------------------------------------------------------------
+    //! @brief      progress in percent
+    //--------------------------------------------------------------------------
+    void progress(int);
+
+protected:
+
+    //--------------------------------------------------------------------------
+    //! @brief      concatinate audio files
+    //!
+    //! @param[in]  sources source audio files
+    //! @param[in]  srcFormat format of audio files
+    //! @param[in]  trgFileName name of target file
+    //!
+    //! @return 0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int conCatWave(const QStringList& sources,
+                   const QVector<TrackAudioFormat>& srcFormat,
+                   const QString& trgFileName);
+
+    CJackTheRipper::CueMap& mCueMap;
+    int mTrack;
+    QString mName;
+    CFlac* mpFlac;
 };

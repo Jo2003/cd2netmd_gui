@@ -490,6 +490,7 @@ void MainWindow::transferFinished(bool checkBusy)
                 delete j.mpFile;
             }
             mWorkQueue.clear();
+            mpRipper->removeTemp();
             enableDialogItems(true);
             QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
         }
@@ -792,20 +793,21 @@ void MainWindow::on_pushSettings_clicked()
 void MainWindow::on_pushLoadImg_clicked()
 {
     QString selfilter;
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CD Image File"), "", tr("cdrdao image (*.toc);;Cue / bin file (*.cue);;Nero CD Image File (*.nrg)"), &selfilter);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CD Image File"), "", tr("Audio CD Image (*.cue *.toc *.nrg)"));
     driver_id_t tp;
 
     if (!fileName.isEmpty())
     {
-        if (selfilter == tr("cdrdao image (*.toc)"))
+        QFileInfo fi(fileName);
+        if (fi.completeSuffix().contains("toc"))
         {
             tp = DRIVER_CDRDAO;
         }
-        else if (selfilter == tr("Cue / bin file (*.cue)"))
+        else if (fi.completeSuffix().contains("cue"))
         {
             tp = DRIVER_BINCUE;
         }
-        else if (selfilter == tr("Nero CD Image File (*.nrg)"))
+        else if (fi.completeSuffix().contains("nrg"))
         {
             tp = DRIVER_NRG;
         }

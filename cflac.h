@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2022 Jo2003 (olenka.joerg@gmail.com)
+ * Copyright (C) 2021 Jo2003 (olenka.joerg@gmail.com)
  * This file is part of cd2netmd_gui
  *
  * cd2netmd is free software: you can redistribute it and/or modify
@@ -15,44 +15,58 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-#include <QObject>
-#include "helpers.h"
+#include "ccliprocess.h"
+#include <QFile>
 #include "defines.h"
 
 //------------------------------------------------------------------------------
-//! @brief      This class describes a wave splitter.
+//! @brief      This class describes the flac decoder handling.
 //------------------------------------------------------------------------------
-class CWaveSplitter : public QObject
+class CFlac : public CCliProcess
 {
     Q_OBJECT
-
-    // data needed for 1 sec in 44100KHz, 16bit, stereo
-    static constexpr uint32_t WAVE_BLOCK_SIZE = 44100 * 2 * 2;
-    static constexpr uint32_t WAVE_FRAME_SIZE = 2048;
+    /// program executable path
+#ifdef Q_OS_WIN
+    static constexpr const char* FLAC_CLI = "toolchain/flac.exe";
+#elif defined Q_OS_MAC
+    static constexpr const char* FLAC_CLI = "flac";
+#else
+    // hopefully in path
+    static constexpr const char* FLAC_CLI = "flac";
+#endif
 
 public:
-
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
     //! @param      parent  The parent
     //--------------------------------------------------------------------------
-    explicit CWaveSplitter(QObject *parent = nullptr);
-    
+    explicit CFlac(QObject *parent = nullptr);
+
     //--------------------------------------------------------------------------
-    //! @brief      Splits waves.
+    //! @brief      start encoder
     //!
-    //! @param[in]  queue  The queue of files
-    //--------------------------------------------------------------------------
-    void splitWaves(const c2n::TransferQueue& queue);
-    
-    //--------------------------------------------------------------------------
-    //! @brief      check wave file
+    //! @param[in]  srcFileName  The source file name
+    //! @param[in]  trgFileName  The target file name
     //!
-    //! @param      fWave         The wave file
-    //! @param      waveDataSize  The wave data size
-    //!
-    //! @return     0 -> ok; -1 -> error
+    //! @return     0 on success
     //--------------------------------------------------------------------------
-    static int checkWaveFile(QFile& fWave, size_t& waveDataSize);
+    int start(const QString& srcFileName, const QString trgFileName);
+
+private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      Finishes a copy.
+    //!
+    //! @param[in]  exitCode    The exit code
+    //! @param[in]  exitStatus  The exit status
+    //--------------------------------------------------------------------------
+    void finishCopy(int exitCode, ExitStatus exitStatus);
+
+signals:
+    //--------------------------------------------------------------------------
+    //! @brief      signals that current file was handled
+    //!
+    //! @param[in]  <unnamed>  false
+    //--------------------------------------------------------------------------
+    void fileDone();
 };

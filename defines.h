@@ -40,11 +40,6 @@ struct SRipTrack
     QTemporaryFile* mpFile;
     time_t          mLength;
     WorkStep        mStep;
-    // new for cue sheet
-    bool            mCueSheet;
-    int32_t         mStartIdx;
-    int32_t         mFrameCount;
-    QString         mSourceFile;
 };
 
 using TransferQueue = QVector<SRipTrack>;
