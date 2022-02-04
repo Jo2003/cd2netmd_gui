@@ -186,7 +186,7 @@ void SettingsDlg::on_cbxLogLevel_currentIndexChanged(int index)
 void SettingsDlg::on_pushCleanup_clicked()
 {
     QDir tempDir(QDir::temp());
-    QStringList tmpFiles = tempDir.entryList(QStringList() << "cd2netmd.*", QDir::Files);
+    QStringList tmpFiles = tempDir.entryList(QStringList() << "cd2netmd.*" << "cd2netmd_flac_decode*.*", QDir::Files);
 
     for (const auto& fName : tmpFiles)
     {

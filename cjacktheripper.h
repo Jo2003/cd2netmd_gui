@@ -201,7 +201,21 @@ public slots:
     //--------------------------------------------------------------------------
     void copyDone();
 
+    //--------------------------------------------------------------------------
+    //! @brief      flac extract done
+    //--------------------------------------------------------------------------
+    void extractDone();
+
 protected:
+    //--------------------------------------------------------------------------
+    //! @brief      extract flac
+    //--------------------------------------------------------------------------
+    void flacExtract();
+
+    //--------------------------------------------------------------------------
+    //! @brief      start file copy stuff
+    //--------------------------------------------------------------------------
+    void startCopyShop();
 
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
@@ -245,7 +259,9 @@ private:
     QString mImgFile;
     driver_id_t mDrvId = DRIVER_UNKNOWN;
     CueMap mCueMap;
-    CCopyShopThread* mpCopyShop;
+    CFlac* mpFlac;
+    int miFlacTrack;
+    QString mFlacFName;
 };
 
 ///
@@ -303,6 +319,8 @@ class CCopyShopThread : public QThread
     using TrackAudioFormat = CJackTheRipper::TrackAudioFormat;
     using SCueInfo = CJackTheRipper::SCueInfo;
 
+    static const int PERCENTS[];
+
 public:
 
     //--------------------------------------------------------------------------
@@ -336,17 +354,17 @@ protected:
     //--------------------------------------------------------------------------
     //! @brief      concatinate audio files
     //!
-    //! @param[in]  sources source audio files
-    //! @param[in]  srcFormat format of audio files
-    //! @param[in]  trgFileName name of target file
-    //!
     //! @return 0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
-    int conCatWave(const QStringList& sources,
-                   const QVector<TrackAudioFormat>& srcFormat,
-                   const QString& trgFileName);
+    int conCatWave();
+
+    //--------------------------------------------------------------------------
+    //! @brief      pseudo update progress
+    //--------------------------------------------------------------------------
+    void updPercent();
 
     CJackTheRipper::CueMap& mCueMap;
     int mTrack;
     QString mName;
+    uint8_t mPercentPos;
 };
