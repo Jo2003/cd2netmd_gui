@@ -39,7 +39,7 @@ int CCDDB::getEntries(const QString &queryPart)
              << QSslSocket::sslLibraryBuildVersionString()
              << QSslSocket::sslLibraryVersionString();
 
-    qDebug() << "Request entries: " << reqUrl;
+    qInfo() << "Request entries: " << reqUrl;
 
 
     QNetworkRequest req(reqUrl);
@@ -55,7 +55,7 @@ int CCDDB::getEntry(const QString &queryPart)
              + "/~cddb/cddb.cgi?cmd=cddb+read+" + queryPart
              + "&hello=me@you.org+localhost+MyRipper+0.1.0&proto=6");
 
-    qDebug() << "Request matching entry: " << reqUrl;
+    qInfo() << "Request matching entry: " << reqUrl;
 
     QNetworkRequest req(reqUrl);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain; charset=utf-8");

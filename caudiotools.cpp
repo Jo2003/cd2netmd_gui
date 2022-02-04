@@ -120,7 +120,7 @@ int CAudioTools::checkWaveFile(QFile &fWave, size_t &waveDataSize)
     }
     catch (const std::exception& e)
     {
-        qDebug() << e.what();
+        qInfo() << e.what();
         ret = -1;
     }
     return ret;
@@ -156,7 +156,7 @@ int CAudioTools::stripWaveHeader(QFile& fWave, size_t& waveDataSize)
     }
     catch (const std::exception& e)
     {
-        qDebug() << e.what();
+        qInfo() << e.what();
         ret = -1;
     }
     return ret;

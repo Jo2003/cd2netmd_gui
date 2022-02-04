@@ -794,7 +794,7 @@ void MainWindow::on_pushSettings_clicked()
 void MainWindow::on_pushLoadImg_clicked()
 {
     QString selfilter;
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CD Image File"), "", tr("Audio CD Image (*.cue *.toc *.nrg)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CD Image File"), "", tr("Cue Sheet (*.cue)"));
     driver_id_t tp;
 
     if (!fileName.isEmpty())

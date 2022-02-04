@@ -349,5 +349,4 @@ protected:
     CJackTheRipper::CueMap& mCueMap;
     int mTrack;
     QString mName;
-    CFlac* mpFlac;
 };

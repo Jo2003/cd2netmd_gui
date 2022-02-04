@@ -216,7 +216,7 @@ void CNetMD::procEnded(bool)
             {
                 emit jsonOut(EMPTY_JSON_RESP);
             }
-            qDebug() << static_cast<const char*>(json.toUtf8());
+            qInfo() << static_cast<const char*>(json.toUtf8());
         }
     }
     else if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC) || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
@@ -226,6 +226,6 @@ void CNetMD::procEnded(bool)
 
     if (!mLog.isEmpty())
     {
-        qDebug() << static_cast<const char*>(mLog.toUtf8());
+        qInfo() << static_cast<const char*>(mLog.toUtf8());
     }
 }

@@ -223,7 +223,7 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
 
     if (!mLog.isEmpty())
     {
-        qDebug() << static_cast<const char*>(mLog.toUtf8());
+        qInfo() << static_cast<const char*>(mLog.toUtf8());
     }
 
     emit fileDone(false);
