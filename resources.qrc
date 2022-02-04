@@ -12,6 +12,7 @@
         <file alias="about">res/about.png</file>
         <file alias="cd">res/cd.png</file>
         <file alias="settings">res/setting.png</file>
+        <file alias="cue">res/cue.png</file>
     </qresource>
     <qresource prefix="/dark">
         <file alias="wait">res/wait_ani_dk.gif</file>

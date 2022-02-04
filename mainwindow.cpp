@@ -640,6 +640,7 @@ void MainWindow::enableDialogItems(bool ena)
     }
     ui->pushLoadMD->setEnabled(ena);
     ui->pushInitCD->setEnabled(ena);
+    ui->pushLoadImg->setEnabled(ena);
 
     if (ena)
     {

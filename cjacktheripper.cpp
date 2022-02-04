@@ -32,10 +32,10 @@
 CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
       mpCDParanoia(nullptr), mpRipThread(nullptr),
-      mpCddb(nullptr), mDiscLength(0), mBusy(false), mbCDDB(false)
+      mpCddb(nullptr), mDiscLength(0), mBusy(false), mbCDDB(false),
+      mpCopyShop(nullptr)
 {
     mpCddb = new CCDDB(this);
-    mpFlac = new CFlac(this);
 }
 
 ///
@@ -88,6 +88,14 @@ int CJackTheRipper::cleanup()
        mpRipThread = nullptr;
     }
 
+    if (mpCopyShop != nullptr)
+    {
+        mpCopyShop->terminate();
+        mpCopyShop->wait();
+        delete mpCopyShop;
+        mpCopyShop = nullptr;
+    }
+
     if (mpCDParanoia != nullptr)
     {
         cdio_paranoia_free(mpCDParanoia);
@@ -117,6 +125,14 @@ int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoi
         delete mpRipThread;
     }
 
+    if (mpCopyShop != nullptr)
+    {
+        mpCopyShop->terminate();
+        mpCopyShop->wait();
+        delete mpCopyShop;
+        mpCopyShop = nullptr;
+    }
+
     if (mCueMap.isEmpty())
     {
         mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName, paranoia);
@@ -128,7 +144,17 @@ int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoi
     }
     else
     {
-        return copyShopThread(trackNo, fName);
+        mpCopyShop = new CCopyShopThread(this, mCueMap, trackNo, fName);
+        if (mpCopyShop != nullptr)
+        {
+            connect(mpCopyShop, &CCopyShopThread::finished, mpCopyShop, &QObject::deleteLater);
+            connect(mpCopyShop, &CCopyShopThread::finished, this, &CJackTheRipper::copyDone);
+            connect(mpCopyShop, &CCopyShopThread::progress, this, &CJackTheRipper::getProgress);
+            mpCopyShop->start(QThread::NormalPriority);
+
+            mBusy = true;
+            return 0;
+        }
     }
     return -1;
 }
@@ -322,100 +348,12 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      thread function for copy stuff (cue sheet)
-//!
-//! @param[in]  track     The track number
-//! @param[in]  fName     The file name
-//!
-//! @return     0 on success
+//! @brief      copy shop thread ended
 //--------------------------------------------------------------------------
-int CJackTheRipper::copyShopThread(int track, const QString& fName)
+void CJackTheRipper::copyDone()
 {
-    int ret = 0;
-
-    if (track == -1)
-    {
-        // DaO
-        // some audio tracks may share the same audio file
-        QStringList sources;
-        QVector<TrackAudioFormat> srcFormat;
-        for (const auto& c : mCueMap)
-        {
-            if (!sources.contains(c.mSrcFileName))
-            {
-                sources << c.mSrcFileName;
-                srcFormat.append(c.mAFormat);
-            }
-        }
-
-        ret = conCatWave(sources, srcFormat, fName);
-    }
-    else if (mCueMap.contains(track))
-    {
-        int percents[] = {0, 25, 50, 75};
-        uint8_t percentPos = 0;
-        bool done = false;
-
-        auto updPercent = [&]()->void
-        {
-            if (++percentPos >= (sizeof(percents) / sizeof(int)))
-            {
-                percentPos = 0;
-            }
-            emit progress(percents[percentPos]);
-        };
-
-        SCueInfo& cinfo = mCueMap[track];
-
-        try
-        {
-            if (cinfo.mAFormat == TrackAudioFormat::WAVE)
-            {
-                cinfo.mWavFileName = cinfo.mSrcFileName;
-            }
-            else if (cinfo.mAFormat == TrackAudioFormat::FLAC)
-            {
-                QFileInfo fi(cinfo.mSrcFileName);
-                cinfo.mWavFileName = QString("%1/%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
-                if (!QFile::exists(cinfo.mWavFileName))
-                {
-                    mpFlac->start(cinfo.mSrcFileName, cinfo.mWavFileName);
-                    for (int j = 0; j < 150; j++)
-                    {
-                        updPercent();
-                        if ((done = mpFlac->waitForFinished(2000)) == true)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (!done)
-                    {
-                        throw std::runtime_error(R"(Can't decode flac in needed time frame.)");
-                    }
-                }
-            }
-            updPercent();
-            if (CAudioTools::extractRange(cinfo.mWavFileName, fName, cinfo.mlStart, cinfo.mlLength) != 0)
-            {
-                throw std::runtime_error(R"(Can't extract wave data.)");
-            }
-        }
-        catch (const std::exception& e)
-        {
-            qDebug() << e.what();
-            ret = -1;
-        }
-    }
-    else
-    {
-        ret = -1;
-    }
-
-    emit progress(100);
     noBusy();
     emit finished();
-    return ret;
 }
 
 QString CJackTheRipper::deviceInfo()
@@ -767,136 +705,6 @@ void CJackTheRipper::getProgress(int percent)
 }
 
 //--------------------------------------------------------------------------
-//! @brief      concatinate audio files
-//!
-//! @param[in]  sources source audio files
-//! @param[in]  srcFormat format of audio files
-//! @param[in]  trgFileName name of target file
-//!
-//! @return 0 -> ok; -1 -> error
-//--------------------------------------------------------------------------
-int CJackTheRipper::conCatWave(const QStringList& sources,
-                               const QVector<TrackAudioFormat>& srcFormat,
-                               const QString& trgFileName)
-{
-    int ret = 0;
-    QString tempTemplate = QString("%1/cd2netmd_gui_concat_temp_%%1.wav").arg(QDir::tempPath());
-    QStringList toConCat;
-    int percents[] = {0, 25, 50, 75};
-    uint8_t percentPos = 0;
-    bool done = false;
-
-    auto updPercent = [&]()->void
-    {
-        if (++percentPos >= (sizeof(percents) / sizeof(int)))
-        {
-            percentPos = 0;
-        }
-        emit progress(percents[percentPos]);
-    };
-
-    try
-    {
-        for (int i = 0; i < sources.count(); i++)
-        {
-            if (srcFormat[i] == TrackAudioFormat::WAVE)
-            {
-                toConCat << sources[i];
-            }
-            else
-            {
-                QString tmpName = QString(tempTemplate).arg(i);
-                toConCat << tmpName;
-                qDebug() << "Convert" << sources[i] << "to" << tmpName;
-                mpFlac->start(sources[i], tmpName);
-                for (int j = 0; j < 150; j++)
-                {
-                    updPercent();
-                    if ((done = mpFlac->waitForFinished(2000)) == true)
-                    {
-                        break;
-                    }
-                }
-
-                if (!done)
-                {
-                    throw std::runtime_error(R"(Can't decode flac in needed time frame.)");
-                }
-            }
-        }
-
-        size_t sz      = 0;
-        size_t wholeSz = 0;
-
-        QFile tmpTrg(trgFileName + ".raw");
-        if (tmpTrg.open(QIODevice::Truncate | QIODevice::ReadWrite))
-        {
-            for (const auto& s : toConCat)
-            {
-                qDebug() << "Append" << s << "to" << tmpTrg.fileName();
-                QFile src(s);
-                if (src.open(QIODevice::ReadOnly))
-                {
-                    if (!CAudioTools::stripWaveHeader(src, sz))
-                    {
-                        updPercent();
-                        tmpTrg.write(src.readAll());
-                        wholeSz += sz;
-                    }
-                    else
-                    {
-                        throw std::runtime_error(R"(Can't strip wave header.)");
-                    }
-                }
-                else
-                {
-                    throw std::runtime_error(R"(Can't open wave file.)");
-                }
-            }
-
-            QFile trg(trgFileName);
-            if (trg.open(QIODevice::WriteOnly))
-            {
-                qDebug() << "Create" << trgFileName << "from" << tmpTrg.fileName();
-                updPercent();
-                CAudioTools::writeWaveHeader(trg, wholeSz);
-                tmpTrg.seek(0);
-                trg.write(tmpTrg.readAll());
-            }
-            else
-            {
-                throw std::runtime_error(R"(Can't open target file.)");
-            }
-
-            tmpTrg.close();
-            tmpTrg.remove();
-        }
-        else
-        {
-            throw std::runtime_error(R"(Can't open raw target file.)");
-        }
-
-        // remove temp files
-        for (int i = 0; i < sources.count(); i++)
-        {
-            if (sources[i] != toConCat[i])
-            {
-                qDebug() << "Remove temp file" << toConCat[i];
-                QFile::remove(toConCat[i]);
-            }
-        }
-        updPercent();
-    }
-    catch (const std::exception& e)
-    {
-        qDebug() << e.what();
-        ret = -1;
-    }
-
-    return ret;
-}
-
-//--------------------------------------------------------------------------
 //! @brief      remove temporary files
 //--------------------------------------------------------------------------
 void CJackTheRipper::removeTemp()
@@ -975,9 +783,8 @@ void CCDInitThread::run()
 //! @param      fName         The target file name
 //--------------------------------------------------------------------------
 CCopyShopThread::CCopyShopThread(QObject* parent, CueMap& cueMap, int track, const QString& fName)
-    :QThread(parent), mCueMap(cueMap), mTrack(track), mName(fName)
+    :QThread(parent), mCueMap(cueMap), mTrack(track), mName(fName), mpFlac(nullptr)
 {
-    mpFlac = new CFlac(this);
 }
 
 //--------------------------------------------------------------------------
@@ -1115,6 +922,7 @@ int CCopyShopThread::conCatWave(const QStringList& sources,
 //--------------------------------------------------------------------------
 void CCopyShopThread::run()
 {
+    mpFlac = new CFlac();
     if (mTrack == -1)
     {
         // DaO
@@ -1193,6 +1001,8 @@ void CCopyShopThread::run()
     {
         qWarning() << "Track" << mTrack << "not included in cue file!";
     }
+
+    mpFlac->deleteLater();
 
     emit progress(100);
     emit finished();

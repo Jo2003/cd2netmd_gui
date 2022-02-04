@@ -44,7 +44,7 @@ struct SRipTrack
 
 using TransferQueue = QVector<SRipTrack>;
 
-static constexpr const char* PROGRAM_VERSION = "1.7.7";
+static constexpr const char* PROGRAM_VERSION = "1.8.1";
 static constexpr const char* PROGRAM_NAME    = "CD2NetMD GUI";
 
 enum LogLevel

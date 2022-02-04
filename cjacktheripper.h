@@ -30,6 +30,8 @@
 #include "cflac.h"
 #include "ccddb.h"
 
+class CCopyShopThread;
+
 ///
 /// \brief The CJackTheRipper class a CD ripper class able of CD paranoia
 ///
@@ -148,16 +150,6 @@ public:
     int ripThread(int track, const QString& fName, bool paranoia);
 
     //--------------------------------------------------------------------------
-    //! @brief      thread function for copy stuff (cue sheet)
-    //!
-    //! @param[in]  track     The track number
-    //! @param[in]  fName     The file name
-    //!
-    //! @return     0 on success
-    //--------------------------------------------------------------------------
-    int copyShopThread(int track, const QString& fName);
-    
-    //--------------------------------------------------------------------------
     //! @brief      get device info
     //!
     //! @return     The info string.
@@ -204,26 +196,17 @@ public slots:
     //--------------------------------------------------------------------------
     int parseCueFile();
 
-protected:
+    //--------------------------------------------------------------------------
+    //! @brief      copy shop thread ended
+    //--------------------------------------------------------------------------
+    void copyDone();
 
-    //--------------------------------------------------------------------------
-    //! @brief      concatinate audio files
-    //!
-    //! @param[in]  sources source audio files
-    //! @param[in]  srcFormat format of audio files
-    //! @param[in]  trgFileName name of target file
-    //!
-    //! @return 0 -> ok; -1 -> error
-    //--------------------------------------------------------------------------
-    int conCatWave(const QStringList& sources,
-                   const QVector<TrackAudioFormat>& srcFormat,
-                   const QString& trgFileName);
+protected:
 
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
     cdrom_paranoia_t* mpCDParanoia;     ///< CD Paranoia pointer
     QTimer mtChkChd;                    ///< check for media change
-    CFlac* mpFlac;
 
 signals:
 
@@ -262,6 +245,7 @@ private:
     QString mImgFile;
     driver_id_t mDrvId = DRIVER_UNKNOWN;
     CueMap mCueMap;
+    CCopyShopThread* mpCopyShop;
 };
 
 ///
