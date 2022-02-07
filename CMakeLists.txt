@@ -69,6 +69,8 @@ add_executable(cd2netmd_gui
     cnamingdialog.cpp
     cnetmd.cpp
     cxenc.cpp
+    cflac.cpp
+    caudiotools.cpp
     main.cpp
     mainwindow.cpp
     helpers.cpp
@@ -90,6 +92,7 @@ target_link_libraries(cd2netmd_gui
     ${CMAKE_SOURCE_DIR}/linux_deps/lib/libcdio_cdda.a
     ${CMAKE_SOURCE_DIR}/linux_deps/lib/libcdio_paranoia.a
     ${CMAKE_SOURCE_DIR}/linux_deps/lib/libjson-c.a
+    ${CMAKE_SOURCE_DIR}/linux_deps/lib/libcue.a
     ${LIB_USB}
     ${GCRYPT}
     ${GPG_ERR}

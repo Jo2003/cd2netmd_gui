@@ -35,3 +35,13 @@ cd libcdio-paranoia
 make
 make install
 ```
+
+## libcue
+```bash
+cd ${HOME}/src
+git clone https://github.com/Jo2003/libcue
+mkdir -p build_cue && cd build_cue
+./cmake -DCMAKE_BUILD_TARGET=Release -DCMAKE_INSTALL_PREFIX=${HOME}/src/cd2netmd_gui/linux_deps ../libcue
+make
+make install
+```
