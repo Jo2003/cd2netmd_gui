@@ -479,7 +479,7 @@ int CJackTheRipper::parseCueFile()
 
             // disc title
             Cdtext* cdt = cd_get_cdtext(cd);
-            tok = cdtext_get_cue(PTI_PERFORMER, cdt);
+            tok = cue_cdtext_get(PTI_PERFORMER, cdt);
 
             if (tok)
             {
@@ -488,7 +488,7 @@ int CJackTheRipper::parseCueFile()
                 track     = QString("%1 - ").arg(performer);
             }
 
-            tok = cdtext_get_cue(PTI_TITLE, cdt);
+            tok = cue_cdtext_get(PTI_TITLE, cdt);
             if (tok)
             {
                 title = QString(tok).trimmed();
@@ -580,7 +580,7 @@ int CJackTheRipper::parseCueFile()
                 mTrackTimes.append(length / CDIO_CD_FRAMES_PER_SEC);
                 mDiscLength += length / CDIO_CD_FRAMES_PER_SEC;
 
-                tok = cdtext_get_cue(PTI_PERFORMER, cdt);
+                tok = cue_cdtext_get(PTI_PERFORMER, cdt);
 
                 if (tok)
                 {
@@ -591,7 +591,7 @@ int CJackTheRipper::parseCueFile()
                     }
                 }
 
-                tok = cdtext_get_cue(PTI_TITLE, cdt);
+                tok = cue_cdtext_get(PTI_TITLE, cdt);
                 if (tok)
                 {
                     title = QString(tok).trimmed();
