@@ -1,0 +1,11 @@
+prefix=/home/joergn/src/cd2netmd_gui/prebuilt/windows
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libcdio_paranoia
+Description: CD paranoia library from libcdio
+Version: 10.2+2.0.1
+Requires: libcdio
+Libs: -L${libdir} -lcdio_paranoia -lcdio_cdda -lcdio
+Cflags: -I${includedir}
