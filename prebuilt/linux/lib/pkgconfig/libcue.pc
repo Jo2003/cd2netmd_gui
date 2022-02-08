@@ -1,0 +1,10 @@
+prefix=/home/joergn/src/cd2netmd_gui/prebuilt/linux
+exec_prefix=${prefix}
+libdir=/home/joergn/src/cd2netmd_gui/prebuilt/linux/lib
+includedir=/home/joergn/src/cd2netmd_gui/prebuilt/linux/include
+
+Name: libcue
+Description: Cuesheet parser library
+Version: 2.2.1
+Libs: -L${libdir} -lcue
+Cflags: -I${includedir}

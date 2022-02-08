@@ -1,0 +1,12 @@
+prefix=/home/joergn/src/cd2netmd_gui/prebuilt/linux
+exec_prefix=/home/joergn/src/cd2netmd_gui/prebuilt/linux
+libdir=/home/joergn/src/cd2netmd_gui/prebuilt/linux/lib
+includedir=/home/joergn/src/cd2netmd_gui/prebuilt/linux/include
+
+Name: json-c
+Description: A JSON implementation in C
+Version: 0.15.99
+Requires:
+Libs.private: 
+Libs: -L${libdir} -ljson-c
+Cflags: -I${includedir} -I${includedir}/json-c

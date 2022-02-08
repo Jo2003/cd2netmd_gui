@@ -32,9 +32,9 @@ create_folders() {
 copy_content() {
     strip -s ${BIN_FILE}
     cp -f ${BIN_FILE} "${BUILD_FOLDER}/usr/bin/"
-    cp -f linux/atracdenc "${BUILD_FOLDER}/usr/bin/"
-    cp -f linux/netmd.rules "${BUILD_FOLDER}/etc/udev/rules.d/"
-    cp -f linux/20-netmd.fdi "${BUILD_FOLDER}/usr/share/hal/fdi/information/20thirdparty/"
+    cp -f prebuilt/linux/bin/atracdenc "${BUILD_FOLDER}/usr/bin/"
+    cp -f prebuilt/linux/config/netmd.rules "${BUILD_FOLDER}/etc/udev/rules.d/"
+    cp -f prebuilt/linux/config/20-netmd.fdi "${BUILD_FOLDER}/usr/share/hal/fdi/information/20thirdparty/"
     # cp -f *.qm "${BUILD_FOLDER}/usr/share/${BIN_NAME}/language/"
     cp -f res/minidisc.png "${BUILD_FOLDER}/usr/share/${BIN_NAME}/${BIN_NAME}.png"
 }

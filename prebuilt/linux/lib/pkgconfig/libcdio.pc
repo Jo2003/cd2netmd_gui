@@ -1,0 +1,11 @@
+prefix=/home/joergn/src/cd2netmd_gui/prebuilt/linux
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libcdio
+Description: Portable CD-ROM I/O library
+Version: 2.1.0
+#Requires: glib-2.0 
+Libs: -L${libdir} -lcdio  -lm  
+Cflags: -I${includedir}
