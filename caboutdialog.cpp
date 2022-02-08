@@ -43,7 +43,7 @@ Please support me through <a style="color: #3499b3; font-weight: bold;" href="ht
     ui->textAbout->setHtml(text);
 #ifdef Q_OS_MAC
     QFont f = ui->textAbout->font();
-    f.setPointSize(f.pointSize() + 2);
+    f.setPointSize(f.pointSize() + 4);
     ui->textAbout->setFont(f);
 #endif
 }

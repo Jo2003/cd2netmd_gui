@@ -16,6 +16,7 @@
  */
 #include "cflac.h"
 #include "helpers.h"
+#include <QApplication>
 
 CFlac::CFlac(QObject *parent)
     : CCliProcess(parent)

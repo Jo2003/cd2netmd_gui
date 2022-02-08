@@ -20,22 +20,26 @@ INCLUDEPATH += include \
                externals/netmd/libnetmd \
                externals/netmd/netmdcli
 			   
-mac{			   
+mac{
+	QT_CONFIG -= no-pkg-config
+	CONFIG += link_pkgconfig
+	PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue libjson-c
     INCLUDEPATH += /usr/local/Cellar/libusb/1.0.24/include \
                    /usr/local/Cellar/libgcrypt/1.9.4_1/include \
                    /usr/local/Cellar/libgpg-error/1.43/include \
                    /usr/local/include
-	LIBS += -L/usr/local/lib
+	LIBS += -L/usr/local/lib -lgcrypt -lusb-1.0 -lgpg-error
 }
 
 win32{
     INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
     RC_FILE = program.rc
-    LIBS += -L./libs/win -lcue
+    LIBS += -L./libs/win -lcue -lws2_32 -lcdio -lcdio_cdda -lcdio_paranoia -ljson-c -lgcrypt -lusb-1.0 -lgpg-error -static-libgcc
 }
 
 linux{
     INCLUDEPATH += /usr/lib/gcc/x86_64-linux-gnu/7/include
+	LIBS += -lcue -lcdio -lcdio_cdda -lcdio_paranoia -ljson-c -lgcrypt -lusb-1.0 -lgpg-error -static-libgcc
 }
 
 SOURCES += \
@@ -113,10 +117,6 @@ FORMS += \
 
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
-
-LIBS += -lcdio -lcdio_cdda -lcdio_paranoia -lgcrypt -lusb-1.0 -lgpg-error -ljson-c
-win32: LIBS += -lws2_32
-!mac: LIBS += -static-libgcc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

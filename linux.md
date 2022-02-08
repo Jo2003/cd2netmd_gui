@@ -10,7 +10,7 @@ console output for missing tools and install them.
 cd ${HOME}/src
 git clone https://github.com/json-c/json-c
 mkdir -p build_json_c && cd build_json_c
-cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_INSTALL_PREFIX=${HOME}/src/cd2netmd_gui/linux_deps/ -DBUILD_SHARED_LIBS=false ../json-c/
+cmake -DCMAKE_BUILD_TYPE=release -DCMAKE_INSTALL_PREFIX=${HOME}/src/cd2netmd_gui/prebuilt/linux/ -DBUILD_SHARED_LIBS=false ../json-c/
 make 
 make install
 ```
@@ -21,7 +21,7 @@ cd ${HOME}/src
 wget https://git.savannah.gnu.org/cgit/libcdio.git/snapshot/libcdio-release-2.1.0.tar.gz
 tar -xvzpf libcdio-release-2.1.0.tar.gz
 cd libcdio-release-2.1.0
-./autogen.sh --prefix=${HOME}/src/cd2netmd_gui/linux_deps --disable-shared
+./autogen.sh --prefix=${HOME}/src/cd2netmd_gui/prebuilt/linux/ --disable-shared
 make
 make install
 ```
@@ -31,7 +31,7 @@ make install
 cd ${HOME}/src
 git clone https://github.com/rocky/libcdio-paranoia.git
 cd libcdio-paranoia
-./autogen.sh --prefix=${HOME}/src/cd2netmd_gui/linux_deps --disable-shared PKG_CONFIG_PATH=${HOME}/src/cd2netmd_gui/linux_deps/lib/pkgconfig
+./autogen.sh --prefix=${HOME}/src/cd2netmd_gui/prebuilt/linux/ --disable-shared PKG_CONFIG_PATH=${HOME}/src/cd2netmd_gui/prebuilt/linux/lib/pkgconfig
 make
 make install
 ```
@@ -41,7 +41,7 @@ make install
 cd ${HOME}/src
 git clone https://github.com/Jo2003/libcue
 mkdir -p build_cue && cd build_cue
-./cmake -DCMAKE_BUILD_TARGET=Release -DCMAKE_INSTALL_PREFIX=${HOME}/src/cd2netmd_gui/linux_deps ../libcue
+cmake -DCMAKE_BUILD_TARGET=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=${HOME}/src/cd2netmd_gui/prebuilt/linux/ ../libcue
 make
 make install
 ```

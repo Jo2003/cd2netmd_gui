@@ -26,8 +26,9 @@ mkdir -p "${CONTENTS}/PlugIns"
 mkdir -p "${CONTENTS}/Frameworks"
 mkdir -p "${CONTENTS}/translations"
 cp "../res/minidisc.icns" "${CONTENTS}/Resources/${APPNAME}.icns"
-cp ../mac/atracdenc "${CONTENTS}/MacOS/"
-cp ../mac/*.dylib "${CONTENTS}/Frameworks/"
+cp ../prebuilt/mac/bin/atracdenc "${CONTENTS}/MacOS/"
+cp ../prebuilt/mac/bin/flac "${CONTENTS}/MacOS/"
+cp ../prebuilt/mac/lib/*.dylib "${CONTENTS}/Frameworks/"
 
 # copy Qt translations
 cp "${QTTRANS}/qt_de.qm" "${CONTENTS}/translations"
@@ -71,9 +72,12 @@ iconv -f ASCII -t UTF-8 ${TMPFILE} >"${CONTENTS}/Info.plist"
 macdeployqt "${APPNAME}.app" -verbose=0
 # install_name_tool -add_rpath @executable_path/../Framework "${APPNAME}.app/Contents/MacOS/atracdenc"
 # install_name_tool -add_rpath @executable_path/plugins "${APPNAME}.app/Contents/MacOS/${APPNAME}"
-install_name_tool -change libjson-c.5.dylib @executable_path/../Frameworks/libjson-c.5.dylib "${APPNAME}.app/Contents/MacOS/${APPNAME}"
-install_name_tool -id @executable_path/../Frameworks/libjson-c.5.dylib "${APPNAME}.app/Contents/Frameworks/libjson-c.5.dylib"
+# install_name_tool -change libjson-c.5.dylib @executable_path/../Frameworks/libjson-c.5.dylib "${APPNAME}.app/Contents/MacOS/${APPNAME}"
+# install_name_tool -id @executable_path/../Frameworks/libjson-c.5.dylib "${APPNAME}.app/Contents/Frameworks/libjson-c.5.dylib"
+# install_name_tool -id @executable_path/../Frameworks/libcue.2.dylib "${APPNAME}.app/Contents/Frameworks/libcue.2.dylib"
 install_name_tool -change /usr/local/lib/libsndfile.1.dylib @executable_path/../Frameworks/libsndfile.1.dylib "${APPNAME}.app/Contents/MacOS/atracdenc"
+install_name_tool -change /usr/local/opt/libogg/lib/libogg.0.dylib @executable_path/../Frameworks/libogg.0.dylib "${APPNAME}.app/Contents/MacOS/flac"
+install_name_tool -change /usr/local/Cellar/flac/1.3.3/lib/libFLAC.8.dylib @executable_path/../Frameworks/libFLAC.8.dylib "${APPNAME}.app/Contents/MacOS/flac"
 
 POS=`pwd`
 cd "${CONTENTS}/Frameworks"

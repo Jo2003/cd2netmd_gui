@@ -1,0 +1,11 @@
+prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libcdio++
+Description: C++ OO Portable CD-ROM I/O library
+Version: 2.1.0
+#Requires: glib-2.0 
+Libs: -L${libdir} -lcdio++ -lcdio  -lm -Wl,-framework,CoreFoundation -Wl,-framework,IOKit -Wl,-framework,DiskArbitration
+Cflags: -I${includedir}

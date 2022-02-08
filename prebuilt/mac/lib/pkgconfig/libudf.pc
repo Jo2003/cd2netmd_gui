@@ -1,0 +1,11 @@
+prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libudf
+Description: UDF library of libcdio
+Version: 2.1.0
+Requires: libcdio 
+Libs: -L${libdir} -ludf -lcdio
+Cflags: -I${includedir}

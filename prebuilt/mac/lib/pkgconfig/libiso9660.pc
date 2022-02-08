@@ -1,0 +1,12 @@
+prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+libiconv=-liconv
+
+Name: libiso9660
+Description: ISO-9660 library of libcdio
+Version: 2.1.0
+Requires: libcdio 
+Libs: -L${libdir} -liso9660 -liconv -lcdio
+Cflags: -I${includedir}

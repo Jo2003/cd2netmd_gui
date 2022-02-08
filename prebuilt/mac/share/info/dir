@@ -1,0 +1,18 @@
+Dies ist die Datei .../info/dir, die den obersten Knoten der
+Info-Hierarchie enthält, genannt (dir)Top.
+Beim ersten Aufruf von Info geht es bei diesem Knoten los.
+
+File: dir,	Node: Top	Dies ist der Beginn des INFO-Baums
+
+  Dieser Verzeichnis-Knoten zeigt ein Menü aller Hauptpunkte an.
+  „q“ beendet Info, „?“ listet alle Info-Befehle auf, „d“ kehrt hierher
+  zurück, „h“ gibt eine Einsteiger-Hilfe, „mEmacs<Return>“ besucht das
+  Emacs-Manual, etc.
+
+  Im Emacs kann man mit dem zweiten Mausknopf auf einen Menüeintrag oder
+  einen Querverweis klicken, um einen solchen auswählen.
+
+* Menu:
+
+Software libraries
+* libcdio: (libcdio).           GNU Compact Disc Input, Output, and Control Library.
