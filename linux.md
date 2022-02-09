@@ -45,3 +45,14 @@ cmake -DCMAKE_BUILD_TARGET=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFI
 make
 make install
 ```
+
+## taglib
+```bash
+cd ${HOME}/src
+wget https://taglib.org/releases/taglib-1.12.tar.gz
+tar -xvzpf taglib-1.12.tar.gz
+mkdir -p build_taglib && cd build_taglib
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${HOME}/src/cd2netmd_gui/prebuilt/linux/ ../taglib-1.12/
+make
+make install
+```
