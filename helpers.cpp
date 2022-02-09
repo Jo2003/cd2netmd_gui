@@ -177,9 +177,10 @@ QString mdToUtf8(const QByteArray& ba)
 QString titleFromFileName(const QString& fName)
 {
     QFileInfo fi(fName);
-    QString ret = fi.baseName();
+    QString ret = fi.completeBaseName();
+    ret.remove(QRegExp("^[0-9.]*"));
     ret.replace(QChar('_'), QChar(' '));
-    return ret;
+    return ret.trimmed();
 }
 
 //--------------------------------------------------------------------------

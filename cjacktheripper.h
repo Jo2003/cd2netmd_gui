@@ -27,8 +27,9 @@
 #include <cdio/cd_types.h>
 #include <cdio/cdtext.h>
 #include <cdio/paranoia/paranoia.h>
-#include "cflac.h"
+#include "cffmpeg.h"
 #include "ccddb.h"
+#include "audio.h"
 
 class CCopyShopThread;
 
@@ -39,20 +40,15 @@ class CJackTheRipper : public QObject
 {
     Q_OBJECT
 public:
-    enum TrackAudioFormat
-    {
-        UNKNOWN,
-        WAVE,
-        FLAC
-    };
 
+    /// one track in cue file
     struct SCueInfo
     {
-        QString mSrcFileName;
-        QString mWavFileName;
-        long mlStart;
-        long mlLength;
-        TrackAudioFormat mAFormat;
+        QString  mSrcFileName;  ///< source audio file
+        QString  mWavFileName;  ///< converted audio file
+        long     mlStart;       ///< RAW block count of start
+        long     mlLength;      ///< track length in RAW blocks
+        uint32_t mConversion;   ///< conversion vector
     };
 
     using CueMap = QMap<int, SCueInfo>;
@@ -208,9 +204,9 @@ public slots:
 
 protected:
     //--------------------------------------------------------------------------
-    //! @brief      extract flac
+    //! @brief      extract to Wave
     //--------------------------------------------------------------------------
-    void flacExtract();
+    void extractWave();
 
     //--------------------------------------------------------------------------
     //! @brief      start file copy stuff
@@ -259,7 +255,7 @@ private:
     QString mImgFile;
     driver_id_t mDrvId = DRIVER_UNKNOWN;
     CueMap mCueMap;
-    CFlac* mpFlac;
+    CFFMpeg* mpFFMpeg;
     int miFlacTrack;
     QString mFlacFName;
 };
@@ -315,8 +311,7 @@ class CCopyShopThread : public QThread
 {
     Q_OBJECT
 
-    using CueMap = CJackTheRipper::CueMap;
-    using TrackAudioFormat = CJackTheRipper::TrackAudioFormat;
+    using CueMap   = CJackTheRipper::CueMap;
     using SCueInfo = CJackTheRipper::SCueInfo;
 
     static const int PERCENTS[];

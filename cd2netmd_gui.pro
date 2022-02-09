@@ -10,7 +10,8 @@ CONFIG += c++11 debug_and_release
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS \
            QT_MESSAGELOGCONTEXT \
-           NO_PROGRAM
+           NO_PROGRAM \
+           TAGLIB_STATIC
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -21,20 +22,20 @@ INCLUDEPATH += include \
                externals/netmd/netmdcli
 			   
 mac{
-	QT_CONFIG -= no-pkg-config
-	CONFIG += link_pkgconfig
-	PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c
+    QT_CONFIG -= no-pkg-config
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c
     INCLUDEPATH += /usr/local/Cellar/libusb/1.0.24/include \
                    /usr/local/Cellar/libgcrypt/1.9.4_1/include \
                    /usr/local/Cellar/libgpg-error/1.43/include \
                    /usr/local/include
-	LIBS += -L/usr/local/lib -lgcrypt -lusb-1.0 -lgpg-error
+    LIBS += -L/usr/local/lib -lgcrypt -lusb-1.0 -lgpg-error
 }
 
 win32{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
-    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c
+    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c taglib
     INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
     RC_FILE = program.rc
     LIBS += -lws2_32 -lgcrypt -lusb-1.0 -lgpg-error -static-libgcc
@@ -69,13 +70,13 @@ SOURCES += \
     cnamingdialog.cpp \
     cnetmd.cpp \
     cxenc.cpp \
-    cflac.cpp \
+    cffmpeg.cpp \
     main.cpp \
     mainwindow.cpp \
     helpers.cpp \
     mdtitle.cpp \
     settingsdlg.cpp \
-    caudiotools.cpp
+    audio.cpp
 
 HEADERS += \
     externals/netmd/libnetmd/CMDiscHeader.h \
@@ -102,14 +103,14 @@ HEADERS += \
     cnamingdialog.h \
     cnetmd.h \
     cxenc.h \
-    cflac.h \
+    cffmpeg.h \
     defines.h \
     include/json.hpp \
     mainwindow.h \
     helpers.h \
     mdtitle.h \
     settingsdlg.h \
-    caudiotools.h
+    audio.h
 
 FORMS += \
     caboutdialog.ui \

@@ -20,10 +20,9 @@
 #include <libcue.h>
 #include <stdexcept>
 #include <QDir>
-#include "cflac.h"
+#include "cffmpeg.h"
 #include "helpers.h"
 #include "defines.h"
-#include "caudiotools.h"
 
 ///
 /// \brief CJackTheRipper::CJackTheRipper
@@ -33,13 +32,13 @@ CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
       mpCDParanoia(nullptr), mpRipThread(nullptr),
       mpCddb(nullptr), mDiscLength(0), mBusy(false), mbCDDB(false),
-      mpFlac(nullptr), miFlacTrack(-99)
+      mpFFMpeg(nullptr), miFlacTrack(-99)
 {
-    mpCddb = new CCDDB(this);
-    mpFlac = new CFlac(this);
+    mpCddb   = new CCDDB(this);
+    mpFFMpeg = new CFFMpeg(this);
 
-    connect(mpFlac, &CFlac::fileDone, this, &CJackTheRipper::extractDone);
-    connect(mpFlac, &CFlac::progress, this, &CJackTheRipper::getProgress);
+    connect(mpFFMpeg, &CFFMpeg::fileDone, this, &CJackTheRipper::extractDone);
+    connect(mpFFMpeg, &CFFMpeg::progress, this, &CJackTheRipper::getProgress);
 }
 
 ///
@@ -135,7 +134,7 @@ int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoi
     {
         miFlacTrack = trackNo;
         mFlacFName  = fName;
-        flacExtract();
+        extractWave();
         return 0;
     }
     return -1;
@@ -292,7 +291,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
-            CAudioTools::writeWaveHeader(f, trkSz);
+            audio::writeWaveHeader(f, trkSz);
 
             cdio_cddap_speed_set(mpCDAudio, 8);
 
@@ -343,13 +342,13 @@ void CJackTheRipper::copyDone()
 //--------------------------------------------------------------------------
 void CJackTheRipper::extractDone()
 {
-    flacExtract();
+    extractWave();
 }
 
 //--------------------------------------------------------------------------
-//! @brief      extract flac
+//! @brief      extract to wave
 //--------------------------------------------------------------------------
-void CJackTheRipper::flacExtract()
+void CJackTheRipper::extractWave()
 {
     QFileInfo fi;
     bool startCopy = true;
@@ -359,14 +358,14 @@ void CJackTheRipper::flacExtract()
         SCueInfo& ci = mCueMap[miFlacTrack];
         if (ci.mWavFileName.isEmpty())
         {
-            if (ci.mAFormat == TrackAudioFormat::FLAC)
+            if (ci.mConversion)
             {
                 fi.setFile(ci.mSrcFileName);
                 ci.mWavFileName = QString("%1/cd2netmd_flac_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
 
                 if (!QFile::exists(ci.mWavFileName))
                 {
-                    mpFlac->start(ci.mSrcFileName, ci.mWavFileName);
+                    mpFFMpeg->start(ci.mSrcFileName, ci.mWavFileName, ci.mConversion);
                     startCopy = false;
                 }
             }
@@ -383,14 +382,14 @@ void CJackTheRipper::flacExtract()
             SCueInfo& ci = mCueMap[track];
             if (ci.mWavFileName.isEmpty())
             {
-                if (ci.mAFormat == TrackAudioFormat::FLAC)
+                if (ci.mConversion)
                 {
                     fi.setFile(ci.mSrcFileName);
                     ci.mWavFileName = QString("%1/cd2netmd_flac_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
 
                     if (!QFile::exists(ci.mWavFileName))
                     {
-                        mpFlac->start(ci.mSrcFileName, ci.mWavFileName);
+                        mpFFMpeg->start(ci.mSrcFileName, ci.mWavFileName, ci.mConversion);
                         startCopy = false;
                         break;
                     }
@@ -523,53 +522,23 @@ int CJackTheRipper::parseCueFile()
                 {
                     lastSrcFile = cueInfo.mSrcFileName;
 
-                    QFile fMedia(cueInfo.mSrcFileName);
-                    if (fMedia.open(QIODevice::ReadOnly))
+                    int iLen = 0;
+                    if (!audio::checkAudioFile(cueInfo.mSrcFileName, cueInfo.mConversion, iLen))
                     {
-                        size_t audioSz = 0;
-                        int flacLength = 0;
-                        if (!CAudioTools::checkWaveFile(fMedia, audioSz))
+                        if (length == -1)
                         {
-                            // wave file ...
-                            if (length == -1)
-                            {
-                                long start = track_get_start(t);
-                                start *= CDIO_CD_FRAMESIZE_RAW; // CD DA block size
-                                length = (audioSz - start) / CDIO_CD_FRAMESIZE_RAW;
-                            }
-                            cueInfo.mAFormat = TrackAudioFormat::WAVE;
-                        }
-                        else if(CAudioTools::isFlac(fMedia, flacLength))
-                        {
-                            // flac file
-                            if (length == -1)
-                            {
-                                long start = track_get_start(t);
-                                length = flacLength * CDIO_CD_FRAMES_PER_SEC - start;
-                            }
-                            cueInfo.mAFormat = TrackAudioFormat::FLAC;
-                        }
-                        else
-                        {
-                            // unsupported audio (or whatever)
-                            cd_delete(cd);
-                            mTrackTimes.clear();
-                            mDiscLength = 0;
-                            mCueMap.clear();
-                            qWarning() << "Unsupported audio format in CUE sheet!";
-                            emit match(QStringList() << "Unsupported audio format in CUE sheet!");
-                            return -1;
+                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mlStart;
                         }
                     }
                     else
                     {
-                        // can't open media file
+                        // unsupported audio (or whatever)
                         cd_delete(cd);
                         mTrackTimes.clear();
                         mDiscLength = 0;
                         mCueMap.clear();
-                        qWarning() << "Can't open media file for CUE sheet!";
-                        emit match(QStringList() << "Can't open media file for CUE sheet!");
+                        qWarning() << "Unsupported audio format in CUE sheet!";
+                        emit match(QStringList() << "Unsupported audio format in CUE sheet!");
                         return -1;
                     }
                 }
@@ -896,7 +865,7 @@ int CCopyShopThread::conCatWave()
                 QFile src(s);
                 if (src.open(QIODevice::ReadOnly))
                 {
-                    if (!CAudioTools::stripWaveHeader(src, sz))
+                    if (!audio::stripWaveHeader(src, sz))
                     {
                         updPercent();
                         tmpTrg.write(src.readAll());
@@ -918,7 +887,7 @@ int CCopyShopThread::conCatWave()
             {
                 qInfo() << "Create" << mName << "from" << tmpTrg.fileName();
                 updPercent();
-                CAudioTools::writeWaveHeader(trg, wholeSz);
+                audio::writeWaveHeader(trg, wholeSz);
                 tmpTrg.seek(0);
                 trg.write(tmpTrg.readAll());
             }
@@ -972,7 +941,7 @@ void CCopyShopThread::run()
     {
         SCueInfo& cinfo = mCueMap[mTrack];
         updPercent();
-        if (CAudioTools::extractRange(cinfo.mWavFileName, mName, cinfo.mlStart, cinfo.mlLength) != 0)
+        if (audio::extractRange(cinfo.mWavFileName, mName, cinfo.mlStart, cinfo.mlLength) != 0)
         {
             qInfo() << "Can't extract wave data.";
         }
