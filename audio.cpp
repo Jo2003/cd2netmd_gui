@@ -88,49 +88,6 @@ int extractRange(const QString& srcName, const QString& trgName, long start, lon
     return ret;
 }
 
-//------------------------------------------------------------------------------
-//! @brief      check if wave file is valid
-//!
-//! @param      fWave         The wave file
-//! @param      waveDataSize  The wave data size
-//!
-//! @return     0 -> ok; -1 -> error
-//------------------------------------------------------------------------------
-int checkWaveFile(QFile &fWave, size_t &waveDataSize)
-{
-    int ret = 0;
-    fWave.seek(0);
-    try
-    {
-        // read WAV header as written by our Jack the Ripper
-        QByteArray data = fWave.read(256);
-        int pos;
-
-        if (data.indexOf("RIFF") == -1)
-        {
-            throw std::runtime_error(R"("RIFF" marker not detected!)");
-        }
-        else if (data.indexOf("WAVEfmt ") == -1)
-        {
-            throw std::runtime_error(R"("WAVEfmt " marker not detected!)");
-        }
-        else if ((pos = data.indexOf("data")) == -1)
-        {
-            throw std::runtime_error(R"("data" marker not detected!)");
-        }
-        else
-        {
-            waveDataSize = qFromLittleEndian<uint32_t>(static_cast<const char*>(data) + pos + 4);
-        }
-    }
-    catch (const std::exception& e)
-    {
-        qInfo() << e.what();
-        ret = -1;
-    }
-    return ret;
-}
-
 //--------------------------------------------------------------------------
 //! @brief      forward file position to wave data
 //!
@@ -164,54 +121,6 @@ int stripWaveHeader(QFile& fWave, size_t& waveDataSize)
         qInfo() << e.what();
         ret = -1;
     }
-    return ret;
-}
-
-//--------------------------------------------------------------------------
-//! @brief      check audio file for fLaC marker
-//!
-//! @param[in]  fAudio   The audio file to check
-//! @param[out] duration audio length
-//!
-//! @return     true if flac, false if not
-//--------------------------------------------------------------------------
-bool isFlac(QFile& fAudio, int& duration)
-{
-    bool ret = false;
-    duration = 0;
-    fAudio.seek(0);
-
-    QByteArray data = fAudio.read(8);
-    ret = (data.indexOf("fLaC") == 0);
-
-    // check for stream info meta block
-    if ((data[4] >> 1) == 0)
-    {
-        // get meta block size
-        int metaSz = arrayToUint(static_cast<const char*>(data) + 5, 3);
-
-        // read stream info block
-        data = fAudio.read(metaSz);
-
-        qDebug() << "Meta Size on" << fAudio.fileName() << "is" << metaSz;
-
-        uint64_t sampleRate = arrayToUint(static_cast<const char*>(data) + 10, 3) >> 4;
-        char cSamples[5] = {0,};
-        memcpy(cSamples, static_cast<const char*>(data) + 13, 5);
-        cSamples[0] = cSamples[0] & 0x0f;
-        uint64_t samples = arrayToUint(cSamples, 5);
-
-        duration = samples / sampleRate;
-
-        if (sampleRate != 44100)
-        {
-            qWarning() << "Only 44.1kHz sampling rate supported!";
-            ret = false;
-        }
-
-        qDebug() << "Samples:" << samples << "Rate:" << sampleRate << "Duration:" << duration;
-    }
-
     return ret;
 }
 

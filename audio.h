@@ -75,26 +75,6 @@ namespace audio {
     int writeWaveHeader(QFile &wf, size_t byteCount);
     
     //--------------------------------------------------------------------------
-    //! @brief      check wave file
-    //!
-    //! @param      fWave         The wave file
-    //! @param      waveDataSize  The wave data size
-    //!
-    //! @return     0 -> ok; -1 -> error
-    //--------------------------------------------------------------------------
-    int checkWaveFile(QFile& fWave, size_t& waveDataSize);
-
-    //--------------------------------------------------------------------------
-    //! @brief      check audio file for fLaC marker
-    //!
-    //! @param[in]  fAudio   The audio file to check
-    //! @param[out] duration audio length
-    //!
-    //! @return     true if flac, false if not
-    //--------------------------------------------------------------------------
-    bool isFlac(QFile& fAudio, int& duration);
-
-    //--------------------------------------------------------------------------
     //! @brief      forward file position to wave data
     //!
     //! @param      fWave         The wave file
