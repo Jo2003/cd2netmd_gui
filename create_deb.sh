@@ -33,6 +33,7 @@ copy_content() {
     strip -s ${BIN_FILE}
     cp -f ${BIN_FILE} "${BUILD_FOLDER}/usr/bin/"
     cp -f prebuilt/linux/bin/atracdenc "${BUILD_FOLDER}/usr/bin/"
+    cp -f ffmpeg/linux/c2nffmpeg "${BUILD_FOLDER}/usr/bin/"
     cp -f prebuilt/linux/config/netmd.rules "${BUILD_FOLDER}/etc/udev/rules.d/"
     cp -f prebuilt/linux/config/20-netmd.fdi "${BUILD_FOLDER}/usr/share/hal/fdi/information/20thirdparty/"
     # cp -f *.qm "${BUILD_FOLDER}/usr/share/${BIN_NAME}/language/"
@@ -64,7 +65,7 @@ Installed-Size: $(($(du -b --max-depth=0 ${BUILD_FOLDER}/usr|gawk '{print $1}') 
 EOF
 
     cat << EOF >> "${BUILD_FOLDER}/DEBIAN/control"
-Depends: flac, libsndfile1 (>= 1.0.28), libflac8 (>= 1.3.2), libogg0 (>= 1.3.2), libvorbis0a (>= 1.3.5), libvorbisenc2 (>= 1.3.5), libgcrypt20 (>= 1.8.1), libusb-1.0-0 (>= 2:1.0.21), libqt5widgets5 (>= 5.9.5), libqt5gui5 (>= 5.9.5), libqt5network5 (>= 5.9.5), libqt5core5a (>= 5.9.5), libgpg-error0 (>= 1.27), libssl1.1 (>= 1.1.1)
+Depends: libsndfile1 (>= 1.0.28), libflac8 (>= 1.3.2), libogg0 (>= 1.3.2), libvorbis0a (>= 1.3.5), libvorbisenc2 (>= 1.3.5), libgcrypt20 (>= 1.8.1), libusb-1.0-0 (>= 2:1.0.21), libqt5widgets5 (>= 5.9.5), libqt5gui5 (>= 5.9.5), libqt5network5 (>= 5.9.5), libqt5core5a (>= 5.9.5), libgpg-error0 (>= 1.27), libssl1.1 (>= 1.1.1)
 EOF
 
 

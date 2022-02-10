@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1.0)
 
-project(cd2netmd_gui VERSION 0.1.7.7 LANGUAGES CXX C)
+project(cd2netmd_gui VERSION 0.1.8.5 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,6 +35,7 @@ pkg_check_modules(CUE REQUIRED libcue)
 pkg_check_modules(JSONC REQUIRED json-c)
 pkg_check_modules(LIBISO REQUIRED libiso9660)
 pkg_check_modules(LIBUDF REQUIRED libudf)
+pkg_check_modules(TAGLIB REQUIRED taglib)
 
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g")
 SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
@@ -53,6 +54,7 @@ set(IDIRS
 	${JSONC_INCLUDE_DIRS}
 	${LIBISO_INCLUDE_DIRS}
 	${LIBUDF_INCLUDE_DIRS}
+	${TAGLIB_INCLUDE_DIRS}
     .
 )
 
@@ -70,6 +72,7 @@ set(LDIRS
 	${JSONC_LIBRARY_DIRS}
 	${LIBISO_LIBRARY_DIRS}
 	${LIBUDF_LIBRARY_DIRS}
+	${TAGLIB_LIBRARY_DIRS}
 )
 
 list(REMOVE_DUPLICATES "LDIRS")
@@ -85,6 +88,7 @@ set(SLIBS
 	${JSONC_LIBRARIES}
 	${LIBISO_LIBRARIES}
 	${LIBUDF_LIBRARIES}
+	${TAGLIB_LIBRARIES}
 )
 
 list(REMOVE_DUPLICATES "SLIBS")
@@ -118,8 +122,8 @@ add_executable(cd2netmd_gui
     cnamingdialog.cpp
     cnetmd.cpp
     cxenc.cpp
-    cflac.cpp
-    caudiotools.cpp
+    cffmpeg.cpp
+    audio.cpp
     main.cpp
     mainwindow.cpp
     helpers.cpp
@@ -140,6 +144,7 @@ set(MYCFLAGS
 	${JSONC_CFLAGS_OTHER}
 	${LIBISO_CFLAGS_OTHER}
 	${LIBUDF_CFLAGS_OTHER}
+	${TAGLIB_CFLAGS_OTHER}
 )
 
 list(REMOVE_DUPLICATES "MYCFLAGS")

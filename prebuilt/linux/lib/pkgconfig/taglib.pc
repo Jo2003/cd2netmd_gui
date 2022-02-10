@@ -1,0 +1,11 @@
+prefix=/home/joergn/src/cd2netmd_gui/prebuilt/linux
+exec_prefix=/home/joergn/src/cd2netmd_gui/prebuilt/linux
+libdir=/home/joergn/src/cd2netmd_gui/prebuilt/linux/lib
+includedir=/home/joergn/src/cd2netmd_gui/prebuilt/linux/include
+
+Name: TagLib
+Description: Audio meta-data library
+Requires: 
+Version: 1.12
+Libs: -L${libdir} -ltag 
+Cflags: -I${includedir} -I${includedir}/taglib
