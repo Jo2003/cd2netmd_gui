@@ -67,7 +67,7 @@ int CFFMpeg::start(const QString& srcFileName, const QString trgFileName, const 
     if (rx.indexIn(sAppDir) > -1)
     {
        // found section --> create path names ...
-       QString encTool = QString("%1/%2").arg(sAppDir).arg(FLAC_CLI);
+       QString encTool = QString("%1/%2").arg(sAppDir).arg(FFMPEG_CLI);
 	   qInfo() << encTool << params;
 	   run(encTool, params);
    }
