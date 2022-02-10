@@ -1,0 +1,12 @@
+prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+exec_prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+libdir=/Users/joergn/src/cd2netmd_gui/prebuilt/mac/lib
+includedir=/Users/joergn/src/cd2netmd_gui/prebuilt/mac/include
+
+
+Name: TagLib C Bindings
+Description: Audio meta-data library (C bindings)
+Requires: taglib
+Version: 1.12
+Libs: -L/Users/joergn/src/cd2netmd_gui/prebuilt/mac/lib -ltag_c
+Cflags: -I/Users/joergn/src/cd2netmd_gui/prebuilt/mac/include/taglib 

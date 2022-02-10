@@ -24,7 +24,7 @@ INCLUDEPATH += include \
 mac{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
-    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c
+    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c taglib
     INCLUDEPATH += /usr/local/Cellar/libusb/1.0.24/include \
                    /usr/local/Cellar/libgcrypt/1.9.4_1/include \
                    /usr/local/Cellar/libgpg-error/1.43/include \
