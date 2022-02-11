@@ -96,6 +96,8 @@ void logger(QtMsgType type, const QMessageLogContext &context, const QString &ms
 int main(int argc, char *argv[])
 {
     int exitCode = 0;
+    qRegisterMetaType<c2n::AudioTracks>("c2n::AudioTracks");
+
     s_logFile.open(QIODevice::Text | QIODevice::Truncate | QIODevice::WriteOnly);
     qInstallMessageHandler(logger);
     QApplication a(argc, argv);

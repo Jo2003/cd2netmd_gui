@@ -44,6 +44,16 @@ struct SRipTrack
 
 using TransferQueue = QVector<SRipTrack>;
 
+struct STrackInfo
+{
+    QString mTitle;
+    QString mFileName;
+    int     mCDTrackNo;
+    time_t  mLength;
+};
+
+using AudioTracks = QVector<STrackInfo>;
+
 static constexpr const char* PROGRAM_VERSION = "1.8.5";
 static constexpr const char* PROGRAM_NAME    = "CD2NetMD GUI";
 

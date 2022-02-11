@@ -18,6 +18,7 @@
 #include <QObject>
 #include <QTableView>
 #include <QResizeEvent>
+#include "defines.h"
 
 //------------------------------------------------------------------------------
 //! @brief      cd table visualization of the data that model contains.
@@ -26,8 +27,10 @@ class CCDTableView : public QTableView
 {
     Q_OBJECT
 public:
-    /// using parents constructor
-    using QTableView::QTableView;
+    //--------------------------------------------------------------------------
+    //! @brief      create / init instance
+    //--------------------------------------------------------------------------
+    CCDTableView(QWidget *parent = nullptr);
 
 protected:
     //--------------------------------------------------------------------------
@@ -36,4 +39,41 @@ protected:
     //! @param      e     pointer to resize event
     //--------------------------------------------------------------------------
     void resizeEvent(QResizeEvent *e) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      drag event enters the widget
+    //!
+    //! @param      event pointer to QDragEnterEvent
+    //--------------------------------------------------------------------------
+    void dragEnterEvent(QDragEnterEvent *event) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      drop event
+    //!
+    //! @param      event pointer to QDropEvent
+    //--------------------------------------------------------------------------
+    void dropEvent(QDropEvent *event) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      drag move event
+    //!
+    //! @param      event pointer to QDragMoveEvent
+    //--------------------------------------------------------------------------
+    void dragMoveEvent(QDragMoveEvent *event) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      key press event
+    //!
+    //! @param      event pointer to QKeyEvent
+    //--------------------------------------------------------------------------
+    void keyPressEvent(QKeyEvent *event) override;
+
+signals:
+    //--------------------------------------------------------------------------
+    //! @brief      signal that files where dropped into the widget
+    //!
+    //! @param      files string list with file names
+    //--------------------------------------------------------------------------
+    void filesDropped(QStringList files);
+
 };
