@@ -40,19 +40,6 @@ class CJackTheRipper : public QObject
 {
     Q_OBJECT
 public:
-
-    /// one track in cue file
-    struct SCueInfo
-    {
-        QString  mSrcFileName;  ///< source audio file
-        QString  mWavFileName;  ///< converted audio file
-        long     mlStart;       ///< RAW block count of start
-        long     mlLength;      ///< track length in RAW blocks
-        uint32_t mConversion;   ///< conversion vector
-    };
-
-    using CueMap = QMap<int, SCueInfo>;
-
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
@@ -100,32 +87,17 @@ public:
     //! @return     pointer to internal CDDB class
     //--------------------------------------------------------------------------
     CCDDB *cddb();
-    
-    //--------------------------------------------------------------------------
-    //! @brief      export track times
-    //!
-    //! @return     track times as vector
-    //--------------------------------------------------------------------------
-    QVector<time_t> trackTimes();
-    
-    //--------------------------------------------------------------------------
-    //! @brief      get disc length ion seconds
-    //!
-    //! @return     disc length
-    //--------------------------------------------------------------------------
-    uint32_t discLength();
 
     //--------------------------------------------------------------------------
     //! @brief      parse CD Text
     //!
     //! @param      pCDT       The cd text object
-    //! @param[in]  firstTrack first track number
-    //! @param[in]  lastTrack  nunmber of last track
-    //! @param[out] ttitles    The ttitles vector
+    //! @param[in]  track      track number
+    //! @param[out] ttitle     The track title
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int parseCDText(cdtext_t* pCDT, track_t firstTrack, track_t lastTrack, QStringList& ttitles);
+    int parseCDText(cdtext_t* pCDT, track_t track, QString& ttitle);
     
     //--------------------------------------------------------------------------
     //! @brief      check if ripper is busy
@@ -156,6 +128,20 @@ public:
     //! @brief      remove temporary files
     //--------------------------------------------------------------------------
     void removeTemp();
+
+    //--------------------------------------------------------------------------
+    //! @brief      get audio tracks
+    //!
+    //! @return     audio tracks vector
+    //--------------------------------------------------------------------------
+    c2n::AudioTracks audioTracks() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      set audio tracks
+    //!
+    //! @param[in]  audio tracks vector
+    //--------------------------------------------------------------------------
+    void setAudioTracks(const c2n::AudioTracks& tracks);
 
 public slots:
 
@@ -235,9 +221,9 @@ signals:
     //--------------------------------------------------------------------------
     //! @brief      signal match from CDDB
     //!
-    //! @param[in]  l     title list
+    //! @param[in]  tracks AudioTracks vector
     //--------------------------------------------------------------------------
-    void match(QStringList l);
+    void match(c2n::AudioTracks tracks);
     
     //--------------------------------------------------------------------------
     //! @brief      thread finished
@@ -248,16 +234,14 @@ private:
     QString mCDDBRequest;           ///< CDDB request
     std::thread*  mpRipThread;      ///< rip thread pointer
     CCDDB* mpCddb;                  ///< CDDB pointer
-    QVector<time_t> mTrackTimes;    ///< track times buffer
-    uint32_t        mDiscLength;    ///< store disc length
     bool mBusy;                     ///< busy flag
     bool mbCDDB;
     QString mImgFile;
     driver_id_t mDrvId = DRIVER_UNKNOWN;
-    CueMap mCueMap;
     CFFMpeg* mpFFMpeg;
     int miFlacTrack;
     QString mFlacFName;
+    c2n::AudioTracks mAudioTracks;
 };
 
 ///
@@ -311,8 +295,8 @@ class CCopyShopThread : public QThread
 {
     Q_OBJECT
 
-    using CueMap   = CJackTheRipper::CueMap;
-    using SCueInfo = CJackTheRipper::SCueInfo;
+    using AudioTracks = c2n::AudioTracks;
+    using STrackInfo  = c2n::STrackInfo;
 
     static const int PERCENTS[];
 
@@ -326,7 +310,7 @@ public:
     //! @param      track         The track number
     //! @param      fName         The target file name
     //--------------------------------------------------------------------------
-    CCopyShopThread(QObject* parent, CueMap& cueMap, int track, const QString& fName);
+    CCopyShopThread(QObject* parent, AudioTracks& cueMap, int track, const QString& fName);
 
     //--------------------------------------------------------------------------
     //! @brief      thread function
@@ -358,7 +342,7 @@ protected:
     //--------------------------------------------------------------------------
     void updPercent();
 
-    CJackTheRipper::CueMap& mCueMap;
+    AudioTracks& mCueMap;
     int mTrack;
     QString mName;
     uint8_t mPercentPos;

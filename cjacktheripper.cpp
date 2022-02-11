@@ -31,7 +31,7 @@
 CJackTheRipper::CJackTheRipper(QObject *parent)
     : QObject(parent), mpCDIO(nullptr), mpCDAudio(nullptr),
       mpCDParanoia(nullptr), mpRipThread(nullptr),
-      mpCddb(nullptr), mDiscLength(0), mBusy(false), mbCDDB(false),
+      mpCddb(nullptr), mBusy(false), mbCDDB(false),
       mpFFMpeg(nullptr), miFlacTrack(-99)
 {
     mpCddb   = new CCDDB(this);
@@ -66,7 +66,7 @@ int CJackTheRipper::init(bool cddb, driver_id_t tp, const QString& name)
     mbCDDB   = cddb;
     mDrvId   = tp;
     mImgFile = name;
-    mCueMap.clear();
+    mAudioTracks.clear();
 
     cleanup();
 
@@ -121,7 +121,7 @@ int CJackTheRipper::extractTrack(int trackNo, const QString &fName, bool paranoi
         delete mpRipThread;
     }
 
-    if (mCueMap.isEmpty())
+    if (mAudioTracks.listType() == c2n::AudioTracks::CD)
     {
         mpRipThread = new std::thread(&CJackTheRipper::ripThread, this, trackNo, fName, paranoia);
         if (mpRipThread)
@@ -145,90 +145,55 @@ CCDDB *CJackTheRipper::cddb()
     return mpCddb;
 }
 
-QVector<time_t> CJackTheRipper::trackTimes()
-{
-    return mTrackTimes;
-}
-
-uint32_t CJackTheRipper::discLength()
-{
-    return mDiscLength;
-}
-
-int CJackTheRipper::parseCDText(cdtext_t *pCDT, track_t firstTrack, track_t lastTrack, QStringList &ttitles)
+//--------------------------------------------------------------------------
+//! @brief      parse CD Text
+//!
+//! @param      pCDT       The cd text object
+//! @param[in]  track      track number
+//! @param[out] ttitle     The track title
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CJackTheRipper::parseCDText(cdtext_t* pCDT, track_t track, QString& ttitle)
 {
     int ret = -1;
+    ttitle  = "";
+
     if (pCDT)
     {
         ret = 0;
         const char* tok;
-        QString track, performer, title;
+        QString performer, title;
 
-        // disc title at index 0
-        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, 0);
+        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, track);
 
         if (tok)
         {
             performer = QString(tok).trimmed();
-            track     = QString("%1 - ").arg(performer);
+            ttitle    = QString("%1 - ").arg(performer);
         }
 
-        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, 0);
+        tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, track);
         if (tok)
         {
             title = QString(tok).trimmed();
             if (title.indexOf(performer) != -1)
             {
-                track = title;
+                ttitle = title;
             }
             else
             {
-                track += title;
+                ttitle += title;
             }
         }
-
-        if (track.isEmpty())
-        {
-            track = tr("<untitled>");
-        }
-        ttitles.append(track);
-
-        // process other tracks
-        for (track_t t = firstTrack; t <= lastTrack; t++)
-        {
-            track = performer = title = "";
-            tok   = cdtext_get_const(pCDT, CDTEXT_FIELD_PERFORMER, t);
-
-            if (tok)
-            {
-                performer = QString(tok).trimmed();
-                track     = QString("%1 - ").arg(performer);
-            }
-
-            tok = cdtext_get_const(pCDT, CDTEXT_FIELD_TITLE, t);
-            if (tok)
-            {
-                title = QString(tok).trimmed();
-                if (title.indexOf(performer) != -1)
-                {
-                    track = title;
-                }
-                else
-                {
-                    track += title;
-                }
-            }
-
-            if (track.isEmpty())
-            {
-                track = tr("<untitled>");
-            }
-
-            ttitles.append(track);
-        }
-
-        qInfo() << "Titles extracted from CD-Text: " << ttitles;
     }
+
+    if (ttitle.isEmpty())
+    {
+        ttitle = tr("<untitled>");
+    }
+
+    qInfo() << "Title" << track << "is named" << ttitle;
     return ret;
 }
 
@@ -353,50 +318,51 @@ void CJackTheRipper::extractWave()
     QFileInfo fi;
     bool startCopy = true;
 
-    if ((miFlacTrack > 0) && mCueMap.contains(miFlacTrack))
+    if ((miFlacTrack > 0) && (miFlacTrack < mAudioTracks.size()))
     {
-        SCueInfo& ci = mCueMap[miFlacTrack];
-        if (ci.mWavFileName.isEmpty())
+        c2n::STrackInfo& ci = mAudioTracks[miFlacTrack];
+        if (ci.mWaveFileName.isEmpty())
         {
             if (ci.mConversion)
             {
-                fi.setFile(ci.mSrcFileName);
-                ci.mWavFileName = QString("%1/cd2netmd_flac_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
+                fi.setFile(ci.mFileName);
+                ci.mWaveFileName = QString("%1/cd2netmd_audio_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
 
-                if (!QFile::exists(ci.mWavFileName))
+                if (!QFile::exists(ci.mWaveFileName))
                 {
-                    mpFFMpeg->start(ci.mSrcFileName, ci.mWavFileName, ci.mConversion);
+                    mpFFMpeg->start(ci.mFileName, ci.mWaveFileName, ci.mConversion);
                     startCopy = false;
                 }
             }
             else
             {
-                ci.mWavFileName = ci.mSrcFileName;
+                ci.mWaveFileName = ci.mFileName;
             }
         }
     }
     else if (miFlacTrack == -1)
     {
-        for (int track : mCueMap.keys())
+        // track 0 keeps disc title
+        for (int track = 1; track < mAudioTracks.size(); track ++)
         {
-            SCueInfo& ci = mCueMap[track];
-            if (ci.mWavFileName.isEmpty())
+            c2n::STrackInfo& ci = mAudioTracks[miFlacTrack];
+            if (ci.mWaveFileName.isEmpty())
             {
                 if (ci.mConversion)
                 {
-                    fi.setFile(ci.mSrcFileName);
-                    ci.mWavFileName = QString("%1/cd2netmd_flac_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
+                    fi.setFile(ci.mFileName);
+                    ci.mWaveFileName = QString("%1/cd2netmd_audio_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
 
-                    if (!QFile::exists(ci.mWavFileName))
+                    if (!QFile::exists(ci.mWaveFileName))
                     {
-                        mpFFMpeg->start(ci.mSrcFileName, ci.mWavFileName, ci.mConversion);
+                        mpFFMpeg->start(ci.mFileName, ci.mWaveFileName, ci.mConversion);
                         startCopy = false;
                         break;
                     }
                 }
                 else
                 {
-                    ci.mWavFileName = ci.mSrcFileName;
+                    ci.mWaveFileName = ci.mFileName;
                 }
             }
         }
@@ -413,7 +379,7 @@ void CJackTheRipper::extractWave()
 //--------------------------------------------------------------------------
 void CJackTheRipper::startCopyShop()
 {
-    CCopyShopThread* pCopyShop = new CCopyShopThread(this, mCueMap, miFlacTrack, mFlacFName);
+    CCopyShopThread* pCopyShop = new CCopyShopThread(this, mAudioTracks, miFlacTrack, mFlacFName);
     if (pCopyShop != nullptr)
     {
         connect(pCopyShop, &CCopyShopThread::finished, pCopyShop, &QObject::deleteLater);
@@ -439,7 +405,7 @@ QString CJackTheRipper::deviceInfo()
         }
     }
 
-    if (!mCueMap.isEmpty() && ret.isEmpty())
+    if (mAudioTracks.listType() == c2n::AudioTracks::FILES)
     {
         ret = "Cue Sheet";
     }
@@ -455,10 +421,9 @@ QString CJackTheRipper::deviceInfo()
 int CJackTheRipper::parseCueFile()
 {
     int ret = -1;
-    SCueInfo cueInfo;
-    QStringList trackTitles;
-    mTrackTimes.clear();
-    mDiscLength = 0;
+    c2n::STrackInfo cueInfo;
+    mAudioTracks.clear();
+    mAudioTracks.setListType(c2n::AudioTracks::FILES);
     QFile cuefile(mImgFile);
     QFileInfo fi(mImgFile);
     QString lastSrcFile;
@@ -475,6 +440,7 @@ int CJackTheRipper::parseCueFile()
             int noTracks = cd_get_ntrack(cd);
             const char* tok;
             QString track, performer, title;
+            long length = 0;
 
             // disc title
             Cdtext* cdt = cd_get_cdtext(cd);
@@ -505,7 +471,9 @@ int CJackTheRipper::parseCueFile()
             {
                 track = tr("<untitled>");
             }
-            trackTitles.append(track);
+
+            cueInfo.mTitle = track;
+            mAudioTracks.append(cueInfo);
 
             // process other tracks
             for (int i  = 1; i <= noTracks; i++)
@@ -514,41 +482,37 @@ int CJackTheRipper::parseCueFile()
                 Track* t = cd_get_track(cd, i);
                 cdt = track_get_cdtext(t);
 
-                long length = track_get_length(t);
-                cueInfo.mlStart = track_get_start(t);
-                cueInfo.mSrcFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
+                length = track_get_length(t);
+                cueInfo.mStartLba = track_get_start(t);
+                cueInfo.mFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
 
-                if ((lastSrcFile != cueInfo.mSrcFileName) || (length == -1))
+                if ((lastSrcFile != cueInfo.mFileName) || (length == -1))
                 {
-                    lastSrcFile = cueInfo.mSrcFileName;
+                    lastSrcFile = cueInfo.mFileName;
 
                     int iLen = 0;
-                    if (!audio::checkAudioFile(cueInfo.mSrcFileName, cueInfo.mConversion, iLen))
+                    if (!audio::checkAudioFile(cueInfo.mFileName, cueInfo.mConversion, iLen))
                     {
                         if (length == -1)
                         {
-                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mlStart;
+                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mStartLba;
                         }
                     }
                     else
                     {
                         // unsupported audio (or whatever)
                         cd_delete(cd);
-                        mTrackTimes.clear();
-                        mDiscLength = 0;
-                        mCueMap.clear();
+                        mAudioTracks.clear();
+                        mAudioTracks = {
+                            {tr("Unsupported audio format in CUE sheet!")}
+                        };
                         qWarning() << "Unsupported audio format in CUE sheet!";
-                        emit match(QStringList() << "Unsupported audio format in CUE sheet!");
+                        emit match(mAudioTracks);
                         return -1;
                     }
                 }
 
-                cueInfo.mlLength = length;
-                mCueMap.insert(i, cueInfo);
-
-                mTrackTimes.append(length / CDIO_CD_FRAMES_PER_SEC);
-                mDiscLength += length / CDIO_CD_FRAMES_PER_SEC;
-
+                cueInfo.mLbCount = length;
                 tok = cue_cdtext_get(PTI_PERFORMER, cdt);
 
                 if (tok)
@@ -586,11 +550,24 @@ int CJackTheRipper::parseCueFile()
                 }
 
                 qDebug() << i << track << track_get_start(t) << track_get_length(t);
-
-                trackTitles.append(track);
+                cueInfo.mTitle = track;
+                mAudioTracks.append(cueInfo);
             }
 
-            qInfo() << "Titles extracted from CUE file: " << trackTitles;
+            if (!mAudioTracks.empty())
+            {
+                length = 0;
+                for (const auto& t : mAudioTracks)
+                {
+                    if (t.mLbCount > 0)
+                    {
+                        length += t.mLbCount;
+                    }
+                    qInfo() << "Title extracted from CUE file: " << t.mTitle;
+                }
+                mAudioTracks[0].mLbCount = length;
+            }
+
             cd_delete(cd);
         }
         else
@@ -602,7 +579,7 @@ int CJackTheRipper::parseCueFile()
     {
         qWarning() << "Can't open CUE file" << mImgFile;
     }
-    emit match(trackTitles);
+    emit match(mAudioTracks);
     return ret;
 }
 
@@ -613,104 +590,81 @@ int CJackTheRipper::cddbReqString()
         return parseCueFile();
     }
 
-    track_t  firstTrack, lastTrack;
-    track_t  noTracks;
-    uint32_t checkSum = 0, tmp = 0;
-    uint32_t offset = 0, lastOffset;
-    QVector<lba_t> tracks;
-    QStringList trackTitles;
-    mTrackTimes.clear();
+    mAudioTracks.clear();
+    mAudioTracks.setListType(c2n::AudioTracks::CD);
 
-    mCDDBRequest.clear();
+    c2n::STrackInfo trackInfo;
+
+    track_t  firstTrack, lastTrack;
+    mCDDBRequest = "";
 
     if (mpCDIO != nullptr)
     {
-        // disc length
-        int secs   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) / CDIO_CD_FRAMES_PER_SEC;
-        noTracks   = cdio_get_num_tracks(mpCDIO);
         firstTrack = cdio_get_first_track_num(mpCDIO);
         lastTrack  = cdio_get_last_track_num(mpCDIO);
 
         qInfo() << "First track: " << firstTrack << "Last track: " << lastTrack;
 
-        // check for CDText
-        parseCDText(cdio_get_cdtext(mpCDIO), firstTrack, lastTrack, trackTitles);
+        cdtext_t* pCdText = cdio_get_cdtext(mpCDIO);
+
+        trackInfo.mCDTrackNo = 0;
+        trackInfo.mStartLba  = 0;
+        trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) - cdio_get_track_lba(mpCDIO, firstTrack);
+        parseCDText(pCdText, 0, trackInfo.mTitle);
+        mAudioTracks.append(trackInfo);
 
         for (track_t t = firstTrack; t <= lastTrack; t++)
         {
-            lastOffset = offset;
-
-            // frame offset
-            offset = cdio_get_track_lba(mpCDIO, t);
-
-            tracks.append(offset);
-
-            if (t == firstTrack)
-            {
-                // first pregap
-                secs -= offset / CDIO_CD_FRAMES_PER_SEC;
-            }
-            else
-            {
-                mTrackTimes.append((offset - lastOffset) / CDIO_CD_FRAMES_PER_SEC);
-            }
-
-            if (trackTitles.isEmpty())
-            {
-                // checksum
-                tmp = offset / CDIO_CD_FRAMES_PER_SEC;
-                do
-                {
-                    checkSum += tmp % 10;
-                    tmp /= 10;
-                } while (tmp != 0);
-            }
+            trackInfo.mCDTrackNo = t;
+            trackInfo.mStartLba  = cdio_get_track_lba(mpCDIO, t);
+            trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, (t == lastTrack) ? CDIO_CDROM_LEADOUT_TRACK : t + 1) - trackInfo.mStartLba;
+            parseCDText(pCdText, t, trackInfo.mTitle);
+            mAudioTracks.append(trackInfo);
         }
 
-        // whole disc length
-        mDiscLength = secs;
-
-        // add last track time
-        mTrackTimes.append(secs - (offset / CDIO_CD_FRAMES_PER_SEC));
-
-        if (trackTitles.isEmpty() && mbCDDB)
+        if (!pCdText && mbCDDB)
         {
-            QString  req;
-            uint32_t discId = checkSum << 24 | secs << 8 | noTracks;
+            uint32_t checkSum = 0, tmp = 0;
+            QString  req, lbas;
+            uint32_t discId = 0;
 
-            req = QString("%1+%2").arg(discId, 8, 16, QChar('0')).arg(noTracks);
-
-            for (const lba_t& a : tracks)
+            for (const auto& t : mAudioTracks)
             {
-                req += QString("+%1").arg(a);
+                if (t.mCDTrackNo > 0)
+                {
+                    // checksum
+                    tmp = t.mStartLba / CDIO_CD_FRAMES_PER_SEC;
+                    do
+                    {
+                        checkSum += tmp % 10;
+                        tmp /= 10;
+                    } while (tmp != 0);
+
+                    lbas += QString("+%1").arg(t.mStartLba);
+                }
             }
 
-            req += QString("+%1").arg(secs);
+            discId = checkSum << 24
+                      | (mAudioTracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC) << 8
+                      | (mAudioTracks.size() - 1);
+
+            req = QString("%1+%2").arg(discId, 8, 16, QChar('0')).arg(mAudioTracks.size() - 1);
+            req += lbas;
+            req += QString("+%1").arg(mAudioTracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC);
             mCDDBRequest = req;
 
             qInfo() << "No CD-Text, do CDDB request: " << req;
 
             // no CDText -> ask CDDB
-            mpCddb->getEntries(req);
-        }
-        else if (trackTitles.isEmpty() && !mbCDDB)
-        {
-            qInfo() << "No CD-Text and no CDDB request -> reply empty result!";
-            emit match(trackTitles);
+            mpCddb->getEntries(req, mAudioTracks);
         }
         else
         {
-            qInfo() << "CD-Text entries found!";
-            mCDDBRequest = "";
-            emit match(trackTitles);
+            emit match(mAudioTracks);
         }
     }
-    else
-    {
-        emit match(QStringList() << "no disc found!");
-    }
 
-    return mCDDBRequest.isEmpty() ? -1 : 0;
+    return mAudioTracks.isEmpty() ? -1 : 0;
 }
 
 void CJackTheRipper::noBusy()
@@ -753,13 +707,33 @@ void CJackTheRipper::getProgress(int percent)
 //--------------------------------------------------------------------------
 void CJackTheRipper::removeTemp()
 {
-    for (const auto& c : mCueMap)
+    for (const auto& c : mAudioTracks)
     {
-        if (c.mWavFileName != c.mSrcFileName)
+        if (c.mWaveFileName != c.mFileName)
         {
-            QFile::remove(c.mWavFileName);
+            QFile::remove(c.mWaveFileName);
         }
     }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      getaudio tracks
+//!
+//! @return     audio tracks vector
+//--------------------------------------------------------------------------
+c2n::AudioTracks CJackTheRipper::audioTracks() const
+{
+    return mAudioTracks;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      set audio tracks
+//!
+//! @param[in]  audio tracks vector
+//--------------------------------------------------------------------------
+void CJackTheRipper::setAudioTracks(const c2n::AudioTracks &tracks)
+{
+    mAudioTracks = tracks;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -828,7 +802,7 @@ const int CCopyShopThread::PERCENTS[] = {0, 25, 50, 75};
 //! @param      track         The track number
 //! @param      fName         The target file name
 //--------------------------------------------------------------------------
-CCopyShopThread::CCopyShopThread(QObject* parent, CueMap& cueMap, int track, const QString& fName)
+CCopyShopThread::CCopyShopThread(QObject* parent, AudioTracks& cueMap, int track, const QString& fName)
     :QThread(parent), mCueMap(cueMap), mTrack(track), mName(fName), mPercentPos(0)
 {
 }
@@ -850,9 +824,9 @@ int CCopyShopThread::conCatWave()
 
         for (const auto& ci : mCueMap)
         {
-            if (!toConCat.contains(ci.mWavFileName))
+            if (!toConCat.contains(ci.mWaveFileName))
             {
-                toConCat << ci.mWavFileName;
+                toConCat << ci.mWaveFileName;
             }
         }
 
@@ -937,11 +911,11 @@ void CCopyShopThread::run()
         // DaO
         conCatWave();
     }
-    else if (mCueMap.contains(mTrack))
+    else if ((mTrack > 0) && (mTrack < mCueMap.size()))
     {
-        SCueInfo& cinfo = mCueMap[mTrack];
+        STrackInfo& cinfo = mCueMap[mTrack];
         updPercent();
-        if (audio::extractRange(cinfo.mWavFileName, mName, cinfo.mlStart, cinfo.mlLength) != 0)
+        if (audio::extractRange(cinfo.mWaveFileName, mName, cinfo.mStartLba, cinfo.mLbCount) != 0)
         {
             qInfo() << "Can't extract wave data.";
         }

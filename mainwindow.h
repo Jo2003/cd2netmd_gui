@@ -137,9 +137,9 @@ private slots:
     //--------------------------------------------------------------------------
     //! @brief      get the one matching CDDB entry
     //!
-    //! @param[in]  l     track titles
+    //! @param[in]  tracks audio tracks vector
     //--------------------------------------------------------------------------
-    void catchCDDBEntry(QStringList l);
+    void catchCDDBEntry(c2n::AudioTracks tracks);
     
     //--------------------------------------------------------------------------
     //! @brief      get json data from MD

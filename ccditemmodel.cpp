@@ -17,13 +17,24 @@
 #include "ccditemmodel.h"
 #include <QFont>
 #include <QIcon>
+#include <cdio/cdio.h>
 #include "defines.h"
 
-CCDItemModel::CCDItemModel(const CDTitles &titles,
-                           const TrackTimes &times,
+//--------------------------------------------------------------------------
+//! @brief      Constructs a new instance.
+//!
+//! @param[in]  tracks  The audio tracks vector
+//! @param      parent  The parent
+//--------------------------------------------------------------------------
+CCDItemModel::CCDItemModel(const c2n::AudioTracks &tracks,
                            QObject *parent)
-    :QAbstractTableModel(parent), mTitles(titles), mTTimes(times)
+    :QAbstractTableModel(parent)
 {
+    for(const auto& t : tracks)
+    {
+        mTitles << t.mTitle;
+        mTTimes << (t.mLbCount / CDIO_CD_FRAMES_PER_SEC);
+    }
 }
 
 CCDItemModel::~CCDItemModel()

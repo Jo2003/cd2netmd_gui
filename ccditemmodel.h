@@ -20,6 +20,7 @@
 #include <QStringList>
 #include <QVector>
 #include <QVariant>
+#include "defines.h"
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a cd item model.
@@ -41,11 +42,10 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
-    //! @param[in]  titles  The titles
-    //! @param[in]  times   The times
+    //! @param[in]  tracks  The audio tracks vector
     //! @param      parent  The parent
     //--------------------------------------------------------------------------
-    explicit CCDItemModel(const CDTitles& titles, const TrackTimes& times, QObject *parent = nullptr);
+    explicit CCDItemModel(const c2n::AudioTracks& tracks, QObject *parent = nullptr);
     
     //--------------------------------------------------------------------------
     //! @brief      Destroys the object.

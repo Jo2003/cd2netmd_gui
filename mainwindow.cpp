@@ -132,56 +132,50 @@ void MainWindow::catchCDDBEntries(QStringList l)
         delete pDlg;
         return;
     }
-    catchCDDBEntry(QStringList{});
+    catchCDDBEntry(mpRipper->audioTracks());
 }
 
-void MainWindow::catchCDDBEntry(QStringList l)
+//--------------------------------------------------------------------------
+//! @brief      get the one matching CDDB entry
+//!
+//! @param[in]  tracks audio tracks vector
+//--------------------------------------------------------------------------
+void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 {
-    CCDItemModel::TrackTimes v = mpRipper->trackTimes();
-    time_t length = mpRipper->discLength();
-
-    ui->labCDTime->clear();
-    ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
-                           .arg((length % 3600) / 60, 2, 10, QChar('0'))
-                           .arg(length % 60, 2, 10, QChar('0')));
-
-    // no CDDB result
-    if (l.isEmpty())
+    if (!tracks.empty())
     {
-        l.append("<untitled disc>");
-        for (const auto& t : v)
+        time_t length = tracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC;
+
+        ui->labCDTime->clear();
+        ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
+                               .arg((length % 3600) / 60, 2, 10, QChar('0'))
+                               .arg(length % 60, 2, 10, QChar('0')));
+
+        ui->lineCDTitle->setText(tracks.at(0).mTitle);
+
+        // remove disc entry
+        tracks.removeFirst();
+
+        CCDItemModel *pModel = static_cast<CCDItemModel *>(ui->tableViewCD->model());
+
+        if (pModel != nullptr)
         {
-            Q_UNUSED(t)
-            l.append("<untitled track>");
+            delete pModel;
         }
+
+        pModel = new CCDItemModel(tracks, this);
+
+        ui->tableViewCD->setModel(pModel);
+        int width = ui->tableViewCD->width();
+
+        ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
+        ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
+
+        mpCDDevice->clear();
+        mpCDDevice->setText(mpRipper->deviceInfo());
+        mpCDDevice->show();
+        enableDialogItems(true);
     }
-
-    if (l.size() > 0)
-    {
-        ui->lineCDTitle->setText(l.at(0));
-    }
-
-    l.removeFirst();
-
-    CCDItemModel *pModel = static_cast<CCDItemModel *>(ui->tableViewCD->model());
-
-    if (pModel != nullptr)
-    {
-        delete pModel;
-    }
-
-    pModel = new CCDItemModel(l, v, this);
-
-    ui->tableViewCD->setModel(pModel);
-    int width = ui->tableViewCD->width();
-
-    ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
-    ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
-
-    mpCDDevice->clear();
-    mpCDDevice->setText(mpRipper->deviceInfo());
-    mpCDDevice->show();
-    enableDialogItems(true);
 }
 
 void MainWindow::catchJson(QString j)
@@ -388,7 +382,7 @@ void MainWindow::encodeFinished(bool checkBusy)
             {
                 mWorkQueue[0].mStep = WorkStep::ENCODE;
                 ui->progressExtEnc->setValue(0);
-                mpXEnc->start(xencCmd, mWorkQueue, mpRipper->discLength());
+                mpXEnc->start(xencCmd, mWorkQueue, mpRipper->audioTracks().at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC);
             }
         }
         else

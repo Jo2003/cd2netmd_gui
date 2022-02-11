@@ -29,8 +29,17 @@ CCDDB::CCDDB(QObject *parent) : QObject(parent)
     }
 }
 
-int CCDDB::getEntries(const QString &queryPart)
+//--------------------------------------------------------------------------
+//! @brief      Gets the entries.
+//!
+//! @param[in]  queryPart  The query part
+//! @param[in]  tracks     The prepared audio tracks
+//!
+//! @return     0 -> ok; -1 -> error
+//--------------------------------------------------------------------------
+int CCDDB::getEntries(const QString& queryPart, c2n::AudioTracks& tracks)
 {
+    mAudioTracks = tracks;
     QUrl reqUrl(QString(CDDB_SERVER)
              + "/~cddb/cddb.cgi?cmd=cddb+query+" + queryPart
              + "&hello=me@you.org+localhost+MyRipper+0.1.0&proto=6");
@@ -141,7 +150,8 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
         if (results.isEmpty())
         {
             // no match
-            emit match(results);
+            mAudioTracks[0].mTitle = tr("No CDDB Entry found!");
+            emit match(mAudioTracks);
         }
         else if (results.size() == 1)
         {
@@ -157,7 +167,15 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
     }
     else if (type == REQ_WHAT::REQ_MATCH)
     {
-        emit match(results);
+        for(int s = 0; s < mAudioTracks.size(); s++)
+        {
+            if (s < results.size())
+            {
+                mAudioTracks[s].mTitle = results[s];
+            }
+        }
+
+        emit match(mAudioTracks);
         return 0;
     }
 

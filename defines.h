@@ -46,13 +46,51 @@ using TransferQueue = QVector<SRipTrack>;
 
 struct STrackInfo
 {
-    QString mTitle;
-    QString mFileName;
-    int     mCDTrackNo;
-    time_t  mLength;
+    STrackInfo(const QString& title = "",
+               const QString& fName = "",
+               const QString& wName = "",
+               int cdt = -1, long lba = 0,
+               long lenb = -1, uint32_t conv = 0)
+        : mTitle(title), mFileName(fName),
+          mWaveFileName(wName), mCDTrackNo(cdt),
+          mStartLba(lba), mLbCount(lenb),
+          mConversion(conv)
+    {}
+
+    QString  mTitle;
+    QString  mFileName;
+    QString  mWaveFileName;
+    int      mCDTrackNo;
+    long     mStartLba;
+    long     mLbCount;
+    uint32_t mConversion;
 };
 
-using AudioTracks = QVector<STrackInfo>;
+class AudioTracks : public QVector<STrackInfo>
+{
+public:
+    enum List_t
+    {
+        CD,
+        FILES,
+        UNKNOWN
+    };
+
+    using QVector::QVector;
+
+    void setListType(List_t t)
+    {
+        mType = t;
+    }
+
+    List_t listType() const
+    {
+        return mType;
+    }
+
+private:
+    List_t mType = List_t::UNKNOWN;
+};
 
 static constexpr const char* PROGRAM_VERSION = "1.8.5";
 static constexpr const char* PROGRAM_NAME    = "CD2NetMD GUI";
