@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->treeView, &CMDTreeView::delGroup, this, &MainWindow::delMDGroup);
     connect(ui->treeView, &CMDTreeView::eraseDisc, this, &MainWindow::eraseDisc);
     connect(ui->treeView, &CMDTreeView::delTrack, this, &MainWindow::delTrack);
+    connect(ui->tableViewCD, &CCDTableView::filesDropped, this, &MainWindow::catchDropped);
 
     mpMDDevice = new QLabel();
     mpCDDevice = new QLabel();
@@ -258,7 +259,7 @@ void MainWindow::on_pushTransfer_clicked()
     {
         int16_t trackNo    = r.row() + 1;
         QString trackTitle = r.data().toString();
-        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toLongLong();
+        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
@@ -744,7 +745,7 @@ void MainWindow::on_pushDAO_clicked()
     {
         int16_t trackNo    = r.row() + 1;
         QString trackTitle = r.data().toString();
-        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toLongLong();
+        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
@@ -813,6 +814,63 @@ void MainWindow::on_pushLoadImg_clicked()
         }
 
         mpRipper->init(mpSettings->cddb(), tp, fileName);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      catch dropped files from cd table view
+//!
+//! @param[in]  sl  string list with file pathes
+//--------------------------------------------------------------------------
+void MainWindow::catchDropped(QStringList sl)
+{
+    audio::STag tag;
+    c2n::STrackInfo trackInfo;
+    c2n::AudioTracks tracks;
+    tracks.setListType(c2n::AudioTracks::FILES);
+    int length;
+    int wholeLength = 0;
+
+    for (const auto& url : sl)
+    {
+        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
+        {
+            trackInfo.mFileName = url;
+            trackInfo.mStartLba = 0;
+            trackInfo.mLbCount  = ((length * CDIO_CD_FRAMES_PER_SEC) / 1000);
+            wholeLength        += length;
+
+            if (!tag.mTitle.isEmpty())
+            {
+                if (!tag.mArtist.isEmpty())
+                {
+                    trackInfo.mTitle = QString("%1 - ").arg(tag.mArtist);
+                }
+
+                trackInfo.mTitle += tag.mTitle;
+            }
+            else
+            {
+                trackInfo.mTitle = titleFromFileName(url);
+            }
+
+            tracks.append(trackInfo);
+        }
+    }
+
+    if (wholeLength > 0)
+    {
+        // disc "title"
+        trackInfo.mFileName = "";
+        trackInfo.mStartLba = 0;
+        trackInfo.mLbCount  = ((wholeLength * CDIO_CD_FRAMES_PER_SEC) / 1000);
+        trackInfo.mTitle    = tr("(Maybe) Various Artists - Dropped Hits (%1)").arg(QDateTime::currentDateTime().toString());
+        tracks.prepend(trackInfo);
+    }
+
+    if (!tracks.isEmpty())
+    {
+        mpRipper->setAudioTracks(tracks);
     }
 }
 

@@ -234,7 +234,17 @@ private slots:
     //--------------------------------------------------------------------------
     void on_pushSettings_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when load image button was clicked.
+    //--------------------------------------------------------------------------
     void on_pushLoadImg_clicked();
+
+    //--------------------------------------------------------------------------
+    //! @brief      catch dropped files from cd table view
+    //!
+    //! @param[in]  sl  string list with file pathes
+    //--------------------------------------------------------------------------
+    void catchDropped(QStringList sl);
 
 private:
     /// GUI pointer

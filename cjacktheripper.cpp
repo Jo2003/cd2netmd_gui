@@ -733,7 +733,29 @@ c2n::AudioTracks CJackTheRipper::audioTracks() const
 //--------------------------------------------------------------------------
 void CJackTheRipper::setAudioTracks(const c2n::AudioTracks &tracks)
 {
-    mAudioTracks = tracks;
+    if (!tracks.isEmpty())
+    {
+        if (tracks.listType() == mAudioTracks.listType())
+        {
+            // get length of new tracks
+            long len = tracks.at(0).mLbCount;
+
+            // remove new title tag!
+            c2n::AudioTracks tmpTracks = tracks;
+            tmpTracks.removeFirst();
+
+            mAudioTracks += tmpTracks;
+
+            // adapt length
+            mAudioTracks[0].mLbCount += len;
+        }
+        else
+        {
+            mAudioTracks = tracks;
+        }
+
+        emit match(mAudioTracks);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

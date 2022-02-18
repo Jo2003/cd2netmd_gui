@@ -29,6 +29,7 @@ CCDTableView::CCDTableView(QWidget *parent)
      setAcceptDrops(true);
      setDragEnabled(true);
      setDropIndicatorShown(true);
+     viewport()->setAcceptDrops(true);
 }
 
 //--------------------------------------------------------------------------
@@ -54,6 +55,10 @@ void CCDTableView::dragEnterEvent(QDragEnterEvent *event)
     {
         event->acceptProposedAction();
     }
+    else
+    {
+        QTableView::dragEnterEvent(event);
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -66,6 +71,10 @@ void CCDTableView::dragMoveEvent(QDragMoveEvent *event)
     if (event->mimeData()->hasUrls())
     {
         event->acceptProposedAction();
+    }
+    else
+    {
+        QTableView::dragMoveEvent(event);
     }
 }
 
@@ -80,9 +89,23 @@ void CCDTableView::keyPressEvent(QKeyEvent *event)
     {
     case Qt::Key_Delete:
     case Qt::Key_Backspace:
-        /// @todo delete selected items
+        {
+            QVector<int> rows;
+            for (const auto& sel : selectionModel()->selectedRows())
+            {
+                rows << sel.row();
+            }
+
+            std::sort(rows.begin(), rows.end(), std::greater<int>());
+
+            for (auto r : rows)
+            {
+                model()->removeRow(r);
+            }
+        }
         break;
     default:
+        QTableView::keyPressEvent(event);
         break;
     }
 }
@@ -98,8 +121,10 @@ void CCDTableView::dropEvent(QDropEvent *event)
     QFileInfo fi;
     for (const auto& u : event->mimeData()->urls())
     {
-        fi.setFile(QUrl::fromPercentEncoding(u.toString(QUrl::RemoveScheme).toUtf8()));
+        fi.setFile(QUrl::fromPercentEncoding(u.toString(QUrl::PreferLocalFile).toUtf8()));
         files << fi.absoluteFilePath();
     }
     emit filesDropped(files);
+
+    QTableView::dropEvent(event);
 }

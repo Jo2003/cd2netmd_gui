@@ -76,4 +76,11 @@ signals:
     //--------------------------------------------------------------------------
     void filesDropped(QStringList files);
 
+    //--------------------------------------------------------------------------
+    //! @brief      signal that entries should be deleted from list
+    //!
+    //! @param      selection vector with selected rows
+    //--------------------------------------------------------------------------
+    void deleteSelected(QVector<int> selection);
+
 };

@@ -17,7 +17,9 @@
 #include "ccditemmodel.h"
 #include <QFont>
 #include <QIcon>
+#include <QMimeData>
 #include <cdio/cdio.h>
+#include "ccditemmodel.h"
 #include "defines.h"
 
 //--------------------------------------------------------------------------
@@ -28,13 +30,8 @@
 //--------------------------------------------------------------------------
 CCDItemModel::CCDItemModel(const c2n::AudioTracks &tracks,
                            QObject *parent)
-    :QAbstractTableModel(parent)
+    :QAbstractTableModel(parent), mTracks(tracks)
 {
-    for(const auto& t : tracks)
-    {
-        mTitles << t.mTitle;
-        mTTimes << (t.mLbCount / CDIO_CD_FRAMES_PER_SEC);
-    }
 }
 
 CCDItemModel::~CCDItemModel()
@@ -45,7 +42,7 @@ CCDItemModel::~CCDItemModel()
 int CCDItemModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent)
-    return mTitles.size();
+    return mTracks.size();
 }
 
 int CCDItemModel::columnCount(const QModelIndex &parent) const
@@ -64,20 +61,24 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
         switch (col)
         {
         case 0:
-            return mTitles.at(row);
+            return mTracks.at(row).mTitle;
         case 1:
             {
-                time_t secs = mTTimes.at(row);
+                float secs = static_cast<float>(mTracks.at(row).mLbCount) / static_cast<float>(CDIO_CD_FRAMES_PER_SEC);
+                int h = static_cast<int>(secs) / 3600;
+                int m = (static_cast<int>(secs) % 3600) / 60;
+
+                float fsec = secs - static_cast<float>(h * 3600 + m * 60);
                 return QString("%1:%2:%3")
-                    .arg((int)(secs / 3600), 1, 10, QChar('0'))
-                    .arg((int)((secs % 3600) / 60), 2, 10, QChar('0'))
-                    .arg((int)(secs % 60), 2, 10, QChar('0'));
+                    .arg(h, 1, 10, QChar('0'))
+                    .arg(m, 2, 10, QChar('0'))
+                    .arg(fsec, 5, 'f', 2, QChar('0'));
             }
         }
     }
     else if ((role == Qt::EditRole) && (col == 0))
     {
-        return mTitles.at(row);
+        return mTracks.at(row).mTitle;
     }
     else if ((role == Qt::DecorationRole) && (col == 0))
     {
@@ -86,7 +87,7 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
     else if ((role == Qt::UserRole) && (col == 1))
     {
         // return track time in seconds
-        return static_cast<int>(mTTimes.at(row));
+        return static_cast<double>(mTracks.at(row).mLbCount) / static_cast<double>(CDIO_CD_FRAMES_PER_SEC);
     }
 
     return QVariant();
@@ -94,28 +95,19 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
 
 bool CCDItemModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
+    int row = index.row();
+    int col = index.column();
+
     if (role == Qt::EditRole)
     {
-        int row = index.row();
-        int col = index.column();
-
         if (col == 0)
         {
-            mTitles[row] = value.toString();
+            mTracks[row].mTitle = value.toString();
             return true;
         }
     }
+
     return QAbstractTableModel::setData(index, value, role);
-}
-
-Qt::ItemFlags CCDItemModel::flags(const QModelIndex &index) const
-{
-    if (index.column() == 0)
-    {
-        return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
-    }
-
-    return QAbstractTableModel::flags(index);
 }
 
 QVariant CCDItemModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -134,4 +126,194 @@ QVariant CCDItemModel::headerData(int section, Qt::Orientation orientation, int 
         }
     }
     return QAbstractTableModel::headerData(section, orientation, role);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get item flags
+//!
+//! @param[in]  index  The index
+//!
+//! @return     item flags
+//--------------------------------------------------------------------------
+Qt::ItemFlags CCDItemModel::flags(const QModelIndex &index) const
+{
+    Qt::ItemFlags defaultFlags = QAbstractTableModel::flags(index);
+
+    if (index.isValid())
+    {
+        return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | defaultFlags;
+    }
+    else
+    {
+        return Qt::ItemIsDropEnabled | defaultFlags;
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      tells what dropactions are supported
+//!
+//! @return     supported drop actions
+//--------------------------------------------------------------------------
+Qt::DropActions CCDItemModel::supportedDropActions() const
+{
+    return Qt::CopyAction | Qt::MoveAction;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      export mime types
+//--------------------------------------------------------------------------
+QStringList CCDItemModel::mimeTypes() const
+{
+    QStringList types;
+    types << "application/vnd.text.list";
+    return types;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      remove [count] rows starting from [row]
+//!
+//! @param[in]  row          target row
+//! @param[in]  count        row count
+//! @param[in]  parent       parent modell index
+//!
+//! @return     true if handled
+//--------------------------------------------------------------------------
+bool CCDItemModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+    Q_UNUSED(parent)
+
+    if ((row > -1) && (row > -1))
+    {
+        beginRemoveRows(parent, row, row + count - 1);
+        for(int i = (count - 1); i >= 0; i--)
+        {
+            if ((i + row) < mTracks.size())
+            {
+                mTracks.remove(i + row);
+            }
+        }
+        endRemoveRows();
+        return true;
+    }
+    return false;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Information carried when dragging
+//!
+//! @return     pointer to mime data
+//--------------------------------------------------------------------------
+QMimeData *CCDItemModel::mimeData(const QModelIndexList &indexes) const
+{
+    QMimeData *mimeData = new QMimeData();
+    QByteArray encodedData;
+
+    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+
+    for(const auto& index : indexes)
+    {
+        if (index.isValid() && (index.column() == 0))
+        {
+            if (index.column() == 0)
+            {
+                // insert source row
+                stream << QString::number(index.row());
+            }
+        }
+    }
+
+    mimeData->setData("application/vnd.text.list", encodedData);
+    return mimeData;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      Process the drop according to the information carried by drag
+//!
+//! @param[in]  data         mime date needed for drop
+//! @param[in]  action       what needs to be done
+//! @param[in]  row          target row
+//! @param[in]  column       target column
+//! @param[in]  parent       parent modell index
+//!
+//! @return     true if handled
+//--------------------------------------------------------------------------
+bool CCDItemModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+{
+    if (action == Qt::IgnoreAction)
+    {
+        return true;
+    }
+
+    if (!data->hasFormat("application/vnd.text.list"))
+    {
+        return false;
+    }
+
+    if (column > 0)
+    {
+        return false;
+    }
+
+    int beginRow;
+
+    if (row != -1)
+    {
+        beginRow = row;
+    }
+    else if (parent.isValid())
+    {
+        beginRow = parent.row();
+    }
+    else
+    {
+        beginRow = rowCount(QModelIndex());
+    }
+
+    QByteArray encodedData = data->data("application/vnd.text.list");
+    QDataStream stream(&encodedData, QIODevice::ReadOnly);
+    QVector<int> srcRows;
+
+    while (!stream.atEnd())
+    {
+        QString text;
+        stream >> text;
+        srcRows << text.toInt();
+    }
+
+    std::sort(srcRows.begin(), srcRows.end());
+
+    qInfo() << "Drop rows" << srcRows << "into row" << beginRow;
+
+    // create temp audio tracks vector for sorting
+    c2n::AudioTracks tmpTracks;
+    bool tracksHandled = false;
+
+    for (int i = 0; i < mTracks.size(); i++)
+    {
+        if (i == beginRow)
+        {
+            tracksHandled = true;
+            for (auto t : srcRows)
+            {
+                tmpTracks.append(mTracks.at(t));
+            }
+        }
+
+        if (!srcRows.contains(i))
+        {
+            tmpTracks.append(mTracks.at(i));
+        }
+    }
+
+    if (!tracksHandled)
+    {
+        // append
+        for (auto t : srcRows)
+        {
+            tmpTracks.append(mTracks.at(t));
+        }
+    }
+
+    mTracks = tmpTracks;
+    return true;
 }

@@ -156,10 +156,11 @@ int writeWaveHeader(QFile &wf, size_t byteCount)
 //! @param      fileName      The audio file name
 //! @param      conversion    The conversion vector @see AudioConv
 //! @param      length        length in mili seconds
+//! @param      pTag[in]      optional pointer to tag structure
 //!
 //! @return     0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
-int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length)
+int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag)
 {
     int ret    = 0;
     conversion = 0;
@@ -297,10 +298,19 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length)
             qWarning() << "Unsupported audio file extension:" << ext << "on file" << fi.fileName();
             ret = -1;
         }
+
+        if ((pTag != nullptr) && (ret == 0))
+        {
+            pTag->mAlbum  = QString::fromUtf8(f.tag()->album().toCString());
+            pTag->mArtist = QString::fromUtf8(f.tag()->artist().toCString());
+            pTag->mTitle  = QString::fromUtf8(f.tag()->title().toCString());
+            pTag->mNumber = f.tag()->track();
+            pTag->mYear   = f.tag()->year();
+        }
     }
     else
     {
-        qWarning() << "Tag lib can't parse" << fi.fileName();
+        qWarning() << "Tag lib can't parse" << fi.absoluteFilePath();
         ret = -1;
     }
     return ret;
