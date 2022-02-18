@@ -18,6 +18,7 @@
 #include <QObject>
 #include <QTableView>
 #include <QResizeEvent>
+#include "ccditemmodel.h"
 #include "defines.h"
 
 //------------------------------------------------------------------------------
@@ -31,6 +32,11 @@ public:
     //! @brief      create / init instance
     //--------------------------------------------------------------------------
     CCDTableView(QWidget *parent = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get correctly casted model
+    //--------------------------------------------------------------------------
+    CCDItemModel *myModel();
 
 protected:
     //--------------------------------------------------------------------------
@@ -77,10 +83,9 @@ signals:
     void filesDropped(QStringList files);
 
     //--------------------------------------------------------------------------
-    //! @brief      signal that entries should be deleted from list
+    //! @brief      signal that new audio length in list
     //!
-    //! @param      selection vector with selected rows
+    //! @param      length in blocks
     //--------------------------------------------------------------------------
-    void deleteSelected(QVector<int> selection);
-
+    void audioLength(long blocks);
 };

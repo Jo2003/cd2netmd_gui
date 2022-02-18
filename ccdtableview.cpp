@@ -102,12 +102,22 @@ void CCDTableView::keyPressEvent(QKeyEvent *event)
             {
                 model()->removeRow(r);
             }
+
+            emit audioLength(myModel()->audioLength());
         }
         break;
     default:
         QTableView::keyPressEvent(event);
         break;
     }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get correctly casted model
+//--------------------------------------------------------------------------
+CCDItemModel *CCDTableView::myModel()
+{
+    return reinterpret_cast<CCDItemModel*>(model());
 }
 
 //--------------------------------------------------------------------------

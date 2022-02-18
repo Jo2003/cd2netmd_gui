@@ -130,13 +130,6 @@ public:
     void removeTemp();
 
     //--------------------------------------------------------------------------
-    //! @brief      get audio tracks
-    //!
-    //! @return     audio tracks vector
-    //--------------------------------------------------------------------------
-    c2n::AudioTracks audioTracks() const;
-
-    //--------------------------------------------------------------------------
     //! @brief      set audio tracks
     //!
     //! @param[in]  audio tracks vector

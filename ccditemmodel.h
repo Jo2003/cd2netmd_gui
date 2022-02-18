@@ -154,6 +154,20 @@ public:
     //--------------------------------------------------------------------------
     bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
+    //--------------------------------------------------------------------------
+    //! @brief      get length of audio in kist
+    //!
+    //! @return     length in blocks
+    //--------------------------------------------------------------------------
+    long audioLength() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      return current audio tracks
+    //!
+    //! @return     audio tracks
+    //--------------------------------------------------------------------------
+    c2n::AudioTracks audioTracks() const;
+
 protected:
     /// backend data storage
     c2n::AudioTracks mTracks;

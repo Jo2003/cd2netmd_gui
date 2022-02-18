@@ -141,7 +141,7 @@ Qt::ItemFlags CCDItemModel::flags(const QModelIndex &index) const
 
     if (index.isValid())
     {
-        return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | defaultFlags;
+        return Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | defaultFlags;
     }
     else
     {
@@ -196,6 +196,31 @@ bool CCDItemModel::removeRows(int row, int count, const QModelIndex &parent)
         return true;
     }
     return false;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get length of audio in kist
+//!
+//! @return     length in blocks
+//--------------------------------------------------------------------------
+long CCDItemModel::audioLength() const
+{
+    long length = 0;
+    for (const auto& t : mTracks)
+    {
+        length += t.mLbCount;
+    }
+    return length;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      return current audio tracks
+//!
+//! @return     audio tracks
+//--------------------------------------------------------------------------
+c2n::AudioTracks CCDItemModel::audioTracks() const
+{
+    return mTracks;
 }
 
 //--------------------------------------------------------------------------

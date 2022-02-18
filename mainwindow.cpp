@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->treeView, &CMDTreeView::eraseDisc, this, &MainWindow::eraseDisc);
     connect(ui->treeView, &CMDTreeView::delTrack, this, &MainWindow::delTrack);
     connect(ui->tableViewCD, &CCDTableView::filesDropped, this, &MainWindow::catchDropped);
+    connect(ui->tableViewCD, &CCDTableView::audioLength, this, &MainWindow::audioLength);
 
     mpMDDevice = new QLabel();
     mpCDDevice = new QLabel();
@@ -133,7 +134,9 @@ void MainWindow::catchCDDBEntries(QStringList l)
         delete pDlg;
         return;
     }
-    catchCDDBEntry(mpRipper->audioTracks());
+
+    c2n::AudioTracks trks = {{"Request Aborted!"}};
+    catchCDDBEntry(trks);
 }
 
 //--------------------------------------------------------------------------
@@ -241,6 +244,10 @@ void MainWindow::mdTitling(CMDTreeModel::ItemRole role, QString title, int no)
 void MainWindow::on_pushTransfer_clicked()
 {
     enableDialogItems(false);
+    c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
+    trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
+    mpRipper->setAudioTracks(trks);
+    bool isCD = (trks.listType() == c2n::AudioTracks::CD);
     mbDAO = false;
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
@@ -257,7 +264,7 @@ void MainWindow::on_pushTransfer_clicked()
     // Multiple rows can be selected
     for(const auto& r : selected)
     {
-        int16_t trackNo    = r.row() + 1;
+        int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
         time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
@@ -383,7 +390,7 @@ void MainWindow::encodeFinished(bool checkBusy)
             {
                 mWorkQueue[0].mStep = WorkStep::ENCODE;
                 ui->progressExtEnc->setValue(0);
-                mpXEnc->start(xencCmd, mWorkQueue, mpRipper->audioTracks().at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC);
+                mpXEnc->start(xencCmd, mWorkQueue, ui->tableViewCD->myModel()->audioLength() / CDIO_CD_FRAMES_PER_SEC);
             }
         }
         else
@@ -729,6 +736,10 @@ void MainWindow::on_pushDAO_clicked()
         return;
     }
     enableDialogItems(false);
+    c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
+    trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
+    mpRipper->setAudioTracks(trks);
+    bool isCD = (trks.listType() == c2n::AudioTracks::CD);
     mbDAO = true;
 
     mpSettings->enaDisaOtf(false, true);
@@ -743,7 +754,7 @@ void MainWindow::on_pushDAO_clicked()
     // Multiple rows can be selected
     for(const auto& r : selected)
     {
-        int16_t trackNo    = r.row() + 1;
+        int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
         time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
@@ -870,7 +881,22 @@ void MainWindow::catchDropped(QStringList sl)
 
     if (!tracks.isEmpty())
     {
-        mpRipper->setAudioTracks(tracks);
+        catchCDDBEntry(tracks);
     }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      catch new audio length in list
+//!
+//! @param      length in blocks
+//--------------------------------------------------------------------------
+void MainWindow::audioLength(long blocks)
+{
+    time_t length = blocks / CDIO_CD_FRAMES_PER_SEC;
+
+    ui->labCDTime->clear();
+    ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
+                           .arg((length % 3600) / 60, 2, 10, QChar('0'))
+                           .arg(length % 60, 2, 10, QChar('0')));
 }
 

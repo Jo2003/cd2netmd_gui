@@ -246,6 +246,13 @@ private slots:
     //--------------------------------------------------------------------------
     void catchDropped(QStringList sl);
 
+    //--------------------------------------------------------------------------
+    //! @brief      catch new audio length in list
+    //!
+    //! @param      length in blocks
+    //--------------------------------------------------------------------------
+    void audioLength(long blocks);
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
