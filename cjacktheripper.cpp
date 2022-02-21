@@ -404,182 +404,11 @@ QString CJackTheRipper::deviceInfo()
             qInfo() << "Found CD Device " << ret;
         }
     }
-
-    if (mAudioTracks.listType() == c2n::AudioTracks::FILES)
-    {
-        ret = "Cue Sheet";
-    }
-
-    return ret;
-}
-
-//--------------------------------------------------------------------------
-//! @brief      parse cue sheet file if not yet recognized
-//!
-//! @return 0 -> ok; -1 -> error
-//--------------------------------------------------------------------------
-int CJackTheRipper::parseCueFile()
-{
-    int ret = -1;
-    c2n::STrackInfo cueInfo;
-    mAudioTracks.clear();
-    mAudioTracks.setListType(c2n::AudioTracks::FILES);
-    QFile cuefile(mImgFile);
-    QFileInfo fi(mImgFile);
-    QString lastSrcFile;
-    QString discPerformer;
-
-    if (cuefile.open(QIODevice::ReadOnly))
-    {
-        Cd* cd = cue_parse_string(static_cast<const char*>(cuefile.readAll()));
-
-        if (cd != nullptr)
-        {
-            ret = 0;
-
-            int noTracks = cd_get_ntrack(cd);
-            const char* tok;
-            QString track, performer, title;
-            long length = 0;
-
-            // disc title
-            Cdtext* cdt = cd_get_cdtext(cd);
-            tok = cue_cdtext_get(PTI_PERFORMER, cdt);
-
-            if (tok)
-            {
-                performer = QString(tok).trimmed();
-                discPerformer = performer;
-                track     = QString("%1 - ").arg(performer);
-            }
-
-            tok = cue_cdtext_get(PTI_TITLE, cdt);
-            if (tok)
-            {
-                title = QString(tok).trimmed();
-                if (title.indexOf(performer) != -1)
-                {
-                    track = title;
-                }
-                else
-                {
-                    track += title;
-                }
-            }
-
-            if (track.isEmpty())
-            {
-                track = tr("<untitled>");
-            }
-
-            cueInfo.mTitle = track;
-            mAudioTracks.append(cueInfo);
-
-            // process other tracks
-            for (int i  = 1; i <= noTracks; i++)
-            {
-                track = performer = title = "";
-                Track* t = cd_get_track(cd, i);
-                cdt = track_get_cdtext(t);
-
-                length = track_get_length(t);
-                cueInfo.mStartLba = track_get_start(t);
-                cueInfo.mFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
-
-                if ((lastSrcFile != cueInfo.mFileName) || (length == -1))
-                {
-                    lastSrcFile = cueInfo.mFileName;
-
-                    int iLen = 0;
-                    if (!audio::checkAudioFile(cueInfo.mFileName, cueInfo.mConversion, iLen))
-                    {
-                        if (length == -1)
-                        {
-                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mStartLba;
-                        }
-                    }
-                    else
-                    {
-                        // unsupported audio (or whatever)
-                        cd_delete(cd);
-                        mAudioTracks.clear();
-                        mAudioTracks = {
-                            {tr("Unsupported audio format in CUE sheet!")}
-                        };
-                        qWarning() << "Unsupported audio format in CUE sheet!";
-                        emit match(mAudioTracks);
-                        return -1;
-                    }
-                }
-
-                cueInfo.mLbCount = length;
-                tok = cue_cdtext_get(PTI_PERFORMER, cdt);
-
-                if (tok)
-                {
-                    performer = QString(tok).trimmed();
-                    if (performer != discPerformer)
-                    {
-                        track = QString("%1 - ").arg(performer);
-                    }
-                }
-
-                tok = cue_cdtext_get(PTI_TITLE, cdt);
-                if (tok)
-                {
-                    title = QString(tok).trimmed();
-                    if (title.indexOf(performer) != -1)
-                    {
-                        track = title;
-                    }
-                    else
-                    {
-                        track += title;
-                    }
-                }
-
-                // in case no title is stored, use file name
-                if (track.isEmpty())
-                {
-                    track = titleFromFileName({track_get_filename(t)});
-                }
-
-                if (track.isEmpty())
-                {
-                    track = tr("<untitled>");
-                }
-
-                qDebug() << i << track << track_get_start(t) << track_get_length(t);
-                cueInfo.mTitle = track;
-                mAudioTracks.append(cueInfo);
-            }
-
-            if (!mAudioTracks.empty())
-            {
-                length = 0;
-                for (const auto& t : mAudioTracks)
-                {
-                    if (t.mLbCount > 0)
-                    {
-                        length += t.mLbCount;
-                    }
-                    qInfo() << "Title extracted from CUE file: " << t.mTitle;
-                }
-                mAudioTracks[0].mLbCount = length;
-            }
-
-            cd_delete(cd);
-        }
-        else
-        {
-            qWarning() << "Error parsing CUE file" << mImgFile;
-        }
-    }
     else
     {
-        qWarning() << "Can't open CUE file" << mImgFile;
+        ret = mDevInfo;
     }
-    emit match(mAudioTracks);
+
     return ret;
 }
 
@@ -587,7 +416,8 @@ int CJackTheRipper::cddbReqString()
 {
     if ((mDrvId == DRIVER_BINCUE) && !mImgFile.isEmpty())
     {
-        return parseCueFile();
+        emit parseCue(mImgFile);
+        return 0;
     }
 
     mAudioTracks.clear();
@@ -726,6 +556,16 @@ void CJackTheRipper::setAudioTracks(const c2n::AudioTracks &tracks)
     mAudioTracks = tracks;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      set device info
+//!
+//! @param[in]  info device info
+//--------------------------------------------------------------------------
+void CJackTheRipper::setDeviceInfo(const QString &info)
+{
+    mDevInfo = info;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 //--------------------------------------------------------------------------
@@ -773,7 +613,7 @@ void CCDInitThread::run()
         }
         else
         {
-            qWarning() << "Can't yet identify CDDA / image!";
+            qInfo() << "Can't yet identify CDDA / image!";
         }
     }
 

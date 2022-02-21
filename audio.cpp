@@ -167,8 +167,11 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
 
     QFileInfo fi(fileName);
     QString ext = fi.suffix().toLower();
+#ifdef Q_OS_WIN
+    TagLib::FileRef f(reinterpret_cast<const wchar_t *>(fileName.utf16()));
+#else
     TagLib::FileRef f(static_cast<const char*>(fileName.toUtf8()));
-
+#endif
     if (!f.isNull())
     {
         if (ext == "wav")
@@ -301,9 +304,9 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
 
         if ((pTag != nullptr) && (ret == 0))
         {
-            pTag->mAlbum  = QString::fromUtf8(f.tag()->album().toCString());
-            pTag->mArtist = QString::fromUtf8(f.tag()->artist().toCString());
-            pTag->mTitle  = QString::fromUtf8(f.tag()->title().toCString());
+            pTag->mAlbum  = QString::fromStdString(f.tag()->album().to8Bit(true));
+            pTag->mArtist = QString::fromStdString(f.tag()->artist().to8Bit(true));
+            pTag->mTitle  = QString::fromStdString(f.tag()->title().to8Bit(true));
             pTag->mNumber = f.tag()->track();
             pTag->mYear   = f.tag()->year();
         }

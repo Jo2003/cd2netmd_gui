@@ -23,6 +23,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QFileDialog>
+#include <libcue.h>
 #include "helpers.h"
 
 using namespace c2n;
@@ -43,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
         connect(mpRipper->cddb(), &CCDDB::match, this, &MainWindow::catchCDDBEntry);
         connect(mpRipper, &CJackTheRipper::match, this, &MainWindow::catchCDDBEntry);
         connect(mpRipper, &CJackTheRipper::finished, this, &MainWindow::ripFinished);
+        connect(mpRipper, &CJackTheRipper::parseCue, this, &MainWindow::parseCueFile);
     }
 
     if ((mpNetMD = new CNetMD(this)) != nullptr)
@@ -148,6 +150,9 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 {
     if (!tracks.empty())
     {
+        // backup tracks
+        mTracksBackup = tracks;
+
         time_t length = tracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC;
 
         ui->labCDTime->clear();
@@ -160,7 +165,7 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
         // remove disc entry
         tracks.removeFirst();
 
-        CCDItemModel *pModel = static_cast<CCDItemModel *>(ui->tableViewCD->model());
+        CCDItemModel *pModel = ui->tableViewCD->myModel();
 
         if (pModel != nullptr)
         {
@@ -249,10 +254,11 @@ void MainWindow::on_pushTransfer_clicked()
     mpRipper->setAudioTracks(trks);
     bool isCD = (trks.listType() == c2n::AudioTracks::CD);
     mbDAO = false;
+
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
-    // no selection means all!
-    if (selected.isEmpty())
+    // no selection or drag'n'drop mode means all!
+    if (selected.isEmpty() || (trks.listType() == c2n::AudioTracks::FILES))
     {
         ui->tableViewCD->selectAll();
         selected = ui->tableViewCD->selectionModel()->selectedRows();
@@ -731,10 +737,21 @@ void MainWindow::eraseDisc()
 
 void MainWindow::on_pushDAO_clicked()
 {
-    if (QMessageBox::question(this, tr("Question"), tr("Disc-at-Once mode only works with external encoder and LP2 mode. Do you want to start this process?")) != QMessageBox::Yes)
+    if (QMessageBox::question(this, tr("Question"),
+                              tr("Disc-at-Once mode only works with external encoder and LP2 mode. "
+                                 "Any change on CD track list will be reverted before starting! "
+                                 "Do you want to start this process?")) != QMessageBox::Yes)
     {
         return;
     }
+
+    if (mTracksBackup.listType() == c2n::AudioTracks::CD)
+    {
+        // DAO can only be done from original CD
+        // revert any change which might be done
+        catchCDDBEntry(mTracksBackup);
+    }
+
     enableDialogItems(false);
     c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
     trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
@@ -835,12 +852,25 @@ void MainWindow::on_pushLoadImg_clicked()
 //--------------------------------------------------------------------------
 void MainWindow::catchDropped(QStringList sl)
 {
+    int length;
+    int wholeLength = 0;
     audio::STag tag;
     c2n::STrackInfo trackInfo;
     c2n::AudioTracks tracks;
-    tracks.setListType(c2n::AudioTracks::FILES);
-    int length;
-    int wholeLength = 0;
+
+    if (ui->tableViewCD->myModel() != nullptr)
+    {
+        tracks      = ui->tableViewCD->myModel()->audioTracks();
+        wholeLength = ui->tableViewCD->myModel()->audioLength();
+    }
+
+    if (tracks.listType() != c2n::AudioTracks::FILES)
+    {
+        tracks.clear();
+        tracks.setListType(c2n::AudioTracks::FILES);
+        ui->lineCDTitle->clear();
+        wholeLength = 0;
+    }
 
     for (const auto& url : sl)
     {
@@ -849,7 +879,7 @@ void MainWindow::catchDropped(QStringList sl)
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;
             trackInfo.mLbCount  = ((length * CDIO_CD_FRAMES_PER_SEC) / 1000);
-            wholeLength        += length;
+            wholeLength        += trackInfo.mLbCount;
 
             if (!tag.mTitle.isEmpty())
             {
@@ -874,13 +904,21 @@ void MainWindow::catchDropped(QStringList sl)
         // disc "title"
         trackInfo.mFileName = "";
         trackInfo.mStartLba = 0;
-        trackInfo.mLbCount  = ((wholeLength * CDIO_CD_FRAMES_PER_SEC) / 1000);
-        trackInfo.mTitle    = tr("(Maybe) Various Artists - Dropped Hits (%1)").arg(QDateTime::currentDateTime().toString());
+        trackInfo.mLbCount  = wholeLength;
+        if (ui->lineCDTitle->text().isEmpty())
+        {
+            trackInfo.mTitle = tr("(Maybe) Various Artists - Dropped Hits (%1)").arg(QDateTime::currentDateTime().toString());
+        }
+        else
+        {
+            trackInfo.mTitle = ui->lineCDTitle->text();
+        }
         tracks.prepend(trackInfo);
     }
 
     if (!tracks.isEmpty())
     {
+        mpRipper->setDeviceInfo("Drag'n'Drop");
         catchCDDBEntry(tracks);
     }
 }
@@ -900,3 +938,172 @@ void MainWindow::audioLength(long blocks)
                            .arg(length % 60, 2, 10, QChar('0')));
 }
 
+//--------------------------------------------------------------------------
+//! @brief      parse cue file
+//!
+//! @param[in]  fileName cue sheet file name
+//--------------------------------------------------------------------------
+int MainWindow::parseCueFile(QString fileName)
+{
+    int ret = -1;
+    c2n::STrackInfo cueInfo;
+    c2n::AudioTracks tracks;
+    tracks.setListType(c2n::AudioTracks::CUE_SHEET);
+    QFile cuefile(fileName);
+    QFileInfo fi(fileName);
+    QString lastSrcFile;
+    QString discPerformer;
+
+    if (cuefile.open(QIODevice::ReadOnly))
+    {
+        Cd* cd = cue_parse_string(static_cast<const char*>(cuefile.readAll()));
+
+        if (cd != nullptr)
+        {
+            ret = 0;
+
+            int noTracks = cd_get_ntrack(cd);
+            const char* tok;
+            QString track, performer, title;
+            long length = 0;
+
+            // disc title
+            Cdtext* cdt = cd_get_cdtext(cd);
+            tok = cue_cdtext_get(PTI_PERFORMER, cdt);
+
+            if (tok)
+            {
+                performer = QString(tok).trimmed();
+                discPerformer = performer;
+                track     = QString("%1 - ").arg(performer);
+            }
+
+            tok = cue_cdtext_get(PTI_TITLE, cdt);
+            if (tok)
+            {
+                title = QString(tok).trimmed();
+                if (title.indexOf(performer) != -1)
+                {
+                    track = title;
+                }
+                else
+                {
+                    track += title;
+                }
+            }
+
+            if (track.isEmpty())
+            {
+                track = tr("<untitled>");
+            }
+
+            cueInfo.mTitle = track;
+            tracks.append(cueInfo);
+
+            // process other tracks
+            for (int i  = 1; i <= noTracks; i++)
+            {
+                track = performer = title = "";
+                Track* t = cd_get_track(cd, i);
+                cdt = track_get_cdtext(t);
+
+                length = track_get_length(t);
+                cueInfo.mStartLba = track_get_start(t);
+                cueInfo.mFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
+
+                if ((lastSrcFile != cueInfo.mFileName) || (length == -1))
+                {
+                    lastSrcFile = cueInfo.mFileName;
+
+                    int iLen = 0;
+                    if (!audio::checkAudioFile(cueInfo.mFileName, cueInfo.mConversion, iLen))
+                    {
+                        if (length == -1)
+                        {
+                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mStartLba;
+                        }
+                    }
+                    else
+                    {
+                        // unsupported audio (or whatever)
+                        cd_delete(cd);
+                        tracks = {
+                            {tr("Unsupported audio format in CUE sheet!")}
+                        };
+                        qWarning() << "Unsupported audio format in CUE sheet!";
+                        catchCDDBEntry(tracks);
+                        return -1;
+                    }
+                }
+
+                cueInfo.mLbCount = length;
+                tok = cue_cdtext_get(PTI_PERFORMER, cdt);
+
+                if (tok)
+                {
+                    performer = QString(tok).trimmed();
+                    if (performer != discPerformer)
+                    {
+                        track = QString("%1 - ").arg(performer);
+                    }
+                }
+
+                tok = cue_cdtext_get(PTI_TITLE, cdt);
+                if (tok)
+                {
+                    title = QString(tok).trimmed();
+                    if (title.indexOf(performer) != -1)
+                    {
+                        track = title;
+                    }
+                    else
+                    {
+                        track += title;
+                    }
+                }
+
+                // in case no title is stored, use file name
+                if (track.isEmpty())
+                {
+                    track = titleFromFileName({track_get_filename(t)});
+                }
+
+                if (track.isEmpty())
+                {
+                    track = tr("<untitled>");
+                }
+
+                qDebug() << i << track << track_get_start(t) << track_get_length(t);
+                cueInfo.mTitle = track;
+                tracks.append(cueInfo);
+            }
+
+            if (!tracks.empty())
+            {
+                length = 0;
+                for (const auto& t : tracks)
+                {
+                    if (t.mLbCount > 0)
+                    {
+                        length += t.mLbCount;
+                    }
+                    qInfo() << "Title extracted from CUE file: " << t.mTitle;
+                }
+                tracks[0].mLbCount = length;
+            }
+
+            cd_delete(cd);
+        }
+        else
+        {
+            qWarning() << "Error parsing CUE file" << fileName;
+        }
+    }
+    else
+    {
+        qWarning() << "Can't open CUE file" << fileName;
+    }
+    mpRipper->setDeviceInfo("Cue Sheet");
+    catchCDDBEntry(tracks);
+    return ret;
+}

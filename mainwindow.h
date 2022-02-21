@@ -253,6 +253,13 @@ private slots:
     //--------------------------------------------------------------------------
     void audioLength(long blocks);
 
+    //--------------------------------------------------------------------------
+    //! @brief      parse cue file
+    //!
+    //! @param[in]  fileName cue sheet file name
+    //--------------------------------------------------------------------------
+    int parseCueFile(QString fileName);
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
@@ -283,4 +290,7 @@ private:
 
     /// settings dialog class
     SettingsDlg    *mpSettings;
+
+    /// keep a clean backup of the tracks
+    c2n::AudioTracks mTracksBackup;
 };

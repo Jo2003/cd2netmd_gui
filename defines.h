@@ -66,33 +66,52 @@ struct STrackInfo
     uint32_t mConversion;
 };
 
+///
+/// \brief The AudioTracks class
+///
 class AudioTracks : public QVector<STrackInfo>
 {
 public:
+    ///
+    /// \brief What may be stored in list
+    ///
     enum List_t
     {
-        CD,
-        FILES,
-        UNKNOWN
+        CD,         ///< CD tracks
+        FILES,      ///< files
+        CUE_SHEET,  ///< cue sheet
+        UNKNOWN     ///< unknown
     };
 
+    ///
+    /// Using base class constructor
+    ///
     using QVector::QVector;
 
+    ///
+    /// \brief set the List Type
+    /// \param t type
+    ///
     void setListType(List_t t)
     {
         mType = t;
     }
 
+    ///
+    /// \brief get the list Type
+    /// \return type
+    ///
     List_t listType() const
     {
         return mType;
     }
 
 private:
+    /// list type
     List_t mType = List_t::UNKNOWN;
 };
 
-static constexpr const char* PROGRAM_VERSION = "1.8.5";
+static constexpr const char* PROGRAM_VERSION = "1.9.1";
 static constexpr const char* PROGRAM_NAME    = "CD2NetMD GUI";
 
 enum LogLevel

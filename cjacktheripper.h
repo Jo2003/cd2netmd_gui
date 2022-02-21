@@ -136,6 +136,13 @@ public:
     //--------------------------------------------------------------------------
     void setAudioTracks(const c2n::AudioTracks& tracks);
 
+    //--------------------------------------------------------------------------
+    //! @brief      set device info
+    //!
+    //! @param[in]  info device info
+    //--------------------------------------------------------------------------
+    void setDeviceInfo(const QString& info);
+
 public slots:
 
     //--------------------------------------------------------------------------
@@ -163,13 +170,6 @@ public slots:
     //! @brief      set ripper to not busy
     //--------------------------------------------------------------------------
     void noBusy();
-
-    //--------------------------------------------------------------------------
-    //! @brief      parse cue sheet file if not yet recognized
-    //!
-    //! @return 0 -> ok; -1 -> error
-    //--------------------------------------------------------------------------
-    int parseCueFile();
 
     //--------------------------------------------------------------------------
     //! @brief      copy shop thread ended
@@ -223,6 +223,13 @@ signals:
     //--------------------------------------------------------------------------
     void finished();
 
+    //--------------------------------------------------------------------------
+    //! @brief      tell main window to parse cue file
+    //!
+    //! @param[in]  cue file name
+    //--------------------------------------------------------------------------
+    void parseCue(QString fileName);
+
 private:
     QString mCDDBRequest;           ///< CDDB request
     std::thread*  mpRipThread;      ///< rip thread pointer
@@ -235,6 +242,7 @@ private:
     int miFlacTrack;
     QString mFlacFName;
     c2n::AudioTracks mAudioTracks;
+    QString mDevInfo;
 };
 
 ///

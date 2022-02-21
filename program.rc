@@ -1,9 +1,9 @@
 #include <windows.h>  
 IDI_ICON1 ICON DISCARDABLE "res/cd2netmdgui.ico"  
-#define VER_FILEVERSION 0,1,8,5
-#define VER_FILEVERSION_STR "0,1,8,5"
-#define PROD_VER_STR "1.8.5"
-#define FILE_VER_STR "1.8.5"
+#define VER_FILEVERSION 0,1,9,1
+#define VER_FILEVERSION_STR "0,1,9,1"
+#define PROD_VER_STR "1.9.1"
+#define FILE_VER_STR "1.9.1"
 
 #define VER_PRODUCTVERSION          VER_FILEVERSION
 #define VER_PRODUCTVERSION_STR      VER_FILEVERSION_STR
