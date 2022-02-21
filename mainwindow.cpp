@@ -23,6 +23,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QFileDialog>
+#include <libcue.h>
 #include "helpers.h"
 
 using namespace c2n;
@@ -43,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
         connect(mpRipper->cddb(), &CCDDB::match, this, &MainWindow::catchCDDBEntry);
         connect(mpRipper, &CJackTheRipper::match, this, &MainWindow::catchCDDBEntry);
         connect(mpRipper, &CJackTheRipper::finished, this, &MainWindow::ripFinished);
+        connect(mpRipper, &CJackTheRipper::parseCue, this, &MainWindow::parseCueFile);
     }
 
     if ((mpNetMD = new CNetMD(this)) != nullptr)
@@ -62,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->treeView, &CMDTreeView::delGroup, this, &MainWindow::delMDGroup);
     connect(ui->treeView, &CMDTreeView::eraseDisc, this, &MainWindow::eraseDisc);
     connect(ui->treeView, &CMDTreeView::delTrack, this, &MainWindow::delTrack);
+    connect(ui->tableViewCD, &CCDTableView::filesDropped, this, &MainWindow::catchDropped);
+    connect(ui->tableViewCD, &CCDTableView::audioLength, this, &MainWindow::audioLength);
 
     mpMDDevice = new QLabel();
     mpCDDevice = new QLabel();
@@ -132,56 +136,55 @@ void MainWindow::catchCDDBEntries(QStringList l)
         delete pDlg;
         return;
     }
-    catchCDDBEntry(QStringList{});
+
+    c2n::AudioTracks trks = {{"Request Aborted!"}};
+    catchCDDBEntry(trks);
 }
 
-void MainWindow::catchCDDBEntry(QStringList l)
+//--------------------------------------------------------------------------
+//! @brief      get the one matching CDDB entry
+//!
+//! @param[in]  tracks audio tracks vector
+//--------------------------------------------------------------------------
+void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 {
-    CCDItemModel::TrackTimes v = mpRipper->trackTimes();
-    time_t length = mpRipper->discLength();
-
-    ui->labCDTime->clear();
-    ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
-                           .arg((length % 3600) / 60, 2, 10, QChar('0'))
-                           .arg(length % 60, 2, 10, QChar('0')));
-
-    // no CDDB result
-    if (l.isEmpty())
+    if (!tracks.empty())
     {
-        l.append("<untitled disc>");
-        for (const auto& t : v)
+        // backup tracks
+        mTracksBackup = tracks;
+
+        time_t length = tracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC;
+
+        ui->labCDTime->clear();
+        ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
+                               .arg((length % 3600) / 60, 2, 10, QChar('0'))
+                               .arg(length % 60, 2, 10, QChar('0')));
+
+        ui->lineCDTitle->setText(tracks.at(0).mTitle);
+
+        // remove disc entry
+        tracks.removeFirst();
+
+        CCDItemModel *pModel = ui->tableViewCD->myModel();
+
+        if (pModel != nullptr)
         {
-            Q_UNUSED(t)
-            l.append("<untitled track>");
+            delete pModel;
         }
+
+        pModel = new CCDItemModel(tracks, this);
+
+        ui->tableViewCD->setModel(pModel);
+        int width = ui->tableViewCD->width();
+
+        ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
+        ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
+
+        mpCDDevice->clear();
+        mpCDDevice->setText(mpRipper->deviceInfo());
+        mpCDDevice->show();
+        enableDialogItems(true);
     }
-
-    if (l.size() > 0)
-    {
-        ui->lineCDTitle->setText(l.at(0));
-    }
-
-    l.removeFirst();
-
-    CCDItemModel *pModel = static_cast<CCDItemModel *>(ui->tableViewCD->model());
-
-    if (pModel != nullptr)
-    {
-        delete pModel;
-    }
-
-    pModel = new CCDItemModel(l, v, this);
-
-    ui->tableViewCD->setModel(pModel);
-    int width = ui->tableViewCD->width();
-
-    ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
-    ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
-
-    mpCDDevice->clear();
-    mpCDDevice->setText(mpRipper->deviceInfo());
-    mpCDDevice->show();
-    enableDialogItems(true);
 }
 
 void MainWindow::catchJson(QString j)
@@ -246,11 +249,16 @@ void MainWindow::mdTitling(CMDTreeModel::ItemRole role, QString title, int no)
 void MainWindow::on_pushTransfer_clicked()
 {
     enableDialogItems(false);
+    c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
+    trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
+    mpRipper->setAudioTracks(trks);
+    bool isCD = (trks.listType() == c2n::AudioTracks::CD);
     mbDAO = false;
+
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
-    // no selection means all!
-    if (selected.isEmpty())
+    // no selection or drag'n'drop mode means all!
+    if (selected.isEmpty() || (trks.listType() == c2n::AudioTracks::FILES))
     {
         ui->tableViewCD->selectAll();
         selected = ui->tableViewCD->selectionModel()->selectedRows();
@@ -262,9 +270,9 @@ void MainWindow::on_pushTransfer_clicked()
     // Multiple rows can be selected
     for(const auto& r : selected)
     {
-        int16_t trackNo    = r.row() + 1;
+        int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
-        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toLongLong();
+        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
@@ -388,7 +396,7 @@ void MainWindow::encodeFinished(bool checkBusy)
             {
                 mWorkQueue[0].mStep = WorkStep::ENCODE;
                 ui->progressExtEnc->setValue(0);
-                mpXEnc->start(xencCmd, mWorkQueue, mpRipper->discLength());
+                mpXEnc->start(xencCmd, mWorkQueue, ui->tableViewCD->myModel()->audioLength() / CDIO_CD_FRAMES_PER_SEC);
             }
         }
         else
@@ -729,11 +737,26 @@ void MainWindow::eraseDisc()
 
 void MainWindow::on_pushDAO_clicked()
 {
-    if (QMessageBox::question(this, tr("Question"), tr("Disc-at-Once mode only works with external encoder and LP2 mode. Do you want to start this process?")) != QMessageBox::Yes)
+    if (QMessageBox::question(this, tr("Question"),
+                              tr("Disc-at-Once mode only works with external encoder and LP2 mode. "
+                                 "Any change on CD track list will be reverted before starting! "
+                                 "Do you want to start this process?")) != QMessageBox::Yes)
     {
         return;
     }
+
+    if (mTracksBackup.listType() == c2n::AudioTracks::CD)
+    {
+        // DAO can only be done from original CD
+        // revert any change which might be done
+        catchCDDBEntry(mTracksBackup);
+    }
+
     enableDialogItems(false);
+    c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
+    trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
+    mpRipper->setAudioTracks(trks);
+    bool isCD = (trks.listType() == c2n::AudioTracks::CD);
     mbDAO = true;
 
     mpSettings->enaDisaOtf(false, true);
@@ -748,9 +771,9 @@ void MainWindow::on_pushDAO_clicked()
     // Multiple rows can be selected
     for(const auto& r : selected)
     {
-        int16_t trackNo    = r.row() + 1;
+        int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
-        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toLongLong();
+        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
@@ -822,3 +845,265 @@ void MainWindow::on_pushLoadImg_clicked()
     }
 }
 
+//--------------------------------------------------------------------------
+//! @brief      catch dropped files from cd table view
+//!
+//! @param[in]  sl  string list with file pathes
+//--------------------------------------------------------------------------
+void MainWindow::catchDropped(QStringList sl)
+{
+    int length;
+    int wholeLength = 0;
+    audio::STag tag;
+    c2n::STrackInfo trackInfo;
+    c2n::AudioTracks tracks;
+
+    if (ui->tableViewCD->myModel() != nullptr)
+    {
+        tracks      = ui->tableViewCD->myModel()->audioTracks();
+        wholeLength = ui->tableViewCD->myModel()->audioLength();
+    }
+
+    if (tracks.listType() != c2n::AudioTracks::FILES)
+    {
+        tracks.clear();
+        tracks.setListType(c2n::AudioTracks::FILES);
+        ui->lineCDTitle->clear();
+        wholeLength = 0;
+    }
+
+    for (const auto& url : sl)
+    {
+        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
+        {
+            trackInfo.mFileName = url;
+            trackInfo.mStartLba = 0;
+            trackInfo.mLbCount  = ((length * CDIO_CD_FRAMES_PER_SEC) / 1000);
+            wholeLength        += trackInfo.mLbCount;
+
+            if (!tag.mTitle.isEmpty())
+            {
+                if (!tag.mArtist.isEmpty())
+                {
+                    trackInfo.mTitle = QString("%1 - ").arg(tag.mArtist);
+                }
+
+                trackInfo.mTitle += tag.mTitle;
+            }
+            else
+            {
+                trackInfo.mTitle = titleFromFileName(url);
+            }
+
+            tracks.append(trackInfo);
+        }
+    }
+
+    if (wholeLength > 0)
+    {
+        // disc "title"
+        trackInfo.mFileName = "";
+        trackInfo.mStartLba = 0;
+        trackInfo.mLbCount  = wholeLength;
+        if (ui->lineCDTitle->text().isEmpty())
+        {
+            trackInfo.mTitle = tr("(Maybe) Various Artists - Dropped Hits (%1)").arg(QDateTime::currentDateTime().toString());
+        }
+        else
+        {
+            trackInfo.mTitle = ui->lineCDTitle->text();
+        }
+        tracks.prepend(trackInfo);
+    }
+
+    if (!tracks.isEmpty())
+    {
+        mpRipper->setDeviceInfo("Drag'n'Drop");
+        catchCDDBEntry(tracks);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      catch new audio length in list
+//!
+//! @param      length in blocks
+//--------------------------------------------------------------------------
+void MainWindow::audioLength(long blocks)
+{
+    time_t length = blocks / CDIO_CD_FRAMES_PER_SEC;
+
+    ui->labCDTime->clear();
+    ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
+                           .arg((length % 3600) / 60, 2, 10, QChar('0'))
+                           .arg(length % 60, 2, 10, QChar('0')));
+}
+
+//--------------------------------------------------------------------------
+//! @brief      parse cue file
+//!
+//! @param[in]  fileName cue sheet file name
+//--------------------------------------------------------------------------
+int MainWindow::parseCueFile(QString fileName)
+{
+    int ret = -1;
+    c2n::STrackInfo cueInfo;
+    c2n::AudioTracks tracks;
+    tracks.setListType(c2n::AudioTracks::CUE_SHEET);
+    QFile cuefile(fileName);
+    QFileInfo fi(fileName);
+    QString lastSrcFile;
+    QString discPerformer;
+
+    if (cuefile.open(QIODevice::ReadOnly))
+    {
+        Cd* cd = cue_parse_string(static_cast<const char*>(cuefile.readAll()));
+
+        if (cd != nullptr)
+        {
+            ret = 0;
+
+            int noTracks = cd_get_ntrack(cd);
+            const char* tok;
+            QString track, performer, title;
+            long length = 0;
+
+            // disc title
+            Cdtext* cdt = cd_get_cdtext(cd);
+            tok = cue_cdtext_get(PTI_PERFORMER, cdt);
+
+            if (tok)
+            {
+                performer = QString(tok).trimmed();
+                discPerformer = performer;
+                track     = QString("%1 - ").arg(performer);
+            }
+
+            tok = cue_cdtext_get(PTI_TITLE, cdt);
+            if (tok)
+            {
+                title = QString(tok).trimmed();
+                if (title.indexOf(performer) != -1)
+                {
+                    track = title;
+                }
+                else
+                {
+                    track += title;
+                }
+            }
+
+            if (track.isEmpty())
+            {
+                track = tr("<untitled>");
+            }
+
+            cueInfo.mTitle = track;
+            tracks.append(cueInfo);
+
+            // process other tracks
+            for (int i  = 1; i <= noTracks; i++)
+            {
+                track = performer = title = "";
+                Track* t = cd_get_track(cd, i);
+                cdt = track_get_cdtext(t);
+
+                length = track_get_length(t);
+                cueInfo.mStartLba = track_get_start(t);
+                cueInfo.mFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
+
+                if ((lastSrcFile != cueInfo.mFileName) || (length == -1))
+                {
+                    lastSrcFile = cueInfo.mFileName;
+
+                    int iLen = 0;
+                    if (!audio::checkAudioFile(cueInfo.mFileName, cueInfo.mConversion, iLen))
+                    {
+                        if (length == -1)
+                        {
+                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mStartLba;
+                        }
+                    }
+                    else
+                    {
+                        // unsupported audio (or whatever)
+                        cd_delete(cd);
+                        tracks = {
+                            {tr("Unsupported audio format in CUE sheet!")}
+                        };
+                        qWarning() << "Unsupported audio format in CUE sheet!";
+                        catchCDDBEntry(tracks);
+                        return -1;
+                    }
+                }
+
+                cueInfo.mLbCount = length;
+                tok = cue_cdtext_get(PTI_PERFORMER, cdt);
+
+                if (tok)
+                {
+                    performer = QString(tok).trimmed();
+                    if (performer != discPerformer)
+                    {
+                        track = QString("%1 - ").arg(performer);
+                    }
+                }
+
+                tok = cue_cdtext_get(PTI_TITLE, cdt);
+                if (tok)
+                {
+                    title = QString(tok).trimmed();
+                    if (title.indexOf(performer) != -1)
+                    {
+                        track = title;
+                    }
+                    else
+                    {
+                        track += title;
+                    }
+                }
+
+                // in case no title is stored, use file name
+                if (track.isEmpty())
+                {
+                    track = titleFromFileName({track_get_filename(t)});
+                }
+
+                if (track.isEmpty())
+                {
+                    track = tr("<untitled>");
+                }
+
+                qDebug() << i << track << track_get_start(t) << track_get_length(t);
+                cueInfo.mTitle = track;
+                tracks.append(cueInfo);
+            }
+
+            if (!tracks.empty())
+            {
+                length = 0;
+                for (const auto& t : tracks)
+                {
+                    if (t.mLbCount > 0)
+                    {
+                        length += t.mLbCount;
+                    }
+                    qInfo() << "Title extracted from CUE file: " << t.mTitle;
+                }
+                tracks[0].mLbCount = length;
+            }
+
+            cd_delete(cd);
+        }
+        else
+        {
+            qWarning() << "Error parsing CUE file" << fileName;
+        }
+    }
+    else
+    {
+        qWarning() << "Can't open CUE file" << fileName;
+    }
+    mpRipper->setDeviceInfo("Cue Sheet");
+    catchCDDBEntry(tracks);
+    return ret;
+}

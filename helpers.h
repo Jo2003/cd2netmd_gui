@@ -18,6 +18,7 @@
 #include <QFile>
 #include <QString>
 #include <QByteArray>
+#include "defines.h"
 
 ///
 /// \brief put number to file

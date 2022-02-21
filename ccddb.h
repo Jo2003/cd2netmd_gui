@@ -17,6 +17,7 @@
 #pragma once
 #include <QObject>
 #include <QNetworkAccessManager>
+#include "defines.h"
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a CDDB helper..
@@ -45,10 +46,11 @@ public:
     //! @brief      Gets the entries.
     //!
     //! @param[in]  queryPart  The query part
+    //! @param[in]  tracks     The prepared audio tracks
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
-    int getEntries(const QString& queryPart);
+    int getEntries(const QString& queryPart, c2n::AudioTracks& tracks);
     
     //--------------------------------------------------------------------------
     //! @brief      Gets the matching entry.
@@ -85,6 +87,9 @@ protected:
 
 signals:
     void entries(QStringList l);
-    void match(QStringList l);
+    void match(c2n::AudioTracks tracks);
+
+private:
+    c2n::AudioTracks mAudioTracks;
 };
 

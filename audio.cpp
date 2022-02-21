@@ -156,18 +156,22 @@ int writeWaveHeader(QFile &wf, size_t byteCount)
 //! @param      fileName      The audio file name
 //! @param      conversion    The conversion vector @see AudioConv
 //! @param      length        length in mili seconds
+//! @param      pTag[in]      optional pointer to tag structure
 //!
 //! @return     0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
-int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length)
+int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag)
 {
     int ret    = 0;
     conversion = 0;
 
     QFileInfo fi(fileName);
     QString ext = fi.suffix().toLower();
+#ifdef Q_OS_WIN
+    TagLib::FileRef f(reinterpret_cast<const wchar_t *>(fileName.utf16()));
+#else
     TagLib::FileRef f(static_cast<const char*>(fileName.toUtf8()));
-
+#endif
     if (!f.isNull())
     {
         if (ext == "wav")
@@ -297,10 +301,19 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length)
             qWarning() << "Unsupported audio file extension:" << ext << "on file" << fi.fileName();
             ret = -1;
         }
+
+        if ((pTag != nullptr) && (ret == 0))
+        {
+            pTag->mAlbum  = QString::fromStdString(f.tag()->album().to8Bit(true));
+            pTag->mArtist = QString::fromStdString(f.tag()->artist().to8Bit(true));
+            pTag->mTitle  = QString::fromStdString(f.tag()->title().to8Bit(true));
+            pTag->mNumber = f.tag()->track();
+            pTag->mYear   = f.tag()->year();
+        }
     }
     else
     {
-        qWarning() << "Tag lib can't parse" << fi.fileName();
+        qWarning() << "Tag lib can't parse" << fi.absoluteFilePath();
         ret = -1;
     }
     return ret;

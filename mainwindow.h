@@ -137,9 +137,9 @@ private slots:
     //--------------------------------------------------------------------------
     //! @brief      get the one matching CDDB entry
     //!
-    //! @param[in]  l     track titles
+    //! @param[in]  tracks audio tracks vector
     //--------------------------------------------------------------------------
-    void catchCDDBEntry(QStringList l);
+    void catchCDDBEntry(c2n::AudioTracks tracks);
     
     //--------------------------------------------------------------------------
     //! @brief      get json data from MD
@@ -234,7 +234,31 @@ private slots:
     //--------------------------------------------------------------------------
     void on_pushSettings_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      Called when load image button was clicked.
+    //--------------------------------------------------------------------------
     void on_pushLoadImg_clicked();
+
+    //--------------------------------------------------------------------------
+    //! @brief      catch dropped files from cd table view
+    //!
+    //! @param[in]  sl  string list with file pathes
+    //--------------------------------------------------------------------------
+    void catchDropped(QStringList sl);
+
+    //--------------------------------------------------------------------------
+    //! @brief      catch new audio length in list
+    //!
+    //! @param      length in blocks
+    //--------------------------------------------------------------------------
+    void audioLength(long blocks);
+
+    //--------------------------------------------------------------------------
+    //! @brief      parse cue file
+    //!
+    //! @param[in]  fileName cue sheet file name
+    //--------------------------------------------------------------------------
+    int parseCueFile(QString fileName);
 
 private:
     /// GUI pointer
@@ -266,4 +290,7 @@ private:
 
     /// settings dialog class
     SettingsDlg    *mpSettings;
+
+    /// keep a clean backup of the tracks
+    c2n::AudioTracks mTracksBackup;
 };

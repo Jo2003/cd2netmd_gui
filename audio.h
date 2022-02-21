@@ -54,6 +54,15 @@ namespace audio {
         MP3
     };
 
+    /// group tag data in structure
+    struct STag {
+        QString mTitle;     ///< track title
+        QString mAlbum;     ///< album
+        QString mArtist;    ///< artist
+        int     mNumber;    ///< number on disc
+        int     mYear;      ///< year
+    };
+
     //--------------------------------------------------------------------------
     //! @brief      extract range from wave file
     //!
@@ -90,11 +99,13 @@ namespace audio {
     //! @param      fileName      The audio file name
     //! @param      conversion    The conversion vector @see AudioConv
     //! @param      length        length in mili seconds
+    //! @param      pTag[in]      optional pointer to tag structure
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
-    int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length);
+    int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag = nullptr);
 
+    /// type generator
     template <Supported T> struct AudioProps;
     template <> struct AudioProps<APE>  { using type = TagLib::APE::Properties*;       }; // has bitsPerSample()
     template <> struct AudioProps<FLAC> { using type = TagLib::FLAC::Properties*;      }; // has bitsPerSample()

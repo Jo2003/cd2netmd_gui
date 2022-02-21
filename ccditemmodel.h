@@ -20,6 +20,7 @@
 #include <QStringList>
 #include <QVector>
 #include <QVariant>
+#include "defines.h"
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a cd item model.
@@ -41,11 +42,10 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
-    //! @param[in]  titles  The titles
-    //! @param[in]  times   The times
+    //! @param[in]  tracks  The audio tracks vector
     //! @param      parent  The parent
     //--------------------------------------------------------------------------
-    explicit CCDItemModel(const CDTitles& titles, const TrackTimes& times, QObject *parent = nullptr);
+    explicit CCDItemModel(const c2n::AudioTracks& tracks, QObject *parent = nullptr);
     
     //--------------------------------------------------------------------------
     //! @brief      Destroys the object.
@@ -111,7 +111,64 @@ public:
     //--------------------------------------------------------------------------
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
+    //--------------------------------------------------------------------------
+    //! @brief      tells what dropactions are supported
+    //!
+    //! @return     supported drop actions
+    //--------------------------------------------------------------------------
+    Qt::DropActions supportedDropActions() const override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      Information carried when dragging
+    //!
+    //! @return     pointer to mime data
+    //--------------------------------------------------------------------------
+    QMimeData *mimeData(const QModelIndexList &indexes) const override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      Process the drop according to the information carried by drag
+    //!
+    //! @param[in]  data         mime date needed for drop
+    //! @param[in]  action       what needs to be done
+    //! @param[in]  row          target row
+    //! @param[in]  column       target column
+    //! @param[in]  parent       parent modell index
+    //!
+    //! @return     true if handled
+    //--------------------------------------------------------------------------
+    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      export mime types
+    //--------------------------------------------------------------------------
+    QStringList mimeTypes() const override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      remove [count] rows starting from [row]
+    //!
+    //! @param[in]  row          target row
+    //! @param[in]  count        row count
+    //! @param[in]  parent       parent modell index
+    //!
+    //! @return     true if handled
+    //--------------------------------------------------------------------------
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get length of audio in kist
+    //!
+    //! @return     length in blocks
+    //--------------------------------------------------------------------------
+    long audioLength() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      return current audio tracks
+    //!
+    //! @return     audio tracks
+    //--------------------------------------------------------------------------
+    c2n::AudioTracks audioTracks() const;
+
 protected:
-    CDTitles   mTitles; ///< buffer CD titles
-    TrackTimes mTTimes; ///< buffer track times
+    /// backend data storage
+    c2n::AudioTracks mTracks;
 };
