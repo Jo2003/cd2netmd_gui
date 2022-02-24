@@ -134,7 +134,15 @@ void CCDTableView::dropEvent(QDropEvent *event)
         fi.setFile(QUrl::fromPercentEncoding(u.toString(QUrl::PreferLocalFile).toUtf8()));
         files << fi.absoluteFilePath();
     }
-    emit filesDropped(files);
+
+    if (!files.isEmpty())
+    {
+        // inform about new files only if there are files
+        emit filesDropped(files);
+    }
+
+    // clear selection since it doesn't match anymore
+    clearSelection();
 
     QTableView::dropEvent(event);
 }
