@@ -2,6 +2,7 @@
     <qresource prefix="/view">
         <file alias="folder">res/folder.png</file>
         <file alias="audio">res/wave.png</file>
+        <file alias="dnd">res/drag-and-drop.png</file>
     </qresource>
     <qresource prefix="/main">
         <file alias="md">res/minidisc.png</file>
