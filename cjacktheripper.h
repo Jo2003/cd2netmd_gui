@@ -261,6 +261,9 @@ private:
     QString mFlacFName;
     c2n::AudioTracks mAudioTracks;
     QString mDevInfo;
+#ifdef Q_OS_MAC
+    CDRUtil* mpDrUtil;
+#endif
 };
 
 ///

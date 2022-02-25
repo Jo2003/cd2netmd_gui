@@ -33,10 +33,16 @@ CJackTheRipper::CJackTheRipper(QObject *parent)
       mpCDParanoia(nullptr), mpRipThread(nullptr),
       mpCddb(nullptr), mBusy(false), mbCDDB(false),
       mpFFMpeg(nullptr), miFlacTrack(-99)
+#ifdef Q_OS_MAC
+      , mpDrUtil(nullptr)
+#endif
 {
     mpCddb   = new CCDDB(this);
     mpFFMpeg = new CFFMpeg(this);
-
+#ifdef Q_OS_MAC
+    mpDrUtil = new CDRUtil(this);
+    connect(mpDrUtil, &CDRUtil::fileDone, this, &CJackTheRipper::macCDText);
+#endif
     connect(mpFFMpeg, &CFFMpeg::fileDone, this, &CJackTheRipper::extractDone);
     connect(mpFFMpeg, &CFFMpeg::progress, this, &CJackTheRipper::getProgress);
 }
@@ -496,9 +502,7 @@ int CJackTheRipper::cddbReqString()
 #ifdef Q_OS_MAC
         if (!pCdText)
         {
-            CDRUtil cdrutil(this);
-            connect(&cdrutil, &CDRUtil::fileDone, this, &CJackTheRipper::macCDText);
-            cdrutil.start();
+            mpDrUtil->start();
         }
 #else
         if (!pCdText && mbCDDB)
