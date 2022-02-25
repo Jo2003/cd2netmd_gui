@@ -437,23 +437,6 @@ int CJackTheRipper::cddbReqString()
 
         cdtext_t* pCdText = cdio_get_cdtext(mpCDIO);
 
-#ifdef Q_OS_MAC
-        if (pCdText == nullptr)
-        {
-            uint8_t* packData = mmc_read_cdtext(mpCDIO);
-            if (packData != nullptr)
-            {
-                cdtext_data_init(pCdText, packData + 4, (size_t) CDIO_MMC_GET_LEN16(packData) - 2);
-                free(packData);
-            }
-            else if ((packData = cdio_get_cdtext_raw(mpCDIO)) != nullptr)
-            {
-                cdtext_data_init(pCdText, packData + 4, (size_t) CDIO_MMC_GET_LEN16(packData) - 2);
-                free(packData);
-            }
-        }
-#endif
-
         trackInfo.mCDTrackNo = 0;
         trackInfo.mStartLba  = 0;
         trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) - cdio_get_track_lba(mpCDIO, firstTrack);

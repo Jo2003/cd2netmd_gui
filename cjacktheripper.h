@@ -27,9 +27,6 @@
 #include <cdio/cd_types.h>
 #include <cdio/cdtext.h>
 #include <cdio/paranoia/paranoia.h>
-#ifdef Q_OS_MAC
-    #include <cdio/mmc.h>
-#endif // mac
 #include "cffmpeg.h"
 #include "ccddb.h"
 #include "audio.h"
