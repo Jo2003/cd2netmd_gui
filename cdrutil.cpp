@@ -88,6 +88,8 @@ int CDRUtil::parseXml(const QString &xmlData, CDTextData &cdtdata)
 
     while(!xml.atEnd() && !xml.hasError())
     {
+        xml.readNext();
+
         if (xml.isStartElement() && (xml.name() == "key"))
         {
             if (xml.readNext() == QXmlStreamReader::Characters)
