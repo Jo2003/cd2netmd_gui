@@ -30,6 +30,11 @@ mac{
                    /usr/local/Cellar/libgpg-error/1.43/include \
                    /usr/local/include
     LIBS += -L/usr/local/lib -lgcrypt -lusb-1.0 -lgpg-error
+
+    # since libcdio doesn't support CD-Text on Mac, use drutil
+    QT += xml
+    SOURCES += cdrutil.cpp
+    HEADERS += cdrutil.h
 }
 
 win32{

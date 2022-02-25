@@ -27,6 +27,9 @@
 #include <cdio/cd_types.h>
 #include <cdio/cdtext.h>
 #include <cdio/paranoia/paranoia.h>
+#ifdef Q_OS_MAC
+    #include "cdrutil.h"
+#endif // Q_OS_MAC
 #include "cffmpeg.h"
 #include "ccddb.h"
 #include "audio.h"
@@ -181,6 +184,16 @@ public slots:
     //--------------------------------------------------------------------------
     void extractDone();
 
+#ifdef Q_OS_MAC
+private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      CD-Text data created by CDRUtil
+    //!
+    //! @param[in]  percent  The percent
+    //--------------------------------------------------------------------------
+    void macCDText(CDRUtil::CDTextData cdtdata);
+#endif
+
 protected:
     //--------------------------------------------------------------------------
     //! @brief      extract to Wave
@@ -191,6 +204,11 @@ protected:
     //! @brief      start file copy stuff
     //--------------------------------------------------------------------------
     void startCopyShop();
+
+    //--------------------------------------------------------------------------
+    //! @brief      create cddbp query and start request
+    //--------------------------------------------------------------------------
+    int cddbRequest();
 
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
