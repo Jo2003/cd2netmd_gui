@@ -21,6 +21,9 @@
 #include <QDir>
 #include <QDateTime>
 #include <QtGlobal>
+#ifdef Q_OS_MAC
+    #include "cdrutil.h"
+#endif // Q_OS_MAC
 #include "defines.h"
 
 const QString g_logFileName = QString("%1/cd2netmd_gui.log").arg(QDir::tempPath());
@@ -97,7 +100,9 @@ int main(int argc, char *argv[])
 {
     int exitCode = 0;
     qRegisterMetaType<c2n::AudioTracks>("c2n::AudioTracks");
-
+#ifdef Q_OS_MAC
+    qRegisterMetaType<CDRUtil::CDTextData>("CDRUtil::CDTextData");
+#endif // Q_OS_MAC
     s_logFile.open(QIODevice::Text | QIODevice::Truncate | QIODevice::WriteOnly);
     qInstallMessageHandler(logger);
     QApplication a(argc, argv);

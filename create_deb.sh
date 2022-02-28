@@ -6,9 +6,9 @@
 # (c)2022 By Jo2003 All rights reserved!
 #-----------------------------------------------------------------------
 BIN_FILE=${1}
-BIN_NAME=cd2netmd_gui
+BIN_NAME=netmd_wizard
 PACKAGE=$(echo -n ${BIN_NAME} | sed 's/_/-/')
-OFF_NAME="CD to NetMD"
+OFF_NAME="NetMD Wizard"
 VER="$(sed -n 's/.*PROGRAM_VERSION[^0-9]\+\([^\"]\+\).*/\1/p' defines.h)-$(date +%Y%m%d)"
 ARCH="amd64"
 QTVER="5"

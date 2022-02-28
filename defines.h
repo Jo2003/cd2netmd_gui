@@ -111,8 +111,8 @@ private:
     List_t mType = List_t::UNKNOWN;
 };
 
-static constexpr const char* PROGRAM_VERSION = "1.9.1";
-static constexpr const char* PROGRAM_NAME    = "CD2NetMD GUI";
+static constexpr const char* PROGRAM_VERSION = "1.9.2";
+static constexpr const char* PROGRAM_NAME    = "NetMD Wizard";
 
 enum LogLevel
 {
@@ -127,3 +127,20 @@ enum LogLevel
 
 extern const QString g_logFileName;
 extern c2n::LogLevel g_LogFilter;
+
+namespace styles {
+constexpr const char* CD_TAB_STD = R"(#tableViewCD {
+    background-repeat: no-repeat;
+    background-position: center fixed;
+    background-image: url(:/view/dnd);
+    background-attachment: fixed;
+    background-color: #fff;
+})";
+
+constexpr const char* CD_TAB_STYLED = R"(#tableViewCD {
+    background-repeat: no-repeat;
+    background-position: center fixed;
+    background-image: url(:/view/dnd);
+    background-attachment: fixed;
+})";
+}

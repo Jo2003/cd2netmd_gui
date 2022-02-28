@@ -33,10 +33,16 @@ CJackTheRipper::CJackTheRipper(QObject *parent)
       mpCDParanoia(nullptr), mpRipThread(nullptr),
       mpCddb(nullptr), mBusy(false), mbCDDB(false),
       mpFFMpeg(nullptr), miFlacTrack(-99)
+#ifdef Q_OS_MAC
+      , mpDrUtil(nullptr)
+#endif
 {
     mpCddb   = new CCDDB(this);
     mpFFMpeg = new CFFMpeg(this);
-
+#ifdef Q_OS_MAC
+    mpDrUtil = new CDRUtil(this);
+    connect(mpDrUtil, &CDRUtil::fileDone, this, &CJackTheRipper::macCDText);
+#endif
     connect(mpFFMpeg, &CFFMpeg::fileDone, this, &CJackTheRipper::extractDone);
     connect(mpFFMpeg, &CFFMpeg::progress, this, &CJackTheRipper::getProgress);
 }
@@ -46,8 +52,6 @@ CJackTheRipper::CJackTheRipper(QObject *parent)
 ///
 CJackTheRipper::~CJackTheRipper()
 {
-    mtChkChd.stop();
-
     // cleanup time
     cleanup();
 }
@@ -101,6 +105,7 @@ int CJackTheRipper::cleanup()
     if (mpCDAudio != nullptr)
     {
         cdio_cddap_close_no_free_cdio(mpCDAudio);
+        mpCDAudio = nullptr;
     }
 
     if (mpCDIO != nullptr)
@@ -391,6 +396,48 @@ void CJackTheRipper::startCopyShop()
     }
 }
 
+//--------------------------------------------------------------------------
+//! @brief      create cddbp query and start request
+//--------------------------------------------------------------------------
+int CJackTheRipper::cddbRequest()
+{
+    uint32_t checkSum = 0, tmp = 0;
+    QString  req, lbas;
+    uint32_t discId = 0;
+
+    for (const auto& t : mAudioTracks)
+    {
+        if (t.mCDTrackNo > 0)
+        {
+            // checksum
+            tmp = t.mStartLba / CDIO_CD_FRAMES_PER_SEC;
+            do
+            {
+                checkSum += tmp % 10;
+                tmp /= 10;
+            } while (tmp != 0);
+
+            lbas += QString("+%1").arg(t.mStartLba);
+        }
+    }
+
+    discId = checkSum << 24
+              | (mAudioTracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC) << 8
+              | (mAudioTracks.size() - 1);
+
+    req = QString("%1+%2").arg(discId, 8, 16, QChar('0')).arg(mAudioTracks.size() - 1);
+    req += lbas;
+    req += QString("+%1").arg(mAudioTracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC);
+    mCDDBRequest = req;
+
+    qInfo() << "No CD-Text, do CDDB request: " << req;
+
+    // no CDText -> ask CDDB
+    mpCddb->getEntries(req, mAudioTracks);
+
+    return 0;
+}
+
 QString CJackTheRipper::deviceInfo()
 {
     QString ret;
@@ -451,80 +498,65 @@ int CJackTheRipper::cddbReqString()
             parseCDText(pCdText, t, trackInfo.mTitle);
             mAudioTracks.append(trackInfo);
         }
-
+#ifdef Q_OS_MAC
+        if (!pCdText)
+        {
+            mpDrUtil->start();
+        }
+#else
         if (!pCdText && mbCDDB)
         {
-            uint32_t checkSum = 0, tmp = 0;
-            QString  req, lbas;
-            uint32_t discId = 0;
-
-            for (const auto& t : mAudioTracks)
-            {
-                if (t.mCDTrackNo > 0)
-                {
-                    // checksum
-                    tmp = t.mStartLba / CDIO_CD_FRAMES_PER_SEC;
-                    do
-                    {
-                        checkSum += tmp % 10;
-                        tmp /= 10;
-                    } while (tmp != 0);
-
-                    lbas += QString("+%1").arg(t.mStartLba);
-                }
-            }
-
-            discId = checkSum << 24
-                      | (mAudioTracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC) << 8
-                      | (mAudioTracks.size() - 1);
-
-            req = QString("%1+%2").arg(discId, 8, 16, QChar('0')).arg(mAudioTracks.size() - 1);
-            req += lbas;
-            req += QString("+%1").arg(mAudioTracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC);
-            mCDDBRequest = req;
-
-            qInfo() << "No CD-Text, do CDDB request: " << req;
-
-            // no CDText -> ask CDDB
-            mpCddb->getEntries(req, mAudioTracks);
+            cddbRequest();
         }
         else
         {
             emit match(mAudioTracks);
         }
+#endif // Q_OS_MAC
     }
 
     return mAudioTracks.isEmpty() ? -1 : 0;
 }
 
+#ifdef Q_OS_MAC
+//--------------------------------------------------------------------------
+//! @brief      CD-Text data created by CDRUtil
+//!
+//! @param[in]  percent  The percent
+//--------------------------------------------------------------------------
+void CJackTheRipper::macCDText(CDRUtil::CDTextData cdtdata)
+{
+    if (!cdtdata.isEmpty())
+    {
+        QString title;
+        for (int i = 0; i < mAudioTracks.count(); i++)
+        {
+            title = "";
+            if (i < cdtdata.count())
+            {
+                if (!cdtdata.at(i).mArtist.isEmpty())
+                {
+                    title = cdtdata.at(i).mArtist.trimmed() + " - ";
+                }
+
+                title += cdtdata.at(i).mTitle.trimmed();
+                mAudioTracks[i].mTitle = title;
+            }
+        }
+    }
+    else if (mbCDDB)
+    {
+        cddbRequest();
+        return;
+    }
+
+    emit match(mAudioTracks);
+}
+#endif
+
 void CJackTheRipper::noBusy()
 {
     mBusy = false;
-}
-
-///
-/// \brief CJackTheRipper::mediaChanged
-/// \return true if media was changed
-///
-bool CJackTheRipper::mediaChanged()
-{
-    int ret;
-    if (mpCDIO != nullptr)
-    {
-        ret = cdio_get_media_changed(mpCDIO);
-        if (ret == 1)
-        {
-            qDebug("Media changed!");
-            emit mediaChgd();
-            return true;
-        }
-        else if (ret < 0)
-        {
-            cdio_log(CDIO_LOG_ERROR, "Error: %s",
-                     cdio_driver_errmsg(static_cast<driver_return_code_t>(ret)));
-        }
-    }
-    return false;
 }
 
 void CJackTheRipper::getProgress(int percent)
@@ -602,18 +634,21 @@ void CCDInitThread::run()
     if (!mImgFile.isEmpty())
     {
         *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), /* mDrvId */DRIVER_UNKNOWN);
-        *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
+        if (*mppCDIO)
+        {
+            *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
 
-        if (*mppCDAudio)
-        {
-            if (cdio_cddap_open(*mppCDAudio) == 0)
+            if (*mppCDAudio)
             {
-                *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+                if (cdio_cddap_open(*mppCDAudio) == 0)
+                {
+                    *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+                }
             }
-        }
-        else
-        {
-            qInfo() << "Can't yet identify CDDA / image!";
+            else
+            {
+                qInfo() << "Can't yet identify CDDA / image!";
+            }
         }
     }
 

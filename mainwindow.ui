@@ -58,7 +58,7 @@
         <item>
          <widget class="CCDTableView" name="tableViewCD">
           <property name="styleSheet">
-           <string notr="true">border-image: url(:/view/dnd) 0 0 0 0 stretch stretch;</string>
+           <string notr="true"/>
           </property>
           <property name="sizeAdjustPolicy">
            <enum>QAbstractScrollArea::AdjustIgnored</enum>

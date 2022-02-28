@@ -1,12 +1,12 @@
 #!/bin/bash
-APPNAME=cd2netmd_gui
+APPNAME=netmd_wizard
 BUILDFOLDER=release
 
 [[ ! -z "${1}" ]] && BUILDFOLDER=${1}
 
 TMPFILE=/tmp/plist.tmp
 CONTENTS=${APPNAME}.app/Contents
-OFFNAME="CD to NetMD"
+OFFNAME="NetMD Wizard"
 QTTRANS=/Users/joergn/Qt5.12.12/5.12.12/clang_64/translations
 echo "Creating APP bundle for ${APPNAME} ..."
 

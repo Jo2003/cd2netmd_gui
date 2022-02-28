@@ -33,6 +33,13 @@ class SettingsDlg : public QDialog
 
 public:
 
+    /// current theme
+    enum Theme {
+        LIGHT,
+        DARK,
+        STANDARD
+    };
+
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
@@ -95,6 +102,13 @@ public:
     //--------------------------------------------------------------------------
     bool cddb() const;
 
+    //--------------------------------------------------------------------------
+    //! @brief      get active theme
+    //!
+    //! @return     active theme
+    //--------------------------------------------------------------------------
+    Theme theme() const;
+
 private slots:
     
     //--------------------------------------------------------------------------
@@ -130,6 +144,12 @@ private slots:
     //! @brief      Called when push OK clicked.
     //--------------------------------------------------------------------------
     void on_pushOK_clicked();
+
+signals:
+    //--------------------------------------------------------------------------
+    //! @brief      will be sent when settings loaded
+    //--------------------------------------------------------------------------
+    void loadingComplete();
 
 private:
     /// pointer to UI

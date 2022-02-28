@@ -27,6 +27,9 @@
 #include <cdio/cd_types.h>
 #include <cdio/cdtext.h>
 #include <cdio/paranoia/paranoia.h>
+#ifdef Q_OS_MAC
+    #include "cdrutil.h"
+#endif // Q_OS_MAC
 #include "cffmpeg.h"
 #include "ccddb.h"
 #include "audio.h"
@@ -144,13 +147,6 @@ public:
     void setDeviceInfo(const QString& info);
 
 public slots:
-
-    //--------------------------------------------------------------------------
-    //! @brief      check if media was changed
-    //!
-    //! @return     true if changed
-    //--------------------------------------------------------------------------
-    bool mediaChanged();
     
     //--------------------------------------------------------------------------
     //! @brief      Gets the progress
@@ -181,6 +177,16 @@ public slots:
     //--------------------------------------------------------------------------
     void extractDone();
 
+#ifdef Q_OS_MAC
+private slots:
+    //--------------------------------------------------------------------------
+    //! @brief      CD-Text data created by CDRUtil
+    //!
+    //! @param[in]  percent  The percent
+    //--------------------------------------------------------------------------
+    void macCDText(CDRUtil::CDTextData cdtdata);
+#endif
+
 protected:
     //--------------------------------------------------------------------------
     //! @brief      extract to Wave
@@ -192,10 +198,14 @@ protected:
     //--------------------------------------------------------------------------
     void startCopyShop();
 
+    //--------------------------------------------------------------------------
+    //! @brief      create cddbp query and start request
+    //--------------------------------------------------------------------------
+    int cddbRequest();
+
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
     cdrom_paranoia_t* mpCDParanoia;     ///< CD Paranoia pointer
-    QTimer mtChkChd;                    ///< check for media change
 
 signals:
 
@@ -243,6 +253,9 @@ private:
     QString mFlacFName;
     c2n::AudioTracks mAudioTracks;
     QString mDevInfo;
+#ifdef Q_OS_MAC
+    CDRUtil* mpDrUtil;
+#endif
 };
 
 ///
