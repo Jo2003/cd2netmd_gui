@@ -84,6 +84,24 @@ bool SettingsDlg::cddb() const
     return ui->checkCDDB->isChecked();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      get active theme
+//!
+//! @return     active theme
+//--------------------------------------------------------------------------
+SettingsDlg::Theme SettingsDlg::theme() const
+{
+    switch(ui->comboBox->currentIndex())
+    {
+    case 1:
+        return Theme::DARK;
+    case 2:
+        return Theme::LIGHT;
+    default:
+        return Theme::STANDARD;
+    }
+}
+
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
 {
     QFile styleFile;
@@ -176,6 +194,8 @@ void SettingsDlg::loadSettings()
     {
         ui->checkCDDB->setChecked(true);
     }
+
+    emit loadingComplete();
 }
 
 void SettingsDlg::on_cbxLogLevel_currentIndexChanged(int index)

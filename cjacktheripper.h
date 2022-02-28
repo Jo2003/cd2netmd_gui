@@ -147,13 +147,6 @@ public:
     void setDeviceInfo(const QString& info);
 
 public slots:
-
-    //--------------------------------------------------------------------------
-    //! @brief      check if media was changed
-    //!
-    //! @return     true if changed
-    //--------------------------------------------------------------------------
-    bool mediaChanged();
     
     //--------------------------------------------------------------------------
     //! @brief      Gets the progress
@@ -213,7 +206,6 @@ protected:
     CdIo_t* mpCDIO;                     ///< CD device pointer
     cdrom_drive_t* mpCDAudio;           ///< CD Audio pointer
     cdrom_paranoia_t* mpCDParanoia;     ///< CD Paranoia pointer
-    QTimer mtChkChd;                    ///< check for media change
 
 signals:
 

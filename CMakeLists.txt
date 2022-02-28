@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1.0)
 
-project(cd2netmd_gui VERSION 0.1.8.5 LANGUAGES CXX C)
+project(netmd_wizard VERSION 0.1.9.2 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -93,7 +93,7 @@ set(SLIBS
 
 list(REMOVE_DUPLICATES "SLIBS")
 
-add_executable(cd2netmd_gui
+add_executable(netmd_wizard
     caboutdialog.ui
     ccddbentriesdialog.ui
     cnamingdialog.ui
@@ -149,9 +149,9 @@ set(MYCFLAGS
 
 list(REMOVE_DUPLICATES "MYCFLAGS")
 
-target_compile_options(cd2netmd_gui PRIVATE ${MYCFLAGS})
+target_compile_options(netmd_wizard PRIVATE ${MYCFLAGS})
 
-target_link_libraries(cd2netmd_gui
+target_link_libraries(netmd_wizard
     Qt5::Widgets 
     Qt5::Core 
     Qt5::Network 

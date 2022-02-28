@@ -1,4 +1,4 @@
-# cd2netmd_gui
+# NetMD Wizard
 A tool like Sonys NetMD Simple Burner to transfer audio from CD to NetMD. It is written in C++ using the Qt framework.
 It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and derivates) 18.04 and newer.
 
@@ -8,7 +8,7 @@ It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and de
 - reads CD using libcdio
 - supports CDDA paranoia
 - reads __Cue Sheets__
-- reads CD-TEXT (not on Mac, sorry)
+- reads CD-TEXT
 - requests track title from CDDB (gnudb.org)
 - supports on-the-fly MDLP encoding on SHARP IM-DR4x0, Sony MDS-JB980, and Sony MDS-JE780
 - support external MDLP encoding for other NetMD devices

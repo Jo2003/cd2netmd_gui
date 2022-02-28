@@ -68,9 +68,16 @@ protected:
     //--------------------------------------------------------------------------
     //! @brief      app is about to close
     //!
-    //! @param[in]  e pointer to clode event
+    //! @param[in]  e pointer to close event
     //--------------------------------------------------------------------------
     void closeEvent(QCloseEvent* e) override;
+
+    //--------------------------------------------------------------------------
+    //! @brief      something changed
+    //!
+    //! @param[in]  e pointer to event
+    //--------------------------------------------------------------------------
+    void changeEvent(QEvent* e) override;
 
     //--------------------------------------------------------------------------
     //! @brief      get the transfer configuration

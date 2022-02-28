@@ -27,19 +27,23 @@ CAboutDialog::CAboutDialog(QWidget *parent) :
     ui->labelName->setText(QString("%1 %2 %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
     QString text =
 R"(<b>CD to NetMD GUI - a tool like Sonys NetMD Simply Burner</b><br>
-Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a><br>
+Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a>
+<br> <br>
+If you like this program, please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!
+<br> <br>
 Thanks for following projects:<br>
 <ul>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.gnu.org/software/libcdio/">libcdio</a> with CDDA paranoia extension.</li>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/nlohmann/json">json.hpp - JSON for modern C++</a></li>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/dcherednik/atracdenc">atracdenc - ATRAC Decoder Encoder</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/nlohmann/json">json.hpp</a> - JSON for modern C++</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/dcherednik/atracdenc">atracdenc</a> - ATRAC Decoder Encoder</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/netmd">linux-minidisc</a></li>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/cybercase/webminidisc">webminidisc - the idea behind all of that</a></li>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt - One framework to rule them all</a></li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/cybercase/webminidisc">webminidisc</a> - the idea behind all of that</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/libcue/">libcue</a> - for making Cue Sheet parsing a bit easier</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://taglib.org/">taglib</a> - for make reading tags much easier</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.ffmpeg.org/">ffmpeg</a> - for encoding <b>xxx</b> to compatible wav files</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt</a> - One framework to rule them all</li>
 </ul>
-Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!
-<br /> <br />
-Please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!)";
+Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!)";
     ui->textAbout->setHtml(text);
 #ifdef Q_OS_MAC
     QFont f = ui->textAbout->font();

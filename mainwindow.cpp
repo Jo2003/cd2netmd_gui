@@ -35,7 +35,12 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    mpSettings = new SettingsDlg(this);
+    setWindowTitle(PROGRAM_NAME);
+
+    if ((mpSettings = new SettingsDlg(this)) != nullptr)
+    {
+        connect(mpSettings, &SettingsDlg::loadingComplete, this, &MainWindow::loadSettings);
+    }
 
     if ((mpRipper = new CJackTheRipper(this)) != nullptr)
     {
@@ -72,8 +77,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
-
-    QTimer::singleShot(10, this, &MainWindow::loadSettings);
 }
 
 MainWindow::~MainWindow()
@@ -86,6 +89,29 @@ void MainWindow::closeEvent(QCloseEvent *e)
     QSettings set;
     set.setValue("mainwindow", geometry());
     QMainWindow::closeEvent(e);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      something changed
+//!
+//! @param[in]  e pointer to event
+//--------------------------------------------------------------------------
+void MainWindow::changeEvent(QEvent *e)
+{
+    if (e->type() == QEvent::StyleChange)
+    {
+        QString style;
+        if (mpSettings->theme() == SettingsDlg::Theme::STANDARD)
+        {
+            style = styles::CD_TAB_STD;
+        }
+        else
+        {
+            style = styles::CD_TAB_STYLED;
+        }
+        ui->tableViewCD->setStyleSheet(style);
+    }
+    QMainWindow::changeEvent(e);
 }
 
 void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xencCmd, QString &trackMode)
@@ -178,7 +204,7 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
         int width = ui->tableViewCD->width();
 
         ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
-        ui->tableViewCD->setColumnWidth(1, (width / 100) * 15);
+        ui->tableViewCD->setColumnWidth(1, (width / 100) * 18);
 
         mpCDDevice->clear();
         mpCDDevice->setText(mpRipper->deviceInfo());
@@ -723,6 +749,15 @@ void MainWindow::loadSettings()
     if (set.contains("mainwindow"))
     {
         setGeometry(set.value("mainwindow").toRect());
+    }
+
+    if (mpSettings->theme() == SettingsDlg::Theme::STANDARD)
+    {
+        ui->tableViewCD->setStyleSheet(styles::CD_TAB_STD);
+    }
+    else
+    {
+        ui->tableViewCD->setStyleSheet(styles::CD_TAB_STYLED);
     }
 }
 

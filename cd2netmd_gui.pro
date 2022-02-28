@@ -20,7 +20,9 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 INCLUDEPATH += include \
                externals/netmd/libnetmd \
                externals/netmd/netmdcli
-			   
+
+TARGET = netmd_wizard
+
 mac{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig

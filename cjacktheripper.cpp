@@ -52,8 +52,6 @@ CJackTheRipper::CJackTheRipper(QObject *parent)
 ///
 CJackTheRipper::~CJackTheRipper()
 {
-    mtChkChd.stop();
-
     // cleanup time
     cleanup();
 }
@@ -107,6 +105,7 @@ int CJackTheRipper::cleanup()
     if (mpCDAudio != nullptr)
     {
         cdio_cddap_close_no_free_cdio(mpCDAudio);
+        mpCDAudio = nullptr;
     }
 
     if (mpCDIO != nullptr)
@@ -560,31 +559,6 @@ void CJackTheRipper::noBusy()
     mBusy = false;
 }
 
-///
-/// \brief CJackTheRipper::mediaChanged
-/// \return true if media was changed
-///
-bool CJackTheRipper::mediaChanged()
-{
-    int ret;
-    if (mpCDIO != nullptr)
-    {
-        ret = cdio_get_media_changed(mpCDIO);
-        if (ret == 1)
-        {
-            qDebug("Media changed!");
-            emit mediaChgd();
-            return true;
-        }
-        else if (ret < 0)
-        {
-            cdio_log(CDIO_LOG_ERROR, "Error: %s",
-                     cdio_driver_errmsg(static_cast<driver_return_code_t>(ret)));
-        }
-    }
-    return false;
-}
-
 void CJackTheRipper::getProgress(int percent)
 {
     emit progress(percent);
@@ -660,18 +634,21 @@ void CCDInitThread::run()
     if (!mImgFile.isEmpty())
     {
         *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), /* mDrvId */DRIVER_UNKNOWN);
-        *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
+        if (*mppCDIO)
+        {
+            *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
 
-        if (*mppCDAudio)
-        {
-            if (cdio_cddap_open(*mppCDAudio) == 0)
+            if (*mppCDAudio)
             {
-                *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+                if (cdio_cddap_open(*mppCDAudio) == 0)
+                {
+                    *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+                }
             }
-        }
-        else
-        {
-            qInfo() << "Can't yet identify CDDA / image!";
+            else
+            {
+                qInfo() << "Can't yet identify CDDA / image!";
+            }
         }
     }
 
