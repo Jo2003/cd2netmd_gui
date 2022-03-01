@@ -21,7 +21,7 @@ echo "Destination folder is ${DSTFOLDER} ..."
 cd ${BUILDFOLDER}
 rm -rf ${APPNAME}_mac*
 mkdir -p "${CONTENTS}/Resources/language"
-mkdir -p "${CONTENTS}/Resources/doc"
+mkdir -p "${CONTENTS}/Resources/help"
 mkdir -p "${CONTENTS}/PlugIns"
 mkdir -p "${CONTENTS}/Frameworks"
 mkdir -p "${CONTENTS}/translations"
@@ -29,6 +29,7 @@ cp "../res/minidisc.icns" "${CONTENTS}/Resources/${APPNAME}.icns"
 cp ../prebuilt/mac/bin/atracdenc "${CONTENTS}/MacOS/"
 cp ../ffmpeg/mac/ffmpeg "${CONTENTS}/MacOS/"
 cp ../prebuilt/mac/lib/*.dylib "${CONTENTS}/Frameworks/"
+cp ../help/*.png ../help/*.html "${CONTENTS}/Resources/help/"
 
 # copy Qt translations
 cp "${QTTRANS}/qt_de.qm" "${CONTENTS}/translations"

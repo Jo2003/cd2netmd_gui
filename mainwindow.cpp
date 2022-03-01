@@ -23,6 +23,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QFileDialog>
+#include <QDesktopServices>
 #include <libcue.h>
 #include "helpers.h"
 
@@ -1142,3 +1143,25 @@ int MainWindow::parseCueFile(QString fileName)
     catchCDDBEntry(tracks);
     return ret;
 }
+
+void MainWindow::on_pushHelp_clicked()
+{
+    QString sAppDir = QApplication::applicationDirPath();
+#ifdef Q_OS_WIN
+    QDesktopServices::openUrl(QUrl(QString("file:///%1/help/NetMD Wizard.html").arg(sAppDir)));
+#elif defined Q_OS_MAC
+    QDir applFolder(sAppDir);
+    if (applFolder.cdUp())
+    {
+        QDesktopServices::openUrl(QUrl(QString("file:///%1/Resources/help/NetMD Wizard.html").arg(applFolder.canonicalPath())));
+    }
+#elif defined Q_OS_LINUX
+    QString sBinName = QFileInfo(QApplication::applicationFilePath()).baseName();
+    QDir applFolder(sAppDir);
+    if (applFolder.cdUp())
+    {
+        QDesktopServices::openUrl(QUrl(QString("file:///%1/share/%2/resources/help/NetMD Wizard.html").arg(applFolder.canonicalPath()).arg(sBinName)));
+    }
+#endif
+}
+

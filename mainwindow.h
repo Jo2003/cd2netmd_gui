@@ -267,6 +267,8 @@ private slots:
     //--------------------------------------------------------------------------
     int parseCueFile(QString fileName);
 
+    void on_pushHelp_clicked();
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
