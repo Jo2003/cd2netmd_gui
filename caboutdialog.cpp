@@ -26,7 +26,7 @@ CAboutDialog::CAboutDialog(QWidget *parent) :
     ui->setupUi(this);
     ui->labelName->setText(QString("%1 %2 %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
     QString text =
-R"(<b>CD to NetMD GUI - a tool like Sonys NetMD Simply Burner</b><br>
+R"(<b>NetMD Wizard - a tool like Sonys NetMD Simply Burner</b><br>
 Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a>
 <br> <br>
 If you like this program, please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!

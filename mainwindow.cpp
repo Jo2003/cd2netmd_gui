@@ -32,7 +32,7 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mbDAO(false), mpSettings(nullptr)
+      mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr)
 {
     ui->setupUi(this);
 
@@ -121,11 +121,15 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
     xencCmd   = CXEnc::XEncCmd::NONE;
     trackMode = "SP";
 
-    if (mbDAO)
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
     {
         netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_SP;
         xencCmd   = CXEnc::XEncCmd::DAO_LP2_ENCODE;
         trackMode = "LP2";
+    }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    {
+        // all set above!
     }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
@@ -280,7 +284,7 @@ void MainWindow::on_pushTransfer_clicked()
     trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
     mpRipper->setAudioTracks(trks);
     bool isCD = (trks.listType() == c2n::AudioTracks::CD);
-    mbDAO = false;
+    mDAOMode = CDaoConfDlg::DAO_WTF;
 
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
@@ -342,11 +346,25 @@ void MainWindow::ripFinished()
 
     bool noEnc = xencCmd == CXEnc::XEncCmd::NONE;
 
-    if (mbDAO)
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
             mWorkQueue[0].mStep = WorkStep::RIPPED;
+        }
+
+        if (mWorkQueue.at(0).mStep == WorkStep::NONE)
+        {
+            mWorkQueue[0].mStep = WorkStep::RIP;
+            ui->progressRip->setValue(0);
+            mpRipper->extractTrack(-1, mWorkQueue.at(0).mpFile->fileName(), mpSettings->paranoia());
+        }
+    }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    {
+        if (mWorkQueue.at(0).mStep == WorkStep::RIP)
+        {
+            mWorkQueue[0].mStep = WorkStep::ENCODED;
         }
 
         if (mWorkQueue.at(0).mStep == WorkStep::NONE)
@@ -403,7 +421,7 @@ void MainWindow::encodeFinished(bool checkBusy)
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        if (mbDAO)
+        if (mDAOMode == CDaoConfDlg::DAO_LP2)
         {
             if (mWorkQueue.at(0).mStep == WorkStep::ENCODE)
             {
@@ -466,24 +484,46 @@ void MainWindow::transferFinished(bool checkBusy)
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        for (auto& j : mWorkQueue)
+        if (mDAOMode == CDaoConfDlg::DAO_SP)
         {
-            if (j.mStep == WorkStep::TRANSFER)
+            if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
             {
-                j.mStep = WorkStep::DONE;
-                addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
-                break;
+                // mark all tracks as done!
+                for (auto& j : mWorkQueue)
+                {
+                    j.mStep = WorkStep::DONE;
+                }
+                addMDTrack(mpMDmodel->discConf()->mTrkCount, mWorkQueue.at(0).mTitle, trackMode, mWorkQueue.at(0).mLength);
+            }
+
+            if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
+            {
+                mWorkQueue[0].mStep = WorkStep::TRANSFER;
+                ui->progressMDTransfer->setValue(0);
+                mpNetMD->start({netMdCmd, mWorkQueue.at(0).mpFile->fileName(), ui->lineCDTitle->text()});
             }
         }
-
-        for (auto& j : mWorkQueue)
+        else
         {
-            if (j.mStep == WorkStep::ENCODED)
+            for (auto& j : mWorkQueue)
             {
-                j.mStep = WorkStep::TRANSFER;
-                ui->progressMDTransfer->setValue(0);
-                mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
-                break;
+                if (j.mStep == WorkStep::TRANSFER)
+                {
+                    j.mStep = WorkStep::DONE;
+                    addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
+                    break;
+                }
+            }
+
+            for (auto& j : mWorkQueue)
+            {
+                if (j.mStep == WorkStep::ENCODED)
+                {
+                    j.mStep = WorkStep::TRANSFER;
+                    ui->progressMDTransfer->setValue(0);
+                    mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
+                    break;
+                }
             }
         }
 
@@ -739,7 +779,19 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
             count ++;
         }
     }
-    int all = (mbDAO && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED))) ? 1 : mWorkQueue.size();
+    int all =  mWorkQueue.size();
+
+    if ((mDAOMode == CDaoConfDlg::DAO_LP2)
+            && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
+    {
+        all = 1;
+    }
+    else if ((mDAOMode == CDaoConfDlg::DAO_SP)
+             && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED) || (step == MainWindow::WorkStep::ENCODED)))
+    {
+        all = 1;
+    }
+
     pLabel->clear();
     pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(all));
 }
@@ -773,10 +825,24 @@ void MainWindow::eraseDisc()
 
 void MainWindow::on_pushDAO_clicked()
 {
-    if (QMessageBox::question(this, tr("Question"),
-                              tr("Disc-at-Once mode only works with external encoder and LP2 mode. "
-                                 "Any change on CD track list will be reverted before starting! "
-                                 "Do you want to start this process?")) != QMessageBox::Yes)
+    mDAOMode = CDaoConfDlg::DAO_WTF;
+
+    CDaoConfDlg* pDaoConf = new CDaoConfDlg(this);
+
+    if (pDaoConf)
+    {
+        if (pDaoConf->exec() == QDialog::Accepted)
+        {
+            mDAOMode = pDaoConf->daoMode();
+        }
+        else
+        {
+            return;
+        }
+        delete pDaoConf;
+    }
+
+    if (mDAOMode == CDaoConfDlg::DAO_WTF)
     {
         return;
     }
@@ -793,10 +859,17 @@ void MainWindow::on_pushDAO_clicked()
     trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
     mpRipper->setAudioTracks(trks);
     bool isCD = (trks.listType() == c2n::AudioTracks::CD);
-    mbDAO = true;
+
 
     mpSettings->enaDisaOtf(false, true);
-    ui->radioLP2->setChecked(true);
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
+    {
+        ui->radioLP2->setChecked(true);
+    }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    {
+        ui->radioSP->setChecked(true);
+    }
 
     ui->tableViewCD->selectAll();
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();

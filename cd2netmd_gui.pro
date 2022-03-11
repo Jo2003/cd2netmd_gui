@@ -54,6 +54,7 @@ linux{
 }
 
 SOURCES += \
+    cdaoconfdlg.cpp \
     externals/netmd/libnetmd/CMDiscHeader.cpp \
     externals/netmd/libnetmd/common.c \
     externals/netmd/libnetmd/error.c \
@@ -86,6 +87,7 @@ SOURCES += \
     audio.cpp
 
 HEADERS += \
+    cdaoconfdlg.h \
     externals/netmd/libnetmd/CMDiscHeader.h \
     externals/netmd/libnetmd/const.h \
     externals/netmd/libnetmd/common.h \
@@ -122,6 +124,7 @@ HEADERS += \
 FORMS += \
     caboutdialog.ui \
     ccddbentriesdialog.ui \
+    cdaoconfdlg.ui \
     cnamingdialog.ui \
     mainwindow.ui \
     settingsdlg.ui

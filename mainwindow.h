@@ -30,6 +30,7 @@
 #include "defines.h"
 #include "caboutdialog.h"
 #include "settingsdlg.h"
+#include "cdaoconfdlg.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -294,8 +295,8 @@ private:
     /// CD device info
     QLabel         *mpCDDevice;
     
-    /// is DAO handling active?
-    bool            mbDAO;
+    /// which DAO handling active?
+    CDaoConfDlg::DAO_Mode mDAOMode;
 
     /// settings dialog class
     SettingsDlg    *mpSettings;
