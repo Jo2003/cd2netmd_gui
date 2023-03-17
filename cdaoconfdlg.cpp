@@ -24,7 +24,7 @@
 //------------------------------------------------------------------------------
 CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CDaoConfDlg)
+    ui(new Ui::CDaoConfDlg), mSPUpload(false)
 {
     ui->setupUi(this);
     QString md = R"(
@@ -35,9 +35,9 @@ DAO / gapless is supported in 2 modes. Both have there pros and cons.
 + __DAO LP2 Mode:__ Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.
   + __Pro:__ Track information will be transfered as well.
   + __Contra:__ Quality loss due to LP2 mode and external encoder. Playback only on MDLP capable devices.
-+ __DAO SP Mode:__ Disc / input will be extracted at once and transfered to NetMD as one track.
-  + __Pro:__ Best quality. Playback on all MD devices.
-  + __Contra:__ All audio in one track on MD. Adding track marker and -information by hand might not work due to track protection.
++ __DAO SP Mode:__ Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.
+  + __Pro:__ Best quality. Playback on all MD devices. Track information will be transfered as well.
+  + __Contra:__ This is only supported on __Sony Type S devices with firmware revision 1.2 or 1.6__.
 
 > Please note: Any change on CD track list will be reverted before starting!
 )";
@@ -61,7 +61,11 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 {
     DAO_Mode mode = DAO_Mode::DAO_WTF;
 
-    if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoLP2")
+    if (!mSPUpload)
+    {
+        mode = DAO_Mode::DAO_LP2;
+    }
+    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoLP2")
     {
         mode = DAO_Mode::DAO_LP2;
     }
@@ -72,3 +76,22 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 
     return mode;
 }
+
+//--------------------------------------------------------------------------
+//! @brief      tell if SP uload is supported
+//!
+//! @param      spu  support flag
+//--------------------------------------------------------------------------
+void CDaoConfDlg::spUpload(bool spu)
+{
+    mSPUpload = spu;
+    if (!mSPUpload)
+    {
+        ui->radioDaoSP->setEnabled(false);
+    }
+    else
+    {
+        ui->radioDaoSP->setChecked(true);
+    }
+}
+

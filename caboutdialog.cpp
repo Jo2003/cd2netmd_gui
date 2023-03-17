@@ -43,6 +43,7 @@ Thanks for following projects:<br>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.ffmpeg.org/">ffmpeg</a> - for encoding <b>xxx</b> to compatible wav files</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt</a> - One framework to rule them all</li>
 </ul>
+Big thanks to <b>asivery</b> for his great support with the SP upload feature. Without him this wouldn't be possible!<br>
 Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!)";
     ui->textAbout->setHtml(text);
 #ifdef Q_OS_MAC

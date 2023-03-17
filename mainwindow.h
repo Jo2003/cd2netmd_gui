@@ -303,4 +303,7 @@ private:
 
     /// keep a clean backup of the tracks
     c2n::AudioTracks mTracksBackup;
+
+    /// can the device SP upload
+    bool mSpUpload;
 };

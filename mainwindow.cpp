@@ -32,7 +32,7 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr)
+      mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false)
 {
     ui->setupUi(this);
 
@@ -129,7 +129,7 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
     }
     else if (mDAOMode == CDaoConfDlg::DAO_SP)
     {
-        // all set above!
+        xencCmd   = CXEnc::XEncCmd::DAO_SP_ENCODE;
     }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
@@ -229,6 +229,10 @@ void MainWindow::catchJson(QString j)
     {
         mpSettings->enaDisaOtf(true, true);
     }
+
+    mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
+
+    qInfo() << "SP Upload supported: " << mSpUpload;
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
@@ -346,25 +350,12 @@ void MainWindow::ripFinished()
 
     bool noEnc = xencCmd == CXEnc::XEncCmd::NONE;
 
-    if (mDAOMode == CDaoConfDlg::DAO_LP2)
+    if ((mDAOMode == CDaoConfDlg::DAO_LP2)
+        || (mDAOMode == CDaoConfDlg::DAO_SP))
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
             mWorkQueue[0].mStep = WorkStep::RIPPED;
-        }
-
-        if (mWorkQueue.at(0).mStep == WorkStep::NONE)
-        {
-            mWorkQueue[0].mStep = WorkStep::RIP;
-            ui->progressRip->setValue(0);
-            mpRipper->extractTrack(-1, mWorkQueue.at(0).mpFile->fileName(), mpSettings->paranoia());
-        }
-    }
-    else if (mDAOMode == CDaoConfDlg::DAO_SP)
-    {
-        if (mWorkQueue.at(0).mStep == WorkStep::RIP)
-        {
-            mWorkQueue[0].mStep = WorkStep::ENCODED;
         }
 
         if (mWorkQueue.at(0).mStep == WorkStep::NONE)
@@ -421,7 +412,8 @@ void MainWindow::encodeFinished(bool checkBusy)
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        if (mDAOMode == CDaoConfDlg::DAO_LP2)
+        if ((mDAOMode == CDaoConfDlg::DAO_LP2)
+            || (mDAOMode == CDaoConfDlg::DAO_SP))
         {
             if (mWorkQueue.at(0).mStep == WorkStep::ENCODE)
             {
@@ -484,46 +476,24 @@ void MainWindow::transferFinished(bool checkBusy)
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        if (mDAOMode == CDaoConfDlg::DAO_SP)
+        for (auto& j : mWorkQueue)
         {
-            if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
+            if (j.mStep == WorkStep::TRANSFER)
             {
-                // mark all tracks as done!
-                for (auto& j : mWorkQueue)
-                {
-                    j.mStep = WorkStep::DONE;
-                }
-                addMDTrack(mpMDmodel->discConf()->mTrkCount, mWorkQueue.at(0).mTitle, trackMode, mWorkQueue.at(0).mLength);
-            }
-
-            if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
-            {
-                mWorkQueue[0].mStep = WorkStep::TRANSFER;
-                ui->progressMDTransfer->setValue(0);
-                mpNetMD->start({netMdCmd, mWorkQueue.at(0).mpFile->fileName(), ui->lineCDTitle->text()});
+                j.mStep = WorkStep::DONE;
+                addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
+                break;
             }
         }
-        else
-        {
-            for (auto& j : mWorkQueue)
-            {
-                if (j.mStep == WorkStep::TRANSFER)
-                {
-                    j.mStep = WorkStep::DONE;
-                    addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
-                    break;
-                }
-            }
 
-            for (auto& j : mWorkQueue)
+        for (auto& j : mWorkQueue)
+        {
+            if (j.mStep == WorkStep::ENCODED)
             {
-                if (j.mStep == WorkStep::ENCODED)
-                {
-                    j.mStep = WorkStep::TRANSFER;
-                    ui->progressMDTransfer->setValue(0);
-                    mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
-                    break;
-                }
+                j.mStep = WorkStep::TRANSFER;
+                ui->progressMDTransfer->setValue(0);
+                mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
+                break;
             }
         }
 
@@ -781,13 +751,8 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
     }
     int all =  mWorkQueue.size();
 
-    if ((mDAOMode == CDaoConfDlg::DAO_LP2)
+    if (((mDAOMode == CDaoConfDlg::DAO_LP2) || (mDAOMode == CDaoConfDlg::DAO_SP))
             && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
-    {
-        all = 1;
-    }
-    else if ((mDAOMode == CDaoConfDlg::DAO_SP)
-             && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED) || (step == MainWindow::WorkStep::ENCODED)))
     {
         all = 1;
     }
@@ -831,6 +796,7 @@ void MainWindow::on_pushDAO_clicked()
 
     if (pDaoConf)
     {
+        pDaoConf->spUpload(mSpUpload);
         if (pDaoConf->exec() == QDialog::Accepted)
         {
             mDAOMode = pDaoConf->daoMode();
@@ -887,8 +853,11 @@ void MainWindow::on_pushDAO_clicked()
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
 
-    // DAO supported only in LP2 mode with external encoder
-    selectionTime /= 2;
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
+    {
+        // LP2 needs half time only
+        selectionTime /= 2;
+    }
 
     if (selectionTime > mpMDmodel->discConf()->mFreeTime)
     {

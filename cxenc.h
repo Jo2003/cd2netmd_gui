@@ -41,11 +41,17 @@ class CXEnc : public CCliProcess
     /// atrac3 header size in bytes
     static constexpr uint32_t ATRAC3_HEADER_SIZE = 96;
 
+    /// atrac (SP) header size in bytes
+    static constexpr uint32_t ATRAC_SP_HEADER_SIZE = 2048;
+
     /// block alignment for LP2 (used for DAO mode)
     static constexpr uint32_t ATRAC3_LP2_BLOCK_ALIGN = 384;
 
     /// block alignment for LP4
     static constexpr uint32_t ATRAC3_LP4_BLOCK_ALIGN = 192;
+
+    /// block alignment for SP (mono)
+    static constexpr uint32_t ATRAC_SP_BLOCK_ALIGN = 212;
 
 public:
     /// encoder commands
@@ -54,7 +60,8 @@ public:
         NONE,           ///< nothing
         LP2_ENCODE,     ///< do LP2 encoding
         LP4_ENCODE,     ///< do LP4 encoding
-        DAO_LP2_ENCODE  ///< do DAO LP2 encoding
+        DAO_LP2_ENCODE, ///< do DAO LP2 encoding
+        DAO_SP_ENCODE,  ///< do DAO SP encoding
     };
 
     //--------------------------------------------------------------------------
@@ -98,6 +105,18 @@ protected:
     //! @return     0 on success
     //--------------------------------------------------------------------------
     int atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int length);
+
+    //--------------------------------------------------------------------------
+    //! @brief      create atrac1 (SP) header
+    //!
+    //! @param      aeaFile   The target file
+    //! @param[in]  cmd       The command
+    //! @param[in]  dataSz    The data size
+    //! @param[in]  length    The length
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
+    int atrac1Header(QFile& aeaFile, XEncCmd cmd, size_t dataSz, int length);
     
     //--------------------------------------------------------------------------
     //! @brief      Splits an atrac 3.
@@ -105,6 +124,13 @@ protected:
     //! @return     0 on success
     //--------------------------------------------------------------------------
     int splitAtrac3();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Splits an atrac 1 (SP).
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
+    int splitAtrac1();
 
 private slots:
     //--------------------------------------------------------------------------

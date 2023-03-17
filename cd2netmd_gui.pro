@@ -43,7 +43,7 @@ win32{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
     PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue json-c taglib
-    INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
+    # INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
     RC_FILE = program.rc
     LIBS += -lws2_32 -lgcrypt -lusb-1.0 -lgpg-error -static-libgcc
 }
@@ -65,6 +65,7 @@ SOURCES += \
     externals/netmd/libnetmd/secure.c \
     externals/netmd/libnetmd/trackinformation.c \
     externals/netmd/libnetmd/utils.c \
+    externals/netmd/libnetmd/patch.c \
     externals/netmd/netmdcli/netmdcli.c \
     caboutdialog.cpp \
     ccddb.cpp \
@@ -99,6 +100,7 @@ HEADERS += \
     externals/netmd/libnetmd/secure.h \
     externals/netmd/libnetmd/trackinformation.h \
     externals/netmd/libnetmd/utils.h \
+    externals/netmd/libnetmd/patch.h \
     externals/netmd/netmdcli/netmdcli.h \
     caboutdialog.h \
     ccddb.h \
