@@ -40,5 +40,9 @@ It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and de
 - [taglib](https://taglib.org/) for make reading tags much easier.
 - [ffmpeg](https://www.ffmpeg.org/) to encode _xxx_ to compatible wav files. 
 
+## Thanks
+A big thanks goes to [asivery](https://github.com/asivery) for his great help with the NetMD exploits which made gapless SP possible! 
+Furthermore I thank **Lars W.** for his tests and DaveFlash for the nice program icon!
+
 ## Support me ##
 In case you find this tool useful, you may consider to [buy me a beer](https://paypal.me/Jo2003).

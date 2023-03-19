@@ -26,7 +26,7 @@ CAboutDialog::CAboutDialog(QWidget *parent) :
     ui->setupUi(this);
     ui->labelName->setText(QString("%1 %2 %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
     QString text =
-R"(<b>NetMD Wizard - a tool like Sonys NetMD Simply Burner</b><br>
+R"(<img src=':main/wizard' alt='wizard' width='128' height='128' boarder='0' /><br><b>NetMD Wizard - a tool like Sonys NetMD Simply Burner</b><br>
 Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a>
 <br> <br>
 If you like this program, please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!
@@ -43,8 +43,10 @@ Thanks for following projects:<br>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.ffmpeg.org/">ffmpeg</a> - for encoding <b>xxx</b> to compatible wav files</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt</a> - One framework to rule them all</li>
 </ul>
-Big thanks to <b>asivery</b> for his great support with the SP upload feature. Without him this wouldn't be possible!<br>
-Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!)";
+Big thanks to <b>asivery</b> for his great support with the SP upload feature.<br>
+Without him this wouldn't be possible!<br>
+Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!<br>
+Further thanks to DaveFlash for the nice program icon!)";
     ui->textAbout->setHtml(text);
 #ifdef Q_OS_MAC
     QFont f = ui->textAbout->font();

@@ -98,8 +98,11 @@ static QMap<QString, QString> s_UmlautEnc = {
     {"Ð", "D"},
     {"ß", "ss"},
 
-    {"´", "'"},
-    {"`", "'"}
+    {"’", "'"},
+    {"‘", "'"},
+    {"…", "..."},
+    {"“", "\""},
+    {"”", "\""},
 };
 
 int putNum(uint32_t num, QFile &f, size_t sz)

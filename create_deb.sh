@@ -38,7 +38,7 @@ copy_content() {
     cp -f prebuilt/linux/config/netmd.rules "${BUILD_FOLDER}/etc/udev/rules.d/"
     cp -f prebuilt/linux/config/20-netmd.fdi "${BUILD_FOLDER}/usr/share/hal/fdi/information/20thirdparty/"
     # cp -f *.qm "${BUILD_FOLDER}/usr/share/${BIN_NAME}/language/"
-    cp -f res/minidisc.png "${BUILD_FOLDER}/usr/share/${BIN_NAME}/${BIN_NAME}.png"
+    cp -f res/netmd_wizard.png "${BUILD_FOLDER}/usr/share/${BIN_NAME}/${BIN_NAME}.png"
 }
 
 create_desktop_file() {
