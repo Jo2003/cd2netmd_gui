@@ -17,6 +17,7 @@
 #include <QFileInfo>
 #include <QRegExp>
 #include <QApplication>
+#include <QtEndian>
 #include "cxenc.h"
 #include "helpers.h"
 #include <cmath>
@@ -43,6 +44,9 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength)
         break;
     case XEncCmd::LP4_ENCODE:
         params << "-e" << "atrac3" << "--bitrate=64" << "-i" << tmpFileName << "-o" << mAtracFileName;
+        break;
+    case XEncCmd::DAO_SP_ENCODE:
+        params << "-e" << "atrac1" << "-i" << tmpFileName << "-o" << mAtracFileName;
         break;
     default:
         return -1;
@@ -119,6 +123,40 @@ int CXEnc::atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int len
     return ret;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      create atrac1 (SP) header
+//!
+//! @param      aeaFile   The target file
+//! @param[in]  cmd       The command
+//! @param[in]  dataSz    The data size
+//! @param[in]  length    The length
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CXEnc::atrac1Header(QFile& aeaFile, XEncCmd cmd, size_t dataSz, int length)
+{
+    Q_UNUSED(length)
+    Q_UNUSED(cmd)
+    int ret = -1;
+    uint8_t header[ATRAC_SP_HEADER_SIZE] = {0,};
+    header[1] = 8;
+    header[264] = 2;
+    char* pTitle = reinterpret_cast<char*>(&header[4]);
+    strcpy(pTitle, "Temp AEA Track by NetMD Wizard");
+
+    uint32_t blockCount = dataSz / ATRAC_SP_BLOCK_ALIGN;
+
+    *reinterpret_cast<uint32_t*>(&header[260]) = qToLittleEndian(blockCount);
+
+    if (aeaFile.isOpen())
+    {
+        size_t written = 0;
+        do { written += aeaFile.write(reinterpret_cast<char*>(header + written), ATRAC_SP_HEADER_SIZE - written); } while(written < ATRAC_SP_HEADER_SIZE);
+        ret = (written == ATRAC_SP_HEADER_SIZE) ? 0 : -1;
+    }
+    return ret;
+}
+
 int CXEnc::splitAtrac3()
 {
     // open atrac file for size check
@@ -177,47 +215,122 @@ int CXEnc::splitAtrac3()
     return 0;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      Splits an atrac 1 (SP).
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CXEnc::splitAtrac1()
+{
+    // open atrac file for size check
+    QFile fAtrac(mAtracFileName, this);
+
+    if (fAtrac.open(QIODevice::ReadOnly))
+    {
+        // get file size
+        QFileInfo atracInfo(fAtrac);
+        size_t sz = atracInfo.size() - ATRAC_SP_HEADER_SIZE;
+
+        // drop atrac 1 header
+        char buff[ATRAC_SP_HEADER_SIZE];
+        size_t read = 0;
+        do { read += fAtrac.read(buff + read, ATRAC_SP_HEADER_SIZE - read); } while(read < ATRAC_SP_HEADER_SIZE);
+
+        // average blocks per second
+        float blocksPerSec = static_cast<float>(sz / ATRAC_SP_BLOCK_ALIGN) / static_cast<float>(mLength);
+
+        int trkCount = 0;
+
+        for (const auto& t : mQueue)
+        {
+            trkCount ++;
+
+            // overwrite original wave file
+            QFile aeaFile(t.mpFile->fileName());
+
+            if (aeaFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
+            {
+                uint32_t copyBlocks = static_cast<uint32_t>(ceil(t.mLength * blocksPerSec));
+                size_t sz = copyBlocks * ATRAC_SP_BLOCK_ALIGN;
+
+                // create file header
+                atrac1Header(aeaFile, mCurrCmd, sz, t.mLength);
+
+                // copy atrac data
+                if (trkCount < mQueue.size())
+                {
+                    aeaFile.write(fAtrac.read(sz));
+                }
+                else
+                {
+                    // last track -> read all
+                    aeaFile.write(fAtrac.readAll());
+                }
+                aeaFile.close();
+                qInfo() << "Copied " << sz << "B ATRAC1 (SP) data to " << t.mpFile->fileName();
+            }
+        }
+
+        fAtrac.close();
+        qInfo() << "Delete temp. file" << fAtrac.fileName();
+        fAtrac.remove();
+    }
+    return 0;
+}
+
 void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
 {
     if ((exitCode == 0) && (exitStatus == ExitStatus::NormalExit))
     {
-        if ((mCurrCmd == XEncCmd::LP2_ENCODE) || (mCurrCmd == XEncCmd::LP4_ENCODE))
+        switch(mCurrCmd)
         {
-            // open atrac file for size check
-            QFile fAtrac(mAtracFileName, this);
-
-            if (fAtrac.open(QIODevice::ReadOnly))
+        case XEncCmd::LP2_ENCODE:
+        case XEncCmd::LP4_ENCODE:
             {
-                // get file size
-                QFileInfo atracInfo(fAtrac);
-                size_t sz = atracInfo.size() - ATRAC3_HEADER_SIZE;
+                // open atrac file for size check
+                QFile fAtrac(mAtracFileName, this);
 
-                // overwrite original wave file
-                QFile waveFile(mAtracFileName.mid(0, mAtracFileName.lastIndexOf(QChar('.'))));
-
-                if (waveFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
+                if (fAtrac.open(QIODevice::ReadOnly))
                 {
-                    // create wave header
-                    atrac3WaveHeader(waveFile, mCurrCmd, sz, mLength);
+                    // get file size
+                    QFileInfo atracInfo(fAtrac);
+                    size_t sz = atracInfo.size() - ATRAC3_HEADER_SIZE;
 
-                    char buff[ATRAC3_HEADER_SIZE];
-                    size_t read = 0;
+                    // overwrite original wave file
+                    QFile waveFile(mAtracFileName.mid(0, mAtracFileName.lastIndexOf(QChar('.'))));
 
-                    // drop atrac 3 header
-                    do { read += fAtrac.read(buff + read, ATRAC3_HEADER_SIZE - read); } while(read < ATRAC3_HEADER_SIZE);
-                    waveFile.write(fAtrac.readAll());
-                    waveFile.close();
-                    qInfo() << "Copied " << sz << "B ATRAC3 data to " << waveFile.fileName();
+                    if (waveFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
+                    {
+                        // create wave header
+                        atrac3WaveHeader(waveFile, mCurrCmd, sz, mLength);
+
+                        char buff[ATRAC3_HEADER_SIZE];
+                        size_t read = 0;
+
+                        // drop atrac 3 header
+                        do { read += fAtrac.read(buff + read, ATRAC3_HEADER_SIZE - read); } while(read < ATRAC3_HEADER_SIZE);
+                        waveFile.write(fAtrac.readAll());
+                        waveFile.close();
+                        qInfo() << "Copied " << sz << "B ATRAC3 data to " << waveFile.fileName();
+                    }
+
+                    fAtrac.close();
+                    qInfo() << "Delete temp. file" << fAtrac.fileName();
+                    fAtrac.remove();
                 }
-
-                fAtrac.close();
-                qInfo() << "Delete temp. file" << fAtrac.fileName();
-                fAtrac.remove();
             }
-        }
-        else if (mCurrCmd == XEncCmd::DAO_LP2_ENCODE)
-        {
+            break;
+
+        case XEncCmd::DAO_LP2_ENCODE:
             splitAtrac3();
+            break;
+
+        case XEncCmd::DAO_SP_ENCODE:
+            splitAtrac1();
+            break;
+
+        default:
+            break;
         }
     }
 

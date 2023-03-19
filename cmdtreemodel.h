@@ -40,6 +40,7 @@ public:
     /// disc config
     struct SDiscConf
     {
+       int mSPUpload;   ///< SP upload supported
        int mOTFEnc;     ///< On-The-Fly encoding support
        int mTrkCount;   ///< track count
        int mTotTime;    ///< total disc time

@@ -7,6 +7,7 @@
     <qresource prefix="/main">
         <file alias="md">res/minidisc.png</file>
         <file alias="icon">res/cd2netmdgui.ico</file>
+        <file alias="wizard">res/netmd_wizard.png</file>
     </qresource>
     <qresource prefix="/buttons">
         <file alias="transfer">res/transfer.png</file>

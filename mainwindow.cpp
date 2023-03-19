@@ -32,7 +32,7 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mbDAO(false), mpSettings(nullptr)
+      mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false)
 {
     ui->setupUi(this);
 
@@ -121,11 +121,15 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
     xencCmd   = CXEnc::XEncCmd::NONE;
     trackMode = "SP";
 
-    if (mbDAO)
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
     {
         netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_SP;
         xencCmd   = CXEnc::XEncCmd::DAO_LP2_ENCODE;
         trackMode = "LP2";
+    }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    {
+        xencCmd   = CXEnc::XEncCmd::DAO_SP_ENCODE;
     }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
@@ -226,6 +230,10 @@ void MainWindow::catchJson(QString j)
         mpSettings->enaDisaOtf(true, true);
     }
 
+    mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
+
+    qInfo() << "SP Upload supported: " << mSpUpload;
+
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
         // read only disc
@@ -280,7 +288,7 @@ void MainWindow::on_pushTransfer_clicked()
     trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
     mpRipper->setAudioTracks(trks);
     bool isCD = (trks.listType() == c2n::AudioTracks::CD);
-    mbDAO = false;
+    mDAOMode = CDaoConfDlg::DAO_WTF;
 
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
@@ -342,7 +350,8 @@ void MainWindow::ripFinished()
 
     bool noEnc = xencCmd == CXEnc::XEncCmd::NONE;
 
-    if (mbDAO)
+    if ((mDAOMode == CDaoConfDlg::DAO_LP2)
+        || (mDAOMode == CDaoConfDlg::DAO_SP))
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
@@ -403,7 +412,8 @@ void MainWindow::encodeFinished(bool checkBusy)
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        if (mbDAO)
+        if ((mDAOMode == CDaoConfDlg::DAO_LP2)
+            || (mDAOMode == CDaoConfDlg::DAO_SP))
         {
             if (mWorkQueue.at(0).mStep == WorkStep::ENCODE)
             {
@@ -739,7 +749,14 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
             count ++;
         }
     }
-    int all = (mbDAO && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED))) ? 1 : mWorkQueue.size();
+    int all =  mWorkQueue.size();
+
+    if (((mDAOMode == CDaoConfDlg::DAO_LP2) || (mDAOMode == CDaoConfDlg::DAO_SP))
+            && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
+    {
+        all = 1;
+    }
+
     pLabel->clear();
     pLabel->setText(tr("%1: %2/%3").arg(text).arg(count).arg(all));
 }
@@ -773,10 +790,25 @@ void MainWindow::eraseDisc()
 
 void MainWindow::on_pushDAO_clicked()
 {
-    if (QMessageBox::question(this, tr("Question"),
-                              tr("Disc-at-Once mode only works with external encoder and LP2 mode. "
-                                 "Any change on CD track list will be reverted before starting! "
-                                 "Do you want to start this process?")) != QMessageBox::Yes)
+    mDAOMode = CDaoConfDlg::DAO_WTF;
+
+    CDaoConfDlg* pDaoConf = new CDaoConfDlg(this);
+
+    if (pDaoConf)
+    {
+        pDaoConf->spUpload(mSpUpload);
+        if (pDaoConf->exec() == QDialog::Accepted)
+        {
+            mDAOMode = pDaoConf->daoMode();
+        }
+        else
+        {
+            return;
+        }
+        delete pDaoConf;
+    }
+
+    if (mDAOMode == CDaoConfDlg::DAO_WTF)
     {
         return;
     }
@@ -793,10 +825,17 @@ void MainWindow::on_pushDAO_clicked()
     trks.prepend({ui->lineCDTitle->text(), "", "", 0, 0, ui->tableViewCD->myModel()->audioLength()});
     mpRipper->setAudioTracks(trks);
     bool isCD = (trks.listType() == c2n::AudioTracks::CD);
-    mbDAO = true;
+
 
     mpSettings->enaDisaOtf(false, true);
-    ui->radioLP2->setChecked(true);
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
+    {
+        ui->radioLP2->setChecked(true);
+    }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    {
+        ui->radioSP->setChecked(true);
+    }
 
     ui->tableViewCD->selectAll();
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
@@ -814,8 +853,11 @@ void MainWindow::on_pushDAO_clicked()
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
 
-    // DAO supported only in LP2 mode with external encoder
-    selectionTime /= 2;
+    if (mDAOMode == CDaoConfDlg::DAO_LP2)
+    {
+        // LP2 needs half time only
+        selectionTime /= 2;
+    }
 
     if (selectionTime > mpMDmodel->discConf()->mFreeTime)
     {

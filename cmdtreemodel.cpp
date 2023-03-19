@@ -113,6 +113,7 @@ void CMDTreeModel::setupModelData()
 {
     // fill mDiscConf structure
     mDiscConf = {
+        mMDJson["sp_upload"].get<int>(),
         mMDJson["otf_enc"].get<int>(),
         mMDJson["trk_count"].get<int>(),
         mMDJson["t_total"].get<int>(),
