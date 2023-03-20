@@ -96,6 +96,7 @@ list(REMOVE_DUPLICATES "SLIBS")
 add_executable(netmd_wizard
     caboutdialog.ui
     ccddbentriesdialog.ui
+    cdaoconfdlg.ui
     cnamingdialog.ui
     mainwindow.ui
     settingsdlg.ui
@@ -109,6 +110,7 @@ add_executable(netmd_wizard
     externals/netmd/libnetmd/secure.c
     externals/netmd/libnetmd/trackinformation.c
     externals/netmd/libnetmd/utils.c
+    externals/netmd/libnetmd/patch.c
     externals/netmd/netmdcli/netmdcli.c
     caboutdialog.cpp
     ccddb.cpp
@@ -116,6 +118,7 @@ add_executable(netmd_wizard
     ccditemmodel.cpp
     ccdtableview.cpp
     ccliprocess.cpp
+    cdaoconfdlg.cpp
     cjacktheripper.cpp
     cmdtreemodel.cpp
     cmdtreeview.cpp

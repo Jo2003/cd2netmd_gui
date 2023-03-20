@@ -27,21 +27,30 @@ CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
     ui(new Ui::CDaoConfDlg), mSPUpload(false)
 {
     ui->setupUi(this);
-    QString md = R"(
-### (D)isc (A)t (O)nce or Gapless Mode ###
+    QString s = R"(
+<h3 id='disc-at-once-or-gapless-mode'>(D)isc (A)t (O)nce or Gapless Mode</h3>
+<p>DAO / gapless is supported in 2 modes. Both have there pros and cons.</p>
+<ul>
+<li><p><strong>DAO LP2 Mode:</strong> Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.</p>
+<ul>
+<li><strong>Pro:</strong> Track information will be transfered as well.</li>
+<li><strong>Contra:</strong> Quality loss due to LP2 mode and external encoder. Playback only on MDLP capable devices.</li>
 
-DAO / gapless is supported in 2 modes. Both have there pros and cons.
+</ul>
+</li>
+<li><p><strong>DAO SP Mode:</strong> Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.</p>
+<ul>
+<li><strong>Pro:</strong> Best quality. Playback on all MD devices. Track information will be transfered as well.</li>
+<li><strong>Contra:</strong> This is only supported on <strong>Sony Type S devices with firmware revision 1.2 or 1.6</strong>.</li>
 
-+ __DAO LP2 Mode:__ Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.
-  + __Pro:__ Track information will be transfered as well.
-  + __Contra:__ Quality loss due to LP2 mode and external encoder. Playback only on MDLP capable devices.
-+ __DAO SP Mode:__ Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.
-  + __Pro:__ Best quality. Playback on all MD devices. Track information will be transfered as well.
-  + __Contra:__ This is only supported on __Sony Type S devices with firmware revision 1.2 or 1.6__.
+</ul>
+</li>
 
-> Please note: Any change on CD track list will be reverted before starting!
+</ul>
+<blockquote><p>Please note: Any change on CD track list will be reverted before starting!</p>
+</blockquote>
 )";
-    ui->textBrowser->setMarkdown(md);
+    ui->textBrowser->setText(s);
 }
 
 //------------------------------------------------------------------------------

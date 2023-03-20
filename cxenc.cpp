@@ -237,7 +237,7 @@ int CXEnc::splitAtrac1()
         do { read += fAtrac.read(buff + read, ATRAC_SP_HEADER_SIZE - read); } while(read < ATRAC_SP_HEADER_SIZE);
 
         // average blocks per second
-        float blocksPerSec = static_cast<float>(sz / ATRAC_SP_BLOCK_ALIGN) / static_cast<float>(mLength);
+        float blocksPerSec = static_cast<float>(sz / AT_SP_STEREO_BLOCK_SIZE) / static_cast<float>(mLength);
 
         int trkCount = 0;
 
@@ -251,7 +251,7 @@ int CXEnc::splitAtrac1()
             if (aeaFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
             {
                 uint32_t copyBlocks = static_cast<uint32_t>(ceil(t.mLength * blocksPerSec));
-                size_t sz = copyBlocks * ATRAC_SP_BLOCK_ALIGN;
+                size_t sz = copyBlocks * AT_SP_STEREO_BLOCK_SIZE;
 
                 // create file header
                 atrac1Header(aeaFile, mCurrCmd, sz, t.mLength);

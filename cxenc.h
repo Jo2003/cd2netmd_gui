@@ -52,6 +52,9 @@ class CXEnc : public CCliProcess
 
     /// block alignment for SP (mono)
     static constexpr uint32_t ATRAC_SP_BLOCK_ALIGN = 212;
+    
+    /// we always copy stereo
+    static constexpr uint32_t AT_SP_STEREO_BLOCK_SIZE = ATRAC_SP_BLOCK_ALIGN * 2;
 
 public:
     /// encoder commands
