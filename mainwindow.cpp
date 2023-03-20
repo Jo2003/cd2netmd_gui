@@ -299,7 +299,7 @@ void MainWindow::on_pushTransfer_clicked()
         selected = ui->tableViewCD->selectionModel()->selectedRows();
     }
 
-    time_t selectionTime = 0;
+    double selectionTime = 0;
     mWorkQueue.clear();
 
     // Multiple rows can be selected
@@ -307,18 +307,18 @@ void MainWindow::on_pushTransfer_clicked()
     {
         int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
-        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
+        double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }
 
     if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
-        selectionTime /= 2;
+        selectionTime /= 2.0;
     }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP4")
     {
-        selectionTime /= 4;
+        selectionTime /= 4.0;
     }
 
     if (selectionTime > mpMDmodel->discConf()->mFreeTime)
