@@ -50,7 +50,12 @@ CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
 <blockquote><p>Please note: Any change on CD track list will be reverted before starting!</p>
 </blockquote>
 )";
-    ui->textBrowser->setText(s);
+    ui->textBrowser->setHtml(s);
+#ifdef Q_OS_MAC
+    QFont f = ui->textBrowser->font();
+    f.setPointSize(f.pointSize() + 4);
+    ui->textBrowser->setFont(f);
+#endif
 }
 
 //------------------------------------------------------------------------------

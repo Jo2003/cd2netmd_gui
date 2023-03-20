@@ -28,7 +28,7 @@ CXEnc::CXEnc(QObject *parent)
     connect(this, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &CXEnc::finishCopy);
 }
 
-int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength)
+int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength)
 {
     QStringList params;
     mLog.clear();
@@ -72,7 +72,7 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength)
     return 0;
 }
 
-int CXEnc::start(CXEnc::XEncCmd cmd, const c2n::TransferQueue &queue, uint32_t discLength)
+int CXEnc::start(CXEnc::XEncCmd cmd, const c2n::TransferQueue &queue, double discLength)
 {
     mQueue  = queue;
     return start(cmd, queue.at(0).mpFile->fileName(), discLength);
@@ -174,7 +174,7 @@ int CXEnc::splitAtrac3()
         do { read += fAtrac.read(buff + read, ATRAC3_HEADER_SIZE - read); } while(read < ATRAC3_HEADER_SIZE);
 
         // average blocks per second
-        float blocksPerSec = static_cast<float>(sz / ATRAC3_LP2_BLOCK_ALIGN) / static_cast<float>(mLength);
+        double blocksPerSec = (static_cast<double>(sz) / static_cast<double>(ATRAC3_LP2_BLOCK_ALIGN)) / mLength;
 
         int trkCount = 0;
 
@@ -237,7 +237,7 @@ int CXEnc::splitAtrac1()
         do { read += fAtrac.read(buff + read, ATRAC_SP_HEADER_SIZE - read); } while(read < ATRAC_SP_HEADER_SIZE);
 
         // average blocks per second
-        float blocksPerSec = static_cast<float>(sz / AT_SP_STEREO_BLOCK_SIZE) / static_cast<float>(mLength);
+        double blocksPerSec = (static_cast<double>(sz) / static_cast<double>(AT_SP_STEREO_BLOCK_SIZE)) / mLength;
 
         int trkCount = 0;
 

@@ -38,7 +38,7 @@ struct SRipTrack
     int16_t         mCDTrackNo;
     QString         mTitle;
     QTemporaryFile* mpFile;
-    time_t          mLength;
+    double          mLength;
     WorkStep        mStep;
 };
 

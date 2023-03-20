@@ -433,7 +433,9 @@ void MainWindow::encodeFinished(bool checkBusy)
             {
                 mWorkQueue[0].mStep = WorkStep::ENCODE;
                 ui->progressExtEnc->setValue(0);
-                mpXEnc->start(xencCmd, mWorkQueue, ui->tableViewCD->myModel()->audioLength() / CDIO_CD_FRAMES_PER_SEC);
+                mpXEnc->start(xencCmd, mWorkQueue,
+                              static_cast<double>(ui->tableViewCD->myModel()->audioLength())
+                              / static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
             }
         }
         else
@@ -840,7 +842,7 @@ void MainWindow::on_pushDAO_clicked()
     ui->tableViewCD->selectAll();
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
-    time_t selectionTime = 0;
+    double selectionTime = 0;
     mWorkQueue.clear();
 
     // Multiple rows can be selected
@@ -848,7 +850,7 @@ void MainWindow::on_pushDAO_clicked()
     {
         int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
-        time_t  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
+        double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
     }

@@ -83,7 +83,7 @@ public:
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int start(XEncCmd cmd, const QString& tmpFileName, uint32_t trackLength);
+    int start(XEncCmd cmd, const QString& tmpFileName, double trackLength);
     
     //--------------------------------------------------------------------------
     //! @brief      start the encoder
@@ -94,7 +94,7 @@ public:
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int start(XEncCmd cmd, const c2n::TransferQueue& queue, uint32_t discLength);
+    int start(XEncCmd cmd, const c2n::TransferQueue& queue, double discLength);
 
 protected:
     //--------------------------------------------------------------------------
@@ -163,5 +163,5 @@ protected:
     c2n::TransferQueue mQueue;
     
     /// disc- / file - length
-    uint32_t mLength;
+    double mLength;
 };
