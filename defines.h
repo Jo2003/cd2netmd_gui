@@ -111,7 +111,7 @@ private:
     List_t mType = List_t::UNKNOWN;
 };
 
-static constexpr const char* PROGRAM_VERSION = "1.9.9beta";
+static constexpr const char* PROGRAM_VERSION = "1.9.9B3";
 static constexpr const char* PROGRAM_NAME    = "NetMD Wizard";
 
 enum LogLevel

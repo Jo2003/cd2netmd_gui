@@ -350,7 +350,7 @@ void CJackTheRipper::extractWave()
         // track 0 keeps disc title
         for (int track = 1; track < mAudioTracks.size(); track ++)
         {
-            c2n::STrackInfo& ci = mAudioTracks[miFlacTrack];
+            c2n::STrackInfo& ci = mAudioTracks[track];
             if (ci.mWaveFileName.isEmpty())
             {
                 if (ci.mConversion)
@@ -689,35 +689,41 @@ int CCopyShopThread::conCatWave()
 
         for (const auto& ci : mCueMap)
         {
-            if (!toConCat.contains(ci.mWaveFileName))
+            if (!ci.mWaveFileName.isEmpty())
             {
-                toConCat << ci.mWaveFileName;
+                if (!toConCat.contains(ci.mWaveFileName))
+                {
+                    toConCat << ci.mWaveFileName;
+                }
             }
         }
 
-        QFile tmpTrg(mName + ".raw");
-        if (tmpTrg.open(QIODevice::Truncate | QIODevice::ReadWrite))
+        if (toConCat.size())
         {
-            for (const auto& s : toConCat)
+            QFile tmpTrg(mName + ".raw");
+            if (tmpTrg.open(QIODevice::Truncate | QIODevice::ReadWrite))
             {
-                qInfo() << "Append" << s << "to" << tmpTrg.fileName();
-                QFile src(s);
-                if (src.open(QIODevice::ReadOnly))
+                for (const auto& s : toConCat)
                 {
-                    if (!audio::stripWaveHeader(src, sz))
+                    qInfo() << "Append" << s << "to" << tmpTrg.fileName();
+                    QFile src(s);
+                    if (src.open(QIODevice::ReadOnly))
                     {
-                        updPercent();
-                        tmpTrg.write(src.readAll());
-                        wholeSz += sz;
+                        if (!audio::stripWaveHeader(src, sz))
+                        {
+                            updPercent();
+                            tmpTrg.write(src.readAll());
+                            wholeSz += sz;
+                        }
+                        else
+                        {
+                            throw std::runtime_error(R"(Can't strip wave header.)");
+                        }
                     }
                     else
                     {
-                        throw std::runtime_error(R"(Can't strip wave header.)");
+                        throw std::runtime_error(R"(Can't open wave file.)");
                     }
-                }
-                else
-                {
-                    throw std::runtime_error(R"(Can't open wave file.)");
                 }
             }
 
