@@ -1,0 +1,10 @@
+prefix=/home/joergn/src/cd2netmd_gui/prebuilt/windows
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libnetmd
+Description: Portable NetMD I/O library
+Version: 0.1.5
+Libs: -L${libdir} -lnetmd -lusb-1.0
+Cflags: -I${includedir}

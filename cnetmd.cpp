@@ -14,15 +14,20 @@
  *
  * You should have received a copy of the GNU General Public License
  */
-#include "cnetmd.h"
 #include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonValue>
+#include <libnetmd.h>
+#include "cnetmd.h"
 #include "defines.h"
 #include "helpers.h"
 
 CNetMD::CNetMD(QObject *parent)
-    : QThread(parent), mCurrJob(NetMDCmd::UNKNWON), mpJsonFile(nullptr), mpLogFile(nullptr)
+    : QThread(parent), mCurrJob(NetMDCmd::UNKNWON), mpLogFile(nullptr),
+      mDevList(nullptr)
 {
-    mNameFJson = QString("%1/cd2netmd_transfer_json.tmp").arg(QDir::tempPath());
     mNameFLog  = QString("%1/cd2netmd_transfer_log.tmp").arg(QDir::tempPath());
     mTReadLog.setInterval(1000);
     mTReadLog.setSingleShot(false);
@@ -37,19 +42,12 @@ CNetMD::~CNetMD()
     mTReadLog.stop();
     mfLog.close();
 
-    if (mpJsonFile)
-    {
-        fclose(mpJsonFile);
-        mpJsonFile = nullptr;
-    }
-
     if (mpLogFile)
     {
         fclose(mpLogFile);
         mpLogFile = nullptr;
     }
 
-    QFile::remove(mNameFJson);
     QFile::remove(mNameFLog);
 }
 
@@ -62,96 +60,513 @@ void CNetMD::start(NetMDStartup startup)
     QThread::start();
 }
 
-void CNetMD::run()
+//--------------------------------------------------------------------------
+//! @brief get / prepare NetMD device
+//!
+//! @param[out] md MD header
+//!
+//! @return nullptr -> error; else NetMD handle
+//--------------------------------------------------------------------------
+netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
 {
-    int ret = 0;
-    QVector<QByteArray> args;
+    netmd_dev_handle* devh;
+    netmd_error nmdErr;
+    char name[16] = {'\0',};
 
-    args << "-v";
+    md = NULL;
 
     if (g_LogFilter == c2n::LogLevel::DEBUG)
     {
-        args << "-t";
+        netmd_set_log_level(NETMD_LOG_ALL);
     }
+    else
+    {
+        netmd_set_log_level(NETMD_LOG_VERBOSE);
+    }
+
+    if ((nmdErr = netmd_cli_init(&mDevList, NULL)) != NETMD_NO_ERROR)
+    {
+        qCritical() << "Error initializing netmd! " << netmd_strerror(nmdErr);
+        return nullptr;
+    }
+
+    if (mDevList == NULL)
+    {
+        qCritical() << "Found no NetMD device(s).";
+        return nullptr;
+    }
+
+    if ((nmdErr = netmd_open(mDevList, &devh)) != NETMD_NO_ERROR)
+    {
+        qCritical() << "Error opening netmd! " << netmd_strerror(nmdErr);
+        netmd_clean(&mDevList);
+        return nullptr;
+    }
+
+    if ((nmdErr = netmd_get_devname(devh, name, 16)) != NETMD_NO_ERROR)
+    {
+        qCritical() << "Could not get device name! " << netmd_strerror(nmdErr);
+        netmd_clean(&mDevList);
+        netmd_close(devh);
+        return nullptr;
+    }
+
+    mDevName = name;
+
+    if (netmd_initialize_disc_info(devh, &md) != NETMD_NO_ERROR)
+    {
+        qCritical() << "Could MD disc info!";
+        netmd_clean(&mDevList);
+        netmd_close(devh);
+        return nullptr;
+    }
+
+    return devh;
+}
+
+//--------------------------------------------------------------------------
+//! @brief free NetMD device
+//!
+//! @param[in] devh netMD device handle
+//! @param[in] pMd  MD header
+//--------------------------------------------------------------------------
+void CNetMD::freeNetMDDevice(netmd_dev_handle* devh, HndMdHdr* pMd)
+{
+    free_md_header(pMd);
+    netmd_close(devh);
+    netmd_clean(&mDevList);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get MD disc info
+//!
+//! @return Json Byte Array
+//--------------------------------------------------------------------------
+QByteArray CNetMD::getDiscInfo()
+{
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+    QByteArray ret;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        // Construct JSON object
+        QJsonObject tree;
+
+        tree.insert("title", md_header_disc_title(md));
+        tree.insert("otf_enc", mDevList->otf_conv);
+        tree.insert("device", mDevList->model);
+        tree.insert("sp_upload", netmd_dev_supports_sp_upload(devh));
+
+        uint16_t tc = 0;
+        if (netmd_request_track_count(devh, &tc) == NETMD_NO_ERROR)
+        {
+            tree.insert("trk_count", tc);
+        }
+
+        uint8_t disc_flags = 0;
+        if (netmd_request_disc_flags(devh, &disc_flags) == NETMD_NO_ERROR)
+        {
+            char hex[5] = {'\0'};
+            snprintf(hex, 5, "0x%.02x", disc_flags);
+            tree.insert("disc_flags", hex);
+        }
+
+        netmd_disc_capacity capacity;
+        if (netmd_get_disc_capacity(devh, &capacity) == NETMD_NO_ERROR)
+        {
+            tree.insert("t_used", toSec(&capacity.recorded));
+            tree.insert("t_total", toSec(&capacity.total));
+            tree.insert("t_free", toSec(&capacity.available));
+        }
+
+        MDGroups* pGroups = md_header_groups(md);
+        if (pGroups != NULL)
+        {
+            QJsonArray groups;
+            for (int i = 0; i < pGroups->mCount; i++)
+            {
+                if (pGroups->mpGroups[i].mFirst > 0)
+                {
+                    int first = pGroups->mpGroups[i].mFirst;
+                    int last  = (pGroups->mpGroups[i].mLast == -1) ? first : pGroups->mpGroups[i].mLast;
+                    QJsonObject group;
+                    group.insert("name", pGroups->mpGroups[i].mpName);
+                    group.insert("first", first);
+                    group.insert("last", last);
+                    groups.append(group);
+                }
+            }
+            tree.insert("groups", groups);
+            md_header_free_groups(&pGroups);
+        }
+
+        QJsonArray tracks;
+        unsigned char bitrate_id;
+        unsigned char flags;
+        unsigned char channel;
+        char *name, buffer[256];
+        struct netmd_track time;
+        struct netmd_pair const *trprot, *bitrate;
+
+        trprot = bitrate = 0;
+
+        for(uint16_t i = 0; i < tc; i++)
+        {
+            QJsonObject track;
+            netmd_request_title(devh, i, buffer, 256);
+            netmd_request_track_time(devh, i, &time);
+            netmd_request_track_flags(devh, i, &flags);
+            netmd_request_track_bitrate(devh, i, &bitrate_id, &channel);
+
+            trprot = find_pair(flags, trprot_settings);
+            bitrate = find_pair(bitrate_id, bitrates);
+
+            /* Skip 'LP:' prefix... the codec type shows up in the list anyway*/
+            if( strncmp( buffer, "LP:", 3 ))
+            {
+                name = buffer;
+            }
+            else
+            {
+                name = buffer + 3;
+            }
+
+            // Format track time
+            char time_buf[9];
+            sprintf(time_buf, "%02i:%02i:%02i", time.minute, time.second, time.tenth);
+
+            // Create JSON track object and add to array
+            track.insert("no", i);
+            track.insert("protect", trprot->name);
+            track.insert("bitrate", bitrate->name);
+            track.insert("time", time_buf);
+            track.insert("name", name);
+            tracks.append(track);
+        }
+        tree.insert("tracks", tracks);
+
+        QJsonDocument jdoc(tree);
+        ret = jdoc.toJson(QJsonDocument::Indented);
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief write audio track to MD
+//!
+//! @param[in] cmd write command
+//! @param[in] fName file name of source file
+//! @param[in] title track title
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString& title)
+{
+    netmd_error ret = NETMD_ERROR;
+    unsigned char onTheFlyConvert;
+    switch(cmd)
+    {
+    case NetMDCmd::WRITE_TRACK_LP2:
+        onTheFlyConvert = NETMD_DISKFORMAT_LP2;
+        break;
+    case NetMDCmd::WRITE_TRACK_LP4:
+        onTheFlyConvert = NETMD_DISKFORMAT_LP4;
+        break;
+    case NetMDCmd::WRITE_TRACK_SP:
+        onTheFlyConvert = NO_ONTHEFLY_CONVERSION;
+        break;
+    default:
+        qCritical() << "Wrong command given: " << static_cast<int>(cmd);
+        return ret;
+        break;
+    }
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        ret = netmd_send_track(devh,
+                               static_cast<const char*>(fName.toUtf8()),
+                               static_cast<const char*>(utf8ToMd(title)),
+                               onTheFlyConvert);
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief add MD group
+//!
+//! @param[in] name group name
+//! @param[in] first first track in group
+//! @param[in] last last track in group
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::addGroup(const QString& name, int first, int last)
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        if (md_header_add_group(md, static_cast<const char*>(utf8ToMd(name)), first, last) > 0)
+        {
+            if (netmd_write_disc_header(devh, md) > 0)
+            {
+                ret = NETMD_NO_ERROR;
+            }
+        }
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief rename MD
+//!
+//! @param[in] name new MD name
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::renameDisc(const QString& name)
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        if (md_header_set_disc_title(md, static_cast<const char*>(utf8ToMd(name))) == 0)
+        {
+            if (netmd_write_disc_header(devh, md) > 0)
+            {
+                ret = NETMD_NO_ERROR;
+            }
+        }
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief rename MD track
+//!
+//! @param[in] name new MD track name
+//! @param[in] trackNo track number
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::renameTrack(const QString& name, int trackNo)
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        netmd_cache_toc(devh);
+        ret = netmd_set_title(devh, trackNo & 0xffff, static_cast<const char*>(utf8ToMd(name))) == 1 ? NETMD_NO_ERROR : NETMD_ERROR;
+        netmd_sync_toc(devh);
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief rename MD group
+//!
+//! @param[in] name new MD group name
+//! @param[in] groupNo group number
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::renameGroup(const QString& name, int groupNo)
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        ret = netmd_set_group_title(devh, md, static_cast<unsigned int>(groupNo),
+                                    static_cast<const char*>(utf8ToMd(name))) == 1 ? NETMD_NO_ERROR : NETMD_ERROR;
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      erase disc
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::eraseDisc()
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        ret = netmd_erase_disc(devh) > 0 ? NETMD_NO_ERROR : NETMD_ERROR;
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief delete MD group
+//!
+//! @param[in] groupNo group number
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::delGroup(int groupNo)
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        ret = netmd_delete_group(devh, md, groupNo & 0xffff) > 0 ? NETMD_NO_ERROR : NETMD_ERROR;
+
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief delete MD track
+//!
+//! @param[in] trackNo track number
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::delTrack(int trackNo)
+{
+    netmd_error ret = NETMD_ERROR;
+
+    HndMdHdr md;
+    netmd_dev_handle* devh;
+
+    if ((devh = prepareNetMDDevice(md)) != nullptr)
+    {
+        uint16_t tc = 0;
+        netmd_request_track_count(devh, &tc);
+
+        if (trackNo < tc)
+        {
+            netmd_cache_toc(devh);
+            netmd_delete_track(devh, trackNo);
+            netmd_wait_for_sync(devh);
+            netmd_sync_toc(devh);
+
+            if (md_header_del_track(md, trackNo + 1) == 0)
+            {
+                if (netmd_cli_write_disc_header(devh, md) > 0)
+                {
+                    ret = NETMD_NO_ERROR;
+                }
+            }
+        }
+        freeNetMDDevice(devh, &md);
+    }
+
+    return ret;
+}
+
+void CNetMD::run()
+{
+    int ret = 0;
+
+    // log file used by libnetmd
+    mpLogFile  = fopen(static_cast<const char*>(mNameFLog.toUtf8()), "a");
+    netmd_cli_set_log_fd(mpLogFile);
 
     switch(mCurrJob.mCmd)
     {
     case NetMDCmd::DISCINFO:
-        args << "json_gui";
+        {
+            QByteArray ba = getDiscInfo();
+            if (ba.isEmpty())
+            {
+                ba = EMPTY_JSON_RESP;
+            }
+            emit jsonOut(static_cast<const char*>(ba));
+            qInfo() << static_cast<const char*>(ba);
+        }
         break;
+
     case NetMDCmd::WRITE_TRACK_SP:
-        args << "send" << mCurrJob.msTrack.toUtf8()
-             << utf8ToMd(mCurrJob.msTitle);
-        break;
     case NetMDCmd::WRITE_TRACK_LP2:
-        args << "-d" << "lp2" << "send" << mCurrJob.msTrack.toUtf8()
-             << utf8ToMd(mCurrJob.msTitle);
-        break;
     case NetMDCmd::WRITE_TRACK_LP4:
-        args << "-d" << "lp4" << "send" << mCurrJob.msTrack.toUtf8()
-             << utf8ToMd(mCurrJob.msTitle);
+        ret = writeTrack(mCurrJob.mCmd, mCurrJob.msTrack, mCurrJob.msTitle);
         break;
+
     case NetMDCmd::ADD_GROUP:
-        args << "add_group" << utf8ToMd(mCurrJob.msGroup)
-             << QString::number(mCurrJob.miFirst).toUtf8()
-             << QString::number(mCurrJob.miLast).toUtf8();
+        ret = addGroup(mCurrJob.msGroup, mCurrJob.miFirst, mCurrJob.miLast);
         break;
+
     case NetMDCmd::RENAME_DISC:
-        args << "rename_disc" << utf8ToMd(mCurrJob.msTitle);
+        ret = renameDisc(mCurrJob.msTitle);
         break;
+
     case NetMDCmd::RENAME_TRACK:
-        args << "rename" << QString::number(mCurrJob.miFirst - 1).toUtf8()
-             << utf8ToMd(mCurrJob.msTrack);
+        ret = renameTrack(mCurrJob.msTrack, mCurrJob.miFirst - 1);
         break;
+
     case NetMDCmd::RENAME_GROUP:
-        args << "retitle" << QString::number(mCurrJob.miGroup).toUtf8()
-             << utf8ToMd(mCurrJob.msGroup);
+        ret = renameGroup(mCurrJob.msGroup, mCurrJob.miGroup);
         break;
+
     case NetMDCmd::ERASE_DISC:
-        args << "erase" << "force";
+        ret = eraseDisc();
         break;
+
     case NetMDCmd::DEL_GROUP:
-        args << "deletegroup" << QString::number(mCurrJob.miGroup).toUtf8();
+        ret = delGroup(mCurrJob.miGroup);
         break;
+
     case NetMDCmd::DEL_TRACK:
-        args << "del_track" << QString::number(mCurrJob.miFirst).toUtf8();
+        ret = delTrack(mCurrJob.miFirst);
         break;
+
     default:
         ret = -1;
         break;
     }
 
-    if (ret == 0)
+    if (ret != 0)
     {
-        qInfo() << "netmdcli arguments: " << args;
-        mpJsonFile = fopen(static_cast<const char*>(mNameFJson.toUtf8()), "w+");
-        mpLogFile  = fopen(static_cast<const char*>(mNameFLog.toUtf8()), "a");
-
-        netmd_cli_set_json_fd(mpJsonFile);
-        netmd_cli_set_log_fd(mpLogFile);
-
-        int argc = args.size() + 1;
-        char** argv = new char*[argc];
-        char** p = argv;
-
-        *p = strdup(NETMDCLI);
-        p++;
-
-        for (auto& a : args)
-        {
-            *p = strdup(static_cast<const char*>(a));
-            p++;
-        }
-
-        run_me(argc, argv);
-
-        for (int i = 0; i < argc; i++)
-        {
-            free(static_cast<void*>(argv[i]));
-        }
-
-        delete [] argv;
+        qCritical() << "libnetmd action returned with error: " << ret;
     }
+
     emit finished(false);
 }
 
@@ -190,36 +605,12 @@ void CNetMD::procEnded(bool)
 {
     mTReadLog.stop();
 
-    fclose(mpJsonFile);
-    mpJsonFile = nullptr;
     fclose(mpLogFile);
     mpLogFile = nullptr;
 
     mfLog.close();
 
-    if (mCurrJob.mCmd == NetMDCmd::DISCINFO)
-    {
-        QFile fjson(mNameFJson);
-        if (fjson.open(QIODevice::ReadOnly))
-        {
-            // mind SHIFT-JIS encoding!
-            QString json = mdToUtf8(fjson.readAll());
-            int start = json.indexOf(QChar('{'));
-            int end   = json.lastIndexOf(QChar('}'));
-
-            if ((start != -1) && (end != -1))
-            {
-                json = json.mid(start, 1 + end - start);
-                emit jsonOut(json);
-            }
-            else
-            {
-                emit jsonOut(EMPTY_JSON_RESP);
-            }
-            qInfo() << static_cast<const char*>(json.toUtf8());
-        }
-    }
-    else if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC) || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
+    if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC) || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
     {
         start({NetMDCmd::DISCINFO});
     }

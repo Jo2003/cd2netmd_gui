@@ -17,9 +17,11 @@
 #pragma once
 #include <QThread>
 #include <QFile>
-#include <netmdcli.h>
 #include <cstdio>
 #include <QTimer>
+#include <QByteArray>
+#include <CMDiscHeader.h>
+#include <libnetmd.h>
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes net md handling.
@@ -27,12 +29,21 @@
 class CNetMD : public QThread
 {
     Q_OBJECT
-
-    /// give the child a name
-    static constexpr const char * NETMDCLI = "netmdcli";
-
 public:
-    static constexpr const char* EMPTY_JSON_RESP = R"({"title": "No disc / NetMD device found!", "otf_enc": 0, "device": "unknown", "trk_count": 0, "disc_flags": "0x00", "t_used": 0, "t_total": 0, "t_free": 0, "groups": [], "tracks": []})";
+    static constexpr const char* EMPTY_JSON_RESP = R"({
+    "title": "No disc / NetMD device found!",
+    "otf_enc": 0,
+    "device": "unknown",
+    "trk_count": 0,
+    "disc_flags": "0x00",
+    "t_used": 0,
+    "t_total": 0,
+    "t_free": 0,
+    "groups": [],
+    "tracks": []
+})";
+
+    static constexpr uint8_t NO_ONTHEFLY_CONVERSION = 0xf;
 
     /// actions to be done on NetMD
     enum class NetMDCmd : uint8_t
@@ -151,17 +162,123 @@ signals:
     void progress(int);
 
 protected:
+    //--------------------------------------------------------------------------
+    //! @brief get / prepare NetMD device
+    //!
+    //! @param[out] md MD header
+    //!
+    //! @return nullptr -> error; else NetMD handle
+    //--------------------------------------------------------------------------
+    netmd_dev_handle* prepareNetMDDevice(HndMdHdr& md);
+
+    //--------------------------------------------------------------------------
+    //! @brief free NetMD device
+    //!
+    //! @param[in] devh netMD device handle
+    //! @param[in] pMd  MD header
+    //--------------------------------------------------------------------------
+    void freeNetMDDevice(netmd_dev_handle* devh, HndMdHdr* pMd);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get MD disc info
+    //!
+    //! @return Json Byte Array
+    //--------------------------------------------------------------------------
+    QByteArray getDiscInfo();
+
+    //--------------------------------------------------------------------------
+    //! @brief write audio track to MD
+    //!
+    //! @param[in] cmd write command
+    //! @param[in] fName file name of source file
+    //! @param[in] title track title
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int writeTrack(const NetMDCmd& cmd, const QString& fName, const QString& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief add MD group
+    //!
+    //! @param[in] name group name
+    //! @param[in] first first track in group
+    //! @param[in] last last track in group
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int addGroup(const QString& name, int first, int last);
+
+    //--------------------------------------------------------------------------
+    //! @brief rename MD
+    //!
+    //! @param[in] name new MD name
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int renameDisc(const QString& name);
+
+    //--------------------------------------------------------------------------
+    //! @brief rename MD track
+    //!
+    //! @param[in] name new MD track name
+    //! @param[in] trackNo track number
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int renameTrack(const QString& name, int trackNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief rename MD group
+    //!
+    //! @param[in] name new MD group name
+    //! @param[in] groupNo group number
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int renameGroup(const QString& name, int groupNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief      erase disc
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int eraseDisc();
+
+    //--------------------------------------------------------------------------
+    //! @brief delete MD group
+    //!
+    //! @param[in] groupNo group number
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int delGroup(int groupNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief delete MD track
+    //!
+    //! @param[in] trackNo track number
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int delTrack(int trackNo);
+
+    //--------------------------------------------------------------------------
+    //! @brief netmd_time to time_t
+    //!
+    //! @param[in] t netmd_time
+    //!
+    //! @return time_t
+    //--------------------------------------------------------------------------
+    static inline time_t toSec(netmd_time* t)
+    {
+        return (t->hour * 3600) + (t->minute * 60) + t->second;
+    }
+
     /// current job description
     NetMDStartup mCurrJob;
     
-    /// file name for json buffer
-    QString   mNameFJson;
-    
     /// log file name
-    QString   mNameFLog;
-    
-    /// json file pointer
-    FILE* mpJsonFile;
+    QString mNameFLog;
     
     /// log file pointer
     FILE* mpLogFile;
@@ -174,4 +291,10 @@ protected:
     
     /// cyclic log parce trigger
     QTimer mTReadLog;
+
+    /// netmd device list
+    netmd_device* mDevList;
+
+    /// NetMD device name
+    QString mDevName;
 };
