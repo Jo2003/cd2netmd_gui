@@ -24,9 +24,9 @@ find_package(Qt5 COMPONENTS Gui REQUIRED)
 find_package(Qt5 COMPONENTS Network REQUIRED)
 
 find_library(GCRYPT NAMES gcrypt libgcrypt Hint /usr/lib/x86_64-linux-gnu)
-find_library(LIB_USB NAMES usb-1.0 libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
 find_library(GPG_ERR NAMES gpg-error libgpg-error Hint /usr/lib/x86_64-linux-gnu)
 find_library(THREAD NAMES pthread libpthread Hint /usr/lib/x86_64-linux-gnu)
+find_library(UDEV NAMES udev libudev Hint /usr/lib/x86_64-linux-gnu)
 
 pkg_check_modules(CDIO REQUIRED libcdio)
 pkg_check_modules(CDDA REQUIRED libcdio_cdda)
@@ -36,6 +36,8 @@ pkg_check_modules(JSONC REQUIRED json-c)
 pkg_check_modules(LIBISO REQUIRED libiso9660)
 pkg_check_modules(LIBUDF REQUIRED libudf)
 pkg_check_modules(TAGLIB REQUIRED taglib)
+pkg_check_modules(NETMD REQUIRED libnetmd)
+pkg_check_modules(USB REQUIRED libusb-1.0)
 
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g")
 SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
@@ -45,8 +47,6 @@ add_definitions(-DQT_DEPRECATED_WARNINGS -DQT_MESSAGELOGCONTEXT -DNO_PROGRAM)
 # include directories
 set(IDIRS
     include
-    externals/netmd/libnetmd
-    externals/netmd/netmdcli
     ${CDIO_INCLUDE_DIRS}
 	${CDDA_INCLUDE_DIRS}
 	${PARANOIA_INCLUDE_DIRS}
@@ -55,6 +55,8 @@ set(IDIRS
 	${LIBISO_INCLUDE_DIRS}
 	${LIBUDF_INCLUDE_DIRS}
 	${TAGLIB_INCLUDE_DIRS}
+	${NETMD_INCLUDE_DIRS}
+	${USB_INCLUDE_DIRS}
     .
 )
 
@@ -73,6 +75,8 @@ set(LDIRS
 	${LIBISO_LIBRARY_DIRS}
 	${LIBUDF_LIBRARY_DIRS}
 	${TAGLIB_LIBRARY_DIRS}
+	${NETMD_LIBRARY_DIRS}
+	${USB_LIBRARY_DIRS}
 )
 
 list(REMOVE_DUPLICATES "LDIRS")
@@ -89,6 +93,8 @@ set(SLIBS
 	${LIBISO_LIBRARIES}
 	${LIBUDF_LIBRARIES}
 	${TAGLIB_LIBRARIES}
+	${NETMD_LIBRARIES}
+	${USB_LIBRARIES}
 )
 
 list(REMOVE_DUPLICATES "SLIBS")
@@ -100,18 +106,6 @@ add_executable(netmd_wizard
     cnamingdialog.ui
     mainwindow.ui
     settingsdlg.ui
-    externals/netmd/libnetmd/CMDiscHeader.cpp
-    externals/netmd/libnetmd/common.c
-    externals/netmd/libnetmd/error.c
-    externals/netmd/libnetmd/libnetmd.c
-    externals/netmd/libnetmd/log.c
-    externals/netmd/libnetmd/netmd_dev.c
-    externals/netmd/libnetmd/playercontrol.c
-    externals/netmd/libnetmd/secure.c
-    externals/netmd/libnetmd/trackinformation.c
-    externals/netmd/libnetmd/utils.c
-    externals/netmd/libnetmd/patch.c
-    externals/netmd/netmdcli/netmdcli.c
     caboutdialog.cpp
     ccddb.cpp
     ccddbentriesdialog.cpp
@@ -148,6 +142,8 @@ set(MYCFLAGS
 	${LIBISO_CFLAGS_OTHER}
 	${LIBUDF_CFLAGS_OTHER}
 	${TAGLIB_CFLAGS_OTHER}
+	${NETMD_CFLAGS_OTHER}
+	${USB_CFLAGS_OTHER}
 )
 
 list(REMOVE_DUPLICATES "MYCFLAGS")
@@ -164,4 +160,5 @@ target_link_libraries(netmd_wizard
     ${GCRYPT}
     ${GPG_ERR}
     ${THREAD}
+    ${UDEV}
 )
