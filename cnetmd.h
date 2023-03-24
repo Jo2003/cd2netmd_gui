@@ -20,7 +20,6 @@
 #include <cstdio>
 #include <QTimer>
 #include <QByteArray>
-#include <CMDiscHeader.h>
 #include <libnetmd.h>
 
 //------------------------------------------------------------------------------
@@ -31,19 +30,18 @@ class CNetMD : public QThread
     Q_OBJECT
 public:
     static constexpr const char* EMPTY_JSON_RESP = R"({
-    "title": "No disc / NetMD device found!",
-    "otf_enc": 0,
     "device": "unknown",
-    "trk_count": 0,
     "disc_flags": "0x00",
-    "t_used": 0,
-    "t_total": 0,
-    "t_free": 0,
     "groups": [],
-    "tracks": []
+    "otf_enc": 0,
+    "sp_upload": 0,
+    "t_free": 0,
+    "t_total": 0,
+    "t_used": 0,
+    "title": "No disc / NetMD device found!",
+    "tracks": [],
+    "trk_count": 0
 })";
-
-    static constexpr uint8_t NO_ONTHEFLY_CONVERSION = 0xf;
 
     /// actions to be done on NetMD
     enum class NetMDCmd : uint8_t

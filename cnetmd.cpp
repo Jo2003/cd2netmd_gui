@@ -84,7 +84,7 @@ netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
         netmd_set_log_level(NETMD_LOG_VERBOSE);
     }
 
-    if ((nmdErr = netmd_cli_init(&mDevList, NULL)) != NETMD_NO_ERROR)
+    if ((nmdErr = netmd_init(&mDevList, NULL)) != NETMD_NO_ERROR)
     {
         qCritical() << "Error initializing netmd! " << netmd_strerror(nmdErr);
         return nullptr;
@@ -144,6 +144,7 @@ void CNetMD::freeNetMDDevice(netmd_dev_handle* devh, HndMdHdr* pMd)
 //--------------------------------------------------------------------------
 QByteArray CNetMD::getDiscInfo()
 {
+    qInfo() << "getting MD disc / device info...";
     HndMdHdr md;
     netmd_dev_handle* devh;
     QByteArray ret;
@@ -266,6 +267,7 @@ QByteArray CNetMD::getDiscInfo()
 //--------------------------------------------------------------------------
 int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString& title)
 {
+    qInfo() << "send track '" << title << "' (" << fName << ") to " << mDevName;
     netmd_error ret = NETMD_ERROR;
     unsigned char onTheFlyConvert;
     switch(cmd)
@@ -311,6 +313,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
 //--------------------------------------------------------------------------
 int CNetMD::addGroup(const QString& name, int first, int last)
 {
+    qInfo() << "add group '" << name << "' (first track: " << first << ", last track: " << last << ")";
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -341,6 +344,7 @@ int CNetMD::addGroup(const QString& name, int first, int last)
 //--------------------------------------------------------------------------
 int CNetMD::renameDisc(const QString& name)
 {
+    qInfo() << "rename MD to '" << name << "'";
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -372,6 +376,7 @@ int CNetMD::renameDisc(const QString& name)
 //--------------------------------------------------------------------------
 int CNetMD::renameTrack(const QString& name, int trackNo)
 {
+    qInfo() << "rename track " << trackNo << " to '" << name << "'";
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -399,6 +404,7 @@ int CNetMD::renameTrack(const QString& name, int trackNo)
 //--------------------------------------------------------------------------
 int CNetMD::renameGroup(const QString& name, int groupNo)
 {
+    qInfo() << "rename group " << groupNo << " to '" << name << "'";
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -422,6 +428,7 @@ int CNetMD::renameGroup(const QString& name, int groupNo)
 //--------------------------------------------------------------------------
 int CNetMD::eraseDisc()
 {
+    qInfo() << "erase disc in " << mDevName;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -446,6 +453,7 @@ int CNetMD::eraseDisc()
 //--------------------------------------------------------------------------
 int CNetMD::delGroup(int groupNo)
 {
+    qInfo() << "delete group " << groupNo;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -470,6 +478,7 @@ int CNetMD::delGroup(int groupNo)
 //--------------------------------------------------------------------------
 int CNetMD::delTrack(int trackNo)
 {
+    qInfo() << "delete track " << trackNo;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -489,7 +498,7 @@ int CNetMD::delTrack(int trackNo)
 
             if (md_header_del_track(md, trackNo + 1) == 0)
             {
-                if (netmd_cli_write_disc_header(devh, md) > 0)
+                if (netmd_write_disc_header(devh, md) > 0)
                 {
                     ret = NETMD_NO_ERROR;
                 }
@@ -507,7 +516,7 @@ void CNetMD::run()
 
     // log file used by libnetmd
     mpLogFile  = fopen(static_cast<const char*>(mNameFLog.toUtf8()), "a");
-    netmd_cli_set_log_fd(mpLogFile);
+    netmd_log_set_fd(mpLogFile);
 
     switch(mCurrJob.mCmd)
     {

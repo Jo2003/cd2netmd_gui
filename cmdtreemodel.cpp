@@ -112,15 +112,68 @@ nlohmann::json CMDTreeModel::exportJson() const
 void CMDTreeModel::setupModelData()
 {
     // fill mDiscConf structure
-    mDiscConf = {
-        mMDJson["sp_upload"].get<int>(),
-        mMDJson["otf_enc"].get<int>(),
-        mMDJson["trk_count"].get<int>(),
-        mMDJson["t_total"].get<int>(),
-        mMDJson["t_free"].get<int>(),
-        std::stoi(mMDJson["disc_flags"].get<std::string>(), nullptr, 16),
-        QString::fromStdString(mMDJson["device"].get<std::string>())
-    };
+    if (mMDJson.find("sp_upload") != mMDJson.end())
+    {
+        mDiscConf.mSPUpload = mMDJson["sp_upload"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mSPUpload = 0;
+    }
+
+    if (mMDJson.find("otf_enc") != mMDJson.end())
+    {
+        mDiscConf.mOTFEnc = mMDJson["otf_enc"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mOTFEnc = 0;
+    }
+
+    if (mMDJson.find("trk_count") != mMDJson.end())
+    {
+        mDiscConf.mTrkCount = mMDJson["trk_count"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mTrkCount = 0;
+    }
+
+    if (mMDJson.find("t_total") != mMDJson.end())
+    {
+        mDiscConf.mTotTime = mMDJson["t_total"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mTotTime = 0;
+    }
+
+    if (mMDJson.find("t_free") != mMDJson.end())
+    {
+        mDiscConf.mFreeTime = mMDJson["t_free"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mFreeTime = 0;
+    }
+
+    if (mMDJson.find("disc_flags") != mMDJson.end())
+    {
+        mDiscConf.mDiscFlags = std::stoi(mMDJson["disc_flags"].get<std::string>(), nullptr, 16);
+    }
+    else
+    {
+        mDiscConf.mDiscFlags = 0;
+    }
+
+    if (mMDJson.find("device") != mMDJson.end())
+    {
+        mDiscConf.mDevice = QString::fromStdString(mMDJson["device"].get<std::string>());
+    }
+    else
+    {
+        mDiscConf.mDevice = "No device fetected!";
+    }
 
     // create Disc node
     CTreeItem*  pDisc  = new CTreeItem(ItemRole::DISC, mMDJson, mpTreeRoot);
@@ -128,46 +181,50 @@ void CMDTreeModel::setupModelData()
     nlohmann::json currGrp;
     int groupNo = 0;
 
-    for (auto& track : mMDJson["tracks"])
+    if ((mMDJson.find("tracks") != mMDJson.end())
+        && mMDJson["tracks"].is_array())
     {
-        CTreeItem*  pTrack;
-        int trackNumber            = track["no"].get<int>() + 1;
-        nlohmann::json& trackGroup = group(trackNumber);
-
-        if (trackGroup.empty())
+        for (auto& track : mMDJson["tracks"])
         {
-            currGrp = trackGroup;
+            CTreeItem*  pTrack;
+            int trackNumber            = track["no"].get<int>() + 1;
+            nlohmann::json& trackGroup = group(trackNumber);
 
-            if (pGroup != nullptr)
+            if (trackGroup.empty())
             {
-                pDisc->appendChild(pGroup);
-                pGroup = nullptr;
-            }
+                currGrp = trackGroup;
 
-            pTrack = new CTreeItem(ItemRole::TRACK, track, pDisc);
-
-            pDisc->appendChild(pTrack);
-        }
-        else
-        {
-            if (trackGroup != currGrp)
-            {
                 if (pGroup != nullptr)
                 {
                     pDisc->appendChild(pGroup);
+                    pGroup = nullptr;
                 }
 
-                // add group number (we might need on group rename)
-                trackGroup["no"] = groupNo++;
+                pTrack = new CTreeItem(ItemRole::TRACK, track, pDisc);
 
-                currGrp = trackGroup;
-
-                pGroup = new CTreeItem(ItemRole::GROUP, trackGroup, pDisc);
+                pDisc->appendChild(pTrack);
             }
-            if (pGroup != nullptr)
+            else
             {
-                pTrack = new CTreeItem(ItemRole::TRACK, track, pGroup);
-                pGroup->appendChild(pTrack);
+                if (trackGroup != currGrp)
+                {
+                    if (pGroup != nullptr)
+                    {
+                        pDisc->appendChild(pGroup);
+                    }
+
+                    // add group number (we might need on group rename)
+                    trackGroup["no"] = groupNo++;
+
+                    currGrp = trackGroup;
+
+                    pGroup = new CTreeItem(ItemRole::GROUP, trackGroup, pDisc);
+                }
+                if (pGroup != nullptr)
+                {
+                    pTrack = new CTreeItem(ItemRole::TRACK, track, pGroup);
+                    pGroup->appendChild(pTrack);
+                }
             }
         }
     }
@@ -182,16 +239,21 @@ void CMDTreeModel::setupModelData()
 
 nlohmann::json& CMDTreeModel::group(int track)
 {
-    for (auto& grp : mMDJson["groups"])
+    if ((mMDJson.find("groups") != mMDJson.end())
+        && mMDJson["groups"].is_array())
     {
-        int first = grp["first"].get<int>();
-        int last  = grp["last"].get<int>();
-        if (last == -1) last = first;
-        if ((track >= first) && (track <= last))
+        for (auto& grp : mMDJson["groups"])
         {
-            return grp;
+            int first = grp["first"].get<int>();
+            int last  = grp["last"].get<int>();
+            if (last == -1) last = first;
+            if ((track >= first) && (track <= last))
+            {
+                return grp;
+            }
         }
     }
+
     return mEmpty;
 }
 
