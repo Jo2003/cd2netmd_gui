@@ -223,6 +223,16 @@ void netmd_log_set_fd(FILE* fdid);
 typedef libusb_device_handle *netmd_dev_handle;
 
 /**
+  polls to see if minidisc wants to send data
+
+  @param dev USB device handle
+  @param buf pointer to poll buffer
+  @param tries maximum attempts to poll the minidisc
+  @return if error <0, else number of bytes that md wants to send
+*/
+int netmd_poll(libusb_device_handle *dev, unsigned char *buf, int tries, uint16_t* fullLength);
+
+/**
   Function to exchange command/response buffer with minidisc player.
 
   @param dev device handle
