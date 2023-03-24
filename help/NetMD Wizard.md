@@ -10,6 +10,7 @@ NetMD Wizard is a program to write audio data to your NetMD device.
 - reads CD-Text and requests CD information from CDDB (gnudb.org)
 - support on-the-fly LP encoding on supporting devices
 - gap-less audio transfer in LP mode (using external encoder)
+- gap-less audio transfer in SP mode (using external encoder) on supporting devices
 - loads Cue Sheets and handles them as CD Audio
 - drag and drop of audio files
 - sorting and naming in the source widget
@@ -55,7 +56,7 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transfered.
 
 ### DAO Mode (Disc-at-Once) ###
 
-In DAO modus the whole audio data will be extracted at once, encoded in one peace, cut in peaces and transfered to your NetMD device. This is so far the one possibility to get gap-less audio data on MD. This transfer type is supported not only when reading from CD. 
+In DAO modus the whole audio data will be extracted at once, encoded in one peace, cut in peaces and transfered to your NetMD device. This is so far the only possibility to get gap-less audio data on MD. This transfer type is supported not only when reading from CD. 
 
 > Note: In DAO mode when reading from CD all sorting and deleting from tracks done in the source window will be reverted before the transfer starts.
 
@@ -73,7 +74,7 @@ In DAO modus the whole audio data will be extracted at once, encoded in one peac
 - __Del. temp. files:__ Delete temporary files created be the program. Normally these files will be deleted before the progtram closes. In case of a program crash these files might persist in your temp folder. Pressing this button will delete these files.
 - __Log File:__ Opens the log file. Useful for debugging or when I ask you for some more information. 
 
-## Projects used / Thanks to ##
+## Related Projects ##
 - [atracdenc](https://github.com/dcherednik/atracdenc) - the external ATRAC encoder
 - [JSON for Modern C++](https://github.com/nlohmann/json)
 - [Qt](https://qt.io) - One framework to rule them all.
@@ -84,6 +85,11 @@ In DAO modus the whole audio data will be extracted at once, encoded in one peac
 - [libcdio](https://www.gnu.org/software/libcdio/) for reading CDs on multi platform.
 - [taglib](https://taglib.org/) for make reading tags much easier.
 - [ffmpeg](https://www.ffmpeg.org/) to encode _xxx_ to compatible wav files. 
+
+## Thanks to... 
+
+* **Lars W.** - my first tester which even paid me a (or more) beer.
+* **asivery** for his great support to add the Sony firmware patching, which makes SP upload possible.
 
 ## Support ##
 
