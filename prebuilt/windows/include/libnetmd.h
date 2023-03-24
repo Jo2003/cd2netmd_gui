@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <libusb-1.0/libusb.h>
 #include <stdint.h>
+#include <unistd.h>
 
 /**
    Error codes of the USB transport layer
@@ -1009,7 +1010,7 @@ netmd_error netmd_secure_get_track_uuid(netmd_dev_handle *dev, uint16_t track,
    @param signature 8-byte signature of deleted track
 */
 netmd_error netmd_secure_delete_track(netmd_dev_handle *dev, uint16_t track,
-                                                   unsigned char *signature);
+                                      unsigned char *signature);
 
 netmd_error netmd_prepare_packets(unsigned char* data, size_t data_lenght,
                                   netmd_track_packets **packets,
@@ -1067,9 +1068,9 @@ typedef struct {
 
 #ifdef WIN32
     #include <windows.h>
-    #define msleep(x) Sleep(x)
+    #define netmd_sleep(x) Sleep(x)
 #else
-    #define msleep(x) usleep(1000*x)
+    #define netmd_sleep(x) usleep(1000*x)
 #endif
 
 /**
