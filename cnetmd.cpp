@@ -73,7 +73,7 @@ netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
     netmd_error nmdErr;
     char name[16] = {'\0',};
 
-    md = NULL;
+    md = nullptr;
 
     if (g_LogFilter == c2n::LogLevel::DEBUG)
     {
@@ -86,7 +86,7 @@ netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
 
     if ((nmdErr = netmd_init(&mDevList, NULL)) != NETMD_NO_ERROR)
     {
-        qCritical() << "Error initializing netmd! " << netmd_strerror(nmdErr);
+        qCritical() << "Error initializing netmd!" << netmd_strerror(nmdErr);
         return nullptr;
     }
 
@@ -98,14 +98,14 @@ netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
 
     if ((nmdErr = netmd_open(mDevList, &devh)) != NETMD_NO_ERROR)
     {
-        qCritical() << "Error opening netmd! " << netmd_strerror(nmdErr);
+        qCritical() << "Error opening netmd!" << netmd_strerror(nmdErr);
         netmd_clean(&mDevList);
         return nullptr;
     }
 
     if ((nmdErr = netmd_get_devname(devh, name, 16)) != NETMD_NO_ERROR)
     {
-        qCritical() << "Could not get device name! " << netmd_strerror(nmdErr);
+        qCritical() << "Could not get device name!" << netmd_strerror(nmdErr);
         netmd_clean(&mDevList);
         netmd_close(devh);
         return nullptr;
@@ -113,7 +113,9 @@ netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
 
     mDevName = name;
 
-    if (netmd_initialize_disc_info(devh, &md) != NETMD_NO_ERROR)
+    netmd_initialize_disc_info(devh, &md);
+
+    if (md == nullptr)
     {
         qCritical() << "Could MD disc info!";
         netmd_clean(&mDevList);
@@ -267,7 +269,7 @@ QByteArray CNetMD::getDiscInfo()
 //--------------------------------------------------------------------------
 int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString& title)
 {
-    qInfo() << "send track '" << title << "' (" << fName << ") to " << mDevName;
+    qInfo() << "send track:" << title << "file:" << fName;
     netmd_error ret = NETMD_ERROR;
     unsigned char onTheFlyConvert;
     switch(cmd)
@@ -282,7 +284,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
         onTheFlyConvert = NO_ONTHEFLY_CONVERSION;
         break;
     default:
-        qCritical() << "Wrong command given: " << static_cast<int>(cmd);
+        qCritical() << "Wrong command given:" << static_cast<int>(cmd);
         return ret;
         break;
     }
@@ -313,7 +315,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
 //--------------------------------------------------------------------------
 int CNetMD::addGroup(const QString& name, int first, int last)
 {
-    qInfo() << "add group '" << name << "' (first track: " << first << ", last track: " << last << ")";
+    qInfo() << "add group" << name << "first track:" << first << "last track:" << last;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -344,7 +346,7 @@ int CNetMD::addGroup(const QString& name, int first, int last)
 //--------------------------------------------------------------------------
 int CNetMD::renameDisc(const QString& name)
 {
-    qInfo() << "rename MD to '" << name << "'";
+    qInfo() << "rename MD to" << name;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -376,7 +378,7 @@ int CNetMD::renameDisc(const QString& name)
 //--------------------------------------------------------------------------
 int CNetMD::renameTrack(const QString& name, int trackNo)
 {
-    qInfo() << "rename track " << trackNo << " to '" << name << "'";
+    qInfo() << "rename track" << trackNo << "to" << name;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -404,7 +406,7 @@ int CNetMD::renameTrack(const QString& name, int trackNo)
 //--------------------------------------------------------------------------
 int CNetMD::renameGroup(const QString& name, int groupNo)
 {
-    qInfo() << "rename group " << groupNo << " to '" << name << "'";
+    qInfo() << "rename group" << groupNo << "to" << name;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -428,7 +430,7 @@ int CNetMD::renameGroup(const QString& name, int groupNo)
 //--------------------------------------------------------------------------
 int CNetMD::eraseDisc()
 {
-    qInfo() << "erase disc in " << mDevName;
+    qInfo() << "erase disc";
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -453,7 +455,7 @@ int CNetMD::eraseDisc()
 //--------------------------------------------------------------------------
 int CNetMD::delGroup(int groupNo)
 {
-    qInfo() << "delete group " << groupNo;
+    qInfo() << "delete group" << groupNo;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;
@@ -478,7 +480,7 @@ int CNetMD::delGroup(int groupNo)
 //--------------------------------------------------------------------------
 int CNetMD::delTrack(int trackNo)
 {
-    qInfo() << "delete track " << trackNo;
+    qInfo() << "delete track" << trackNo;
     netmd_error ret = NETMD_ERROR;
 
     HndMdHdr md;

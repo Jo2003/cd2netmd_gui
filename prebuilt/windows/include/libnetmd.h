@@ -28,10 +28,6 @@
 #include <libusb-1.0/libusb.h>
 #include <stdint.h>
 
-#ifdef __cpluplus
-extern "C" {
-#endif /* __cplusplus */
-
 /**
    Error codes of the USB transport layer
 */
@@ -117,6 +113,9 @@ extern "C" {
 #define NETMD_DATA_BLOCK_SIZE_LP2 384
 #define NETMD_DATA_BLOCK_SIZE_LP4 192
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
 /**
    Enum with possible error codes the netmd_* functions could return.
@@ -293,6 +292,177 @@ int netmd_wait_for_sync(netmd_dev_handle* dev);
 //! @param      enable  1 to enable factory write, 0 to disable
 //------------------------------------------------------------------------------
 void netmd_set_factory_write(int enable);
+
+
+//! define a MD Header handle
+typedef void* HndMdHdr;
+
+//! c structure to hold a groups
+typedef struct {
+    int      mGid;      //!< group id
+    int16_t  mFirst;    //!< first track
+    int16_t  mLast;     //!< last track
+    char*    mpName;    //!< group name
+} MDGroup;
+
+//! a groups container
+typedef struct {
+    int      mCount;
+    MDGroup* mpGroups;
+} MDGroups;
+
+//------------------------------------------------------------------------------
+//! @brief      Creates a md header.
+//!
+//! @param[in]  content  The content
+//!
+//! @return     The handle md header.
+//------------------------------------------------------------------------------
+HndMdHdr create_md_header(const char* content);
+
+//------------------------------------------------------------------------------
+//! @brief         free the MD header
+//!
+//! @param[in/out] hdl   handle to MD header
+//------------------------------------------------------------------------------
+void free_md_header(HndMdHdr* hdl);
+
+//------------------------------------------------------------------------------
+//! @brief      create C string from MD header
+//!
+//! @param[in]  hdl   The MD header handle
+//!
+//! @return     C string or NULL
+//------------------------------------------------------------------------------
+const char* md_header_to_string(HndMdHdr hdl);
+
+//------------------------------------------------------------------------------
+//! @brief      add a group to the MD header
+//!
+//! @param[in]  hdl    The MD header handlehdl
+//! @param[in]  name   The name
+//! @param[in]  first  The first
+//! @param[in]  last   The last
+//!
+//! @return     > -1 -> group id; else -> error
+//------------------------------------------------------------------------------
+int md_header_add_group(HndMdHdr hdl, const char* name, int16_t first, int16_t last);
+
+//------------------------------------------------------------------------------
+//! @brief      list groups in MD header
+//!
+//! @param[in]  hdl   The MD header handle
+//------------------------------------------------------------------------------
+void md_header_list_groups(HndMdHdr hdl);
+
+//------------------------------------------------------------------------------
+//! @brief      Adds a track to group.
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  gid    The group id
+//! @param[in]  track  The track number
+//!
+//! @return     0 -> ok; -1 -> error
+//------------------------------------------------------------------------------
+int md_header_add_track_to_group(HndMdHdr hdl, int gid, int16_t track);
+
+//-----------------------------------------------------------------------------
+//! @brief      remove a track from a group.
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  gid    The group id
+//! @param[in]  track  The track number
+//!
+//! @return     0 -> ok; -1 -> error
+//-----------------------------------------------------------------------------
+int md_header_del_track_from_group(HndMdHdr hdl, int gid, int16_t track);
+
+//-----------------------------------------------------------------------------
+//! @brief      remove a track
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  track  The track number
+//!
+//! @return     0 -> ok; -1 -> error
+//-----------------------------------------------------------------------------
+int md_header_del_track(HndMdHdr hdl, int16_t track);
+
+//-----------------------------------------------------------------------------
+//! @brief      remove a group (included tracks become ungrouped)
+//!
+//! @param[in]  hdl   The MD header handle
+//! @param[in]  gid   The group id
+//!
+//! @return     0 -> ok; -1 -> error
+//-----------------------------------------------------------------------------
+int md_header_del_group(HndMdHdr hdl, int gid);
+
+//-----------------------------------------------------------------------------
+//! @brief      Sets the disc title.
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  title  The title
+//!
+//! @return     0 -> ok; else -> error
+//-----------------------------------------------------------------------------
+int md_header_set_disc_title(HndMdHdr hdl, const char* title);
+
+//-----------------------------------------------------------------------------
+//! @brief      rename one group
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  gid    The group id
+//! @param[in]  title  The new title
+//!
+//! @return     0 -> ok; else -> error
+//-----------------------------------------------------------------------------
+int md_header_rename_group(HndMdHdr hdl, int gid, const char* title);
+
+//------------------------------------------------------------------------------
+//! @brief      get disc title
+//!
+//! @param[in]  hdl   The MD header handle
+//!
+//! @return     C string
+//------------------------------------------------------------------------------
+const char* md_header_disc_title(HndMdHdr hdl);
+
+//------------------------------------------------------------------------------
+//! @brief      get group name for track
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  track  The track number
+//! @param[out] pGid   The buffer for gid
+//!
+//! @return     C string or nullptr
+//------------------------------------------------------------------------------
+const char* md_header_track_group(HndMdHdr hdl, int16_t track, int16_t* pGid);
+
+//------------------------------------------------------------------------------
+//! @brief      unhroup track
+//!
+//! @param[in]  hdl    The MD header handle
+//! @param[in]  track  The track
+//!
+//! @return     0 -> ok; -1 -> error
+//------------------------------------------------------------------------------
+int md_header_ungroup_track(HndMdHdr hdl, int16_t track);
+
+//------------------------------------------------------------------------------
+//! @brief      export all minidisc groups
+//!
+//! @param[in]  hdl The MD header handle
+//!
+//! @return     array of groups
+//------------------------------------------------------------------------------
+MDGroups* md_header_groups(HndMdHdr hdl);
+
+//------------------------------------------------------------------------------
+//! @brief      free groups you've got through md_header_groups()
+//!
+//! @param      groups  The groups
+//------------------------------------------------------------------------------
+void md_header_free_groups(MDGroups** groups);
 
 
 /**
@@ -660,177 +830,6 @@ void netmd_undo_sp_patch(netmd_dev_handle *devh);
 int netmd_dev_supports_sp_upload(netmd_dev_handle *devh);
 
 
-//! define a MD Header handle
-typedef void* HndMdHdr;
-
-//! c structure to hold a groups
-typedef struct {
-    int      mGid;      //!< group id
-    int16_t  mFirst;    //!< first track
-    int16_t  mLast;     //!< last track
-    char*    mpName;    //!< group name
-} MDGroup;
-
-//! a groups container
-typedef struct {
-    int      mCount;
-    MDGroup* mpGroups;
-} MDGroups;
-
-//------------------------------------------------------------------------------
-//! @brief      Creates a md header.
-//!
-//! @param[in]  content  The content
-//!
-//! @return     The handle md header.
-//------------------------------------------------------------------------------
-HndMdHdr create_md_header(const char* content);
-
-//------------------------------------------------------------------------------
-//! @brief         free the MD header
-//!
-//! @param[in/out] hdl   handle to MD header
-//------------------------------------------------------------------------------
-void free_md_header(HndMdHdr* hdl);
-
-//------------------------------------------------------------------------------
-//! @brief      create C string from MD header
-//!
-//! @param[in]  hdl   The MD header handle
-//!
-//! @return     C string or NULL
-//------------------------------------------------------------------------------
-const char* md_header_to_string(HndMdHdr hdl);
-
-//------------------------------------------------------------------------------
-//! @brief      add a group to the MD header
-//!
-//! @param[in]  hdl    The MD header handlehdl
-//! @param[in]  name   The name
-//! @param[in]  first  The first
-//! @param[in]  last   The last
-//!
-//! @return     > -1 -> group id; else -> error
-//------------------------------------------------------------------------------
-int md_header_add_group(HndMdHdr hdl, const char* name, int16_t first, int16_t last);
-
-//------------------------------------------------------------------------------
-//! @brief      list groups in MD header
-//!
-//! @param[in]  hdl   The MD header handle
-//------------------------------------------------------------------------------
-void md_header_list_groups(HndMdHdr hdl);
-
-//------------------------------------------------------------------------------
-//! @brief      Adds a track to group.
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  gid    The group id
-//! @param[in]  track  The track number
-//!
-//! @return     0 -> ok; -1 -> error
-//------------------------------------------------------------------------------
-int md_header_add_track_to_group(HndMdHdr hdl, int gid, int16_t track);
-
-//-----------------------------------------------------------------------------
-//! @brief      remove a track from a group.
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  gid    The group id
-//! @param[in]  track  The track number
-//!
-//! @return     0 -> ok; -1 -> error
-//-----------------------------------------------------------------------------
-int md_header_del_track_from_group(HndMdHdr hdl, int gid, int16_t track);
-
-//-----------------------------------------------------------------------------
-//! @brief      remove a track
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  track  The track number
-//!
-//! @return     0 -> ok; -1 -> error
-//-----------------------------------------------------------------------------
-int md_header_del_track(HndMdHdr hdl, int16_t track);
-
-//-----------------------------------------------------------------------------
-//! @brief      remove a group (included tracks become ungrouped)
-//!
-//! @param[in]  hdl   The MD header handle
-//! @param[in]  gid   The group id
-//!
-//! @return     0 -> ok; -1 -> error
-//-----------------------------------------------------------------------------
-int md_header_del_group(HndMdHdr hdl, int gid);
-
-//-----------------------------------------------------------------------------
-//! @brief      Sets the disc title.
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  title  The title
-//!
-//! @return     0 -> ok; else -> error
-//-----------------------------------------------------------------------------
-int md_header_set_disc_title(HndMdHdr hdl, const char* title);
-
-//-----------------------------------------------------------------------------
-//! @brief      rename one group
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  gid    The group id
-//! @param[in]  title  The new title
-//!
-//! @return     0 -> ok; else -> error
-//-----------------------------------------------------------------------------
-int md_header_rename_group(HndMdHdr hdl, int gid, const char* title);
-
-//------------------------------------------------------------------------------
-//! @brief      get disc title
-//!
-//! @param[in]  hdl   The MD header handle
-//!
-//! @return     C string
-//------------------------------------------------------------------------------
-const char* md_header_disc_title(HndMdHdr hdl);
-
-//------------------------------------------------------------------------------
-//! @brief      get group name for track
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  track  The track number
-//! @param[out] pGid   The buffer for gid
-//!
-//! @return     C string or nullptr
-//------------------------------------------------------------------------------
-const char* md_header_track_group(HndMdHdr hdl, int16_t track, int16_t* pGid);
-
-//------------------------------------------------------------------------------
-//! @brief      unhroup track
-//!
-//! @param[in]  hdl    The MD header handle
-//! @param[in]  track  The track
-//!
-//! @return     0 -> ok; -1 -> error
-//------------------------------------------------------------------------------
-int md_header_ungroup_track(HndMdHdr hdl, int16_t track);
-
-//------------------------------------------------------------------------------
-//! @brief      export all minidisc groups
-//!
-//! @param[in]  hdl The MD header handle
-//!
-//! @return     array of groups
-//------------------------------------------------------------------------------
-MDGroups* md_header_groups(HndMdHdr hdl);
-
-//------------------------------------------------------------------------------
-//! @brief      free groups you've got through md_header_groups()
-//!
-//! @param      groups  The groups
-//------------------------------------------------------------------------------
-void md_header_free_groups(MDGroups** groups);
-
-
 /**
    linked list to store a list of 16-byte keys
 */
@@ -973,7 +972,6 @@ netmd_error netmd_secure_send_track(netmd_dev_handle *dev,
                                     netmd_track_packets *packets,
                                     size_t packet_length,
                                     unsigned char *sessionkey,
-
                                     uint16_t *track, unsigned char *uuid,
                                     unsigned char *content_id);
 
@@ -1011,7 +1009,7 @@ netmd_error netmd_secure_get_track_uuid(netmd_dev_handle *dev, uint16_t track,
    @param signature 8-byte signature of deleted track
 */
 netmd_error netmd_secure_delete_track(netmd_dev_handle *dev, uint16_t track,
-                                      unsigned char *signature);
+                                                   unsigned char *signature);
 
 netmd_error netmd_prepare_packets(unsigned char* data, size_t data_lenght,
                                   netmd_track_packets **packets,
@@ -1300,7 +1298,149 @@ int netmd_scan_query(const uint8_t data[], size_t size, const char* format, netm
 //------------------------------------------------------------------------------
 netmd_error netmd_prepare_audio_sp_upload(uint8_t** audio_data, size_t* data_size);
 
-#ifdef __cpluplus
+
+typedef struct {
+    uint16_t hour;
+    uint8_t minute;
+    uint8_t second;
+    uint8_t frame;
+} netmd_time;
+
+/**
+   Structure to hold the capacity information of a disc.
+*/
+typedef struct {
+    /** Time allready recorded on the disc. */
+    netmd_time recorded;
+
+    /** Total time, that could be recorded on the disc. This depends on the
+       current recording settings. */
+    netmd_time total;
+
+    /** Time that is available on the disc. This depends on the current
+       recording settings. */
+    netmd_time available;
+} netmd_disc_capacity;
+
+/**
+   Starts playing the current track. If no track is selected, starts playing the
+   first track.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_play(netmd_dev_handle* dev);
+
+/**
+   Pause playing. If uses netmd_play afterwards the player continues at the
+   current position.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_pause(netmd_dev_handle* dev);
+
+/**
+   Spin the track fast forward.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_fast_forward(netmd_dev_handle* dev);
+
+/**
+   Spin the track backwards in time (aka rewind it).
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_rewind(netmd_dev_handle* dev);
+
+/**
+   Stop playing. The current position is discarded.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_stop(netmd_dev_handle* dev);
+
+/**
+   Set the playmode.
+
+   @param dev Handle to the open minidisc player.
+   @param playmode Playmode to set. Could be a OR'ed combination of the
+                   corresponding defines from const.h.
+   @see NETMD_PLAYMODE_SINGLE
+   @see NETMD_PLAYMODE_REPEAT
+   @see NETMD_PLAYMODE_SHUFFLE
+
+*/
+netmd_error netmd_set_playmode(netmd_dev_handle* dev, const uint16_t playmode);
+
+/**
+   Jump to the given track.
+
+   @param dev Handle to the open minidisc player.
+   @param track Number of the track to jump to.
+*/
+netmd_error netmd_set_track(netmd_dev_handle* dev, const uint16_t track);
+
+/**
+   Jump to the next track. If you currently playing the last track, nothing
+   happens.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_track_next(netmd_dev_handle* dev);
+
+/**
+   Jump to the previous track. If you currently playing the first track, nothing
+   happens.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_track_previous(netmd_dev_handle* dev);
+
+/**
+   Jump to the beginning of the current track.
+
+   @param dev Handle to the open minidisc player.
+*/
+netmd_error netmd_track_restart(netmd_dev_handle* dev);
+
+/**
+   Jump to a specific time of the given track.
+
+   @param dev Handle to the open minidisc player.
+   @param track Track, where to jump to the given time.
+   @param time Time to jump to.
+*/
+netmd_error netmd_set_time(netmd_dev_handle* dev, const uint16_t track,
+                           const netmd_time* time);
+
+/**
+   Gets the currently playing track.
+
+   @param dev Handle to the open minidisc player.
+   @param track Pointer where to save the current track.
+*/
+netmd_error netmd_get_track(netmd_dev_handle* dev, uint16_t *track);
+
+/**
+   Gets the position within the currently playing track
+
+   @param dev Handle to the open minidisc player.
+   @param time Pointer to save the current time to.
+*/
+netmd_error netmd_get_position(netmd_dev_handle* dev, netmd_time* time);
+
+/**
+   Gets the used, total and available disc capacity (total and available
+   capacity depend on current recording settings)
+
+   @param dev Handle to the open minidisc player.
+   @param capacity Pointer to a netmd_disc_capacity structure to save the
+                   capacity information of the current minidisc to.
+*/
+netmd_error netmd_get_disc_capacity(netmd_dev_handle* dev,
+                                    netmd_disc_capacity* capacity);
+
+#ifdef __cplusplus
 }
 #endif /* __cplusplus */
 #endif /* LIBNETMD_H */

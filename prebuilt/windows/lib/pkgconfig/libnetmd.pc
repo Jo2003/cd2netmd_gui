@@ -1,10 +1,12 @@
-prefix=/home/joergn/src/cd2netmd_gui/prebuilt/windows
-exec_prefix=${prefix}
+prefix=C:/msys64/home/joergn/src/cd2netmd_gui/prebuilt/windows
+exec_prefix=C:/msys64/home/joergn/src/cd2netmd_gui/prebuilt/windows
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
-Name: libnetmd
-Description: Portable NetMD I/O library
-Version: 0.1.5
-Libs: -L${libdir} -lnetmd -lusb-1.0
+Name: netmd
+Description: NetMD library
+Version: 1.0.1
+
+Requires:
+Libs: -L${libdir} -lnetmd -lusb-1.0 -lgcrypt -lgpg-error
 Cflags: -I${includedir}
