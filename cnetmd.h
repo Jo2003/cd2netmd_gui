@@ -265,9 +265,9 @@ protected:
     //!
     //! @param[in] t netmd_time
     //!
-    //! @return time_t
+    //! @return int
     //--------------------------------------------------------------------------
-    static inline time_t toSec(netmd_time* t)
+    static inline int toSec(netmd_time* t)
     {
         return (t->hour * 3600) + (t->minute * 60) + t->second;
     }
