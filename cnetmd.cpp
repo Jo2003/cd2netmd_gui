@@ -117,7 +117,7 @@ netmd_dev_handle* CNetMD::prepareNetMDDevice(HndMdHdr& md)
 
     if (md == nullptr)
     {
-        qCritical() << "Could MD disc info!";
+        qCritical() << "Could not get MD disc info!";
         netmd_clean(&mDevList);
         netmd_close(devh);
         return nullptr;
