@@ -24,7 +24,7 @@ TARGET = netmd_wizard
 mac{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
-    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue taglib libnetmd
+    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue taglib libnetmd++
     INCLUDEPATH += /usr/local/Cellar/libusb/1.0.24/include \
                    /usr/local/Cellar/libgcrypt/1.9.4_1/include \
                    /usr/local/Cellar/libgpg-error/1.43/include \
@@ -40,7 +40,7 @@ mac{
 win32{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
-    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue taglib libnetmd
+    PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf libcue taglib libnetmd++
     # INCLUDEPATH += /mingw64/lib/gcc/x86_64-w64-mingw32/10.3.0/include
     RC_FILE = program.rc
     LIBS += -lws2_32

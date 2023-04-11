@@ -20,7 +20,8 @@
 #include <cstdio>
 #include <QTimer>
 #include <QByteArray>
-#include <libnetmd.h>
+#include <CNetMdApi.h>
+#include <fstream>
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes net md handling.
@@ -160,22 +161,11 @@ signals:
     void progress(int);
 
 protected:
-    //--------------------------------------------------------------------------
-    //! @brief get / prepare NetMD device
-    //!
-    //! @param[out] md MD header
-    //!
-    //! @return nullptr -> error; else NetMD handle
-    //--------------------------------------------------------------------------
-    netmd_dev_handle* prepareNetMDDevice(HndMdHdr& md);
 
     //--------------------------------------------------------------------------
-    //! @brief free NetMD device
-    //!
-    //! @param[in] devh netMD device handle
-    //! @param[in] pMd  MD header
+    //! @brief init the NetMD device
     //--------------------------------------------------------------------------
-    void freeNetMDDevice(netmd_dev_handle* devh, HndMdHdr* pMd);
+    void initNetMdDevice();
 
     //--------------------------------------------------------------------------
     //! @brief      get MD disc info
@@ -267,7 +257,7 @@ protected:
     //!
     //! @return int
     //--------------------------------------------------------------------------
-    static inline int toSec(netmd_time* t)
+    static inline int toSec(netmd::NetMdTime* t)
     {
         return (t->hour * 3600) + (t->minute * 60) + t->second;
     }
@@ -279,7 +269,7 @@ protected:
     QString mNameFLog;
     
     /// log file pointer
-    FILE* mpLogFile;
+    std::ofstream mLogStream;
     
     /// log file
     QFile mfLog;
@@ -290,9 +280,8 @@ protected:
     /// cyclic log parce trigger
     QTimer mTReadLog;
 
-    /// netmd device list
-    netmd_device* mDevList;
-
     /// NetMD device name
     QString mDevName;
+
+    netmd::CNetMdApi* mpApi;
 };
