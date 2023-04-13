@@ -82,28 +82,27 @@ void CNetMD::start(NetMDStartup startup)
 //--------------------------------------------------------------------------
 void CNetMD::initNetMdDevice()
 {
+    // set log level for netmd++
+    switch(g_LogFilter)
+    {
+    case c2n::LogLevel::DEBUG:
+        mpApi->setLogLevel(netmd::DEBUG);
+        break;
+    case c2n::LogLevel::INFO:
+        mpApi->setLogLevel(netmd::INFO);
+        break;
+    case c2n::LogLevel::WARN:
+        mpApi->setLogLevel(netmd::WARN);
+        break;
+    case c2n::LogLevel::CRITICAL:
+    case c2n::LogLevel::FATAL:
+        mpApi->setLogLevel(netmd::CRITICAL);
+        break;
+    }
+
     mpApi->initDevice();
     mpApi->initDiscHeader();
     mDevName = QString::fromStdString(mpApi->getDeviceName());
-
-    if (g_LogFilter == c2n::LogLevel::DEBUG)
-    {
-        mpApi->setLogLevel(netmd::DEBUG);
-    }
-    else
-    {
-        mpApi->setLogLevel(netmd::WARN);
-    }
-
-    if (!mLogStream)
-    {
-        qCritical() << "Can't open Log File / Stream";
-    }
-
-    if (!mfLog.isOpen())
-    {
-        qCritical() << "Can't share Log File / Stream";
-    }
 }
 
 //--------------------------------------------------------------------------
@@ -299,7 +298,7 @@ int CNetMD::addGroup(const QString& name, int first, int last)
 int CNetMD::renameDisc(const QString& name)
 {
     qInfo() << "rename MD to" << name << "on" << mDevName;
-    return mpApi->writeDiscHeader(name.toStdString());
+    return mpApi->setDiscTitle(name.toStdString());
 }
 
 //--------------------------------------------------------------------------
@@ -483,6 +482,6 @@ void CNetMD::procEnded(bool)
 
     if (!mLog.isEmpty())
     {
-        qInfo() << static_cast<const char*>(mLog.toUtf8());
+        qInfo() << "\n" << static_cast<const char*>(mLog.toUtf8());
     }
 }
