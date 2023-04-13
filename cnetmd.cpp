@@ -19,6 +19,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <iomanip>
 #include "cnetmd.h"
 #include "defines.h"
 #include "helpers.h"
@@ -122,6 +123,9 @@ QByteArray CNetMD::getDiscInfo()
     QByteArray ret;
     std::string s;
     std::ostringstream os;
+    
+    // helper function to clear std::ostringstream
+    auto clrOs = [&]()->void{os.clear(); os.str("");};
 
     // Construct JSON object
     QJsonObject tree;
@@ -145,9 +149,9 @@ QByteArray CNetMD::getDiscInfo()
 
     if ((i = mpApi->discFlags()) > -1)
     {
-        char hex[5] = {'\0'};
-        snprintf(hex, 5, "0x%.02x", i);
-        tree.insert("disc_flags", hex);
+        clrOs();
+        os << "0x" << std::hex << std::setw(2) << std::setfill('0') << i;
+        tree.insert("disc_flags", os.str().c_str());
     }
 
     DiscCapacity capacity;
@@ -180,9 +184,6 @@ QByteArray CNetMD::getDiscInfo()
     TrackProtection tprot;
     TrackTime ttime;
     uint8_t channel;
-
-    // helper function to clear std::ostringstream
-    auto clrOs = [&]()->void{os.clear(); os.str("");};
 
     for(i = 0; i < tc; i++)
     {

@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.8.0)
 
-project(netmd_wizard VERSION 0.1.9.2 LANGUAGES CXX C)
+project(netmd_wizard VERSION 0.1.9.9 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,11 +32,10 @@ pkg_check_modules(CDIO REQUIRED libcdio)
 pkg_check_modules(CDDA REQUIRED libcdio_cdda)
 pkg_check_modules(PARANOIA REQUIRED libcdio_paranoia)
 pkg_check_modules(CUE REQUIRED libcue)
-pkg_check_modules(JSONC REQUIRED json-c)
 pkg_check_modules(LIBISO REQUIRED libiso9660)
 pkg_check_modules(LIBUDF REQUIRED libudf)
 pkg_check_modules(TAGLIB REQUIRED taglib)
-pkg_check_modules(NETMD REQUIRED libnetmd)
+pkg_check_modules(NETMD REQUIRED libnetmd++)
 
 SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g")
 SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
@@ -50,7 +49,6 @@ set(IDIRS
 	${CDDA_INCLUDE_DIRS}
 	${PARANOIA_INCLUDE_DIRS}
 	${CUE_INCLUDE_DIRS}
-	${JSONC_INCLUDE_DIRS}
 	${LIBISO_INCLUDE_DIRS}
 	${LIBUDF_INCLUDE_DIRS}
 	${TAGLIB_INCLUDE_DIRS}
@@ -69,7 +67,6 @@ set(LDIRS
 	${CDDA_LIBRARY_DIRS}
 	${PARANOIA_LIBRARY_DIRS}
 	${CUE_LIBRARY_DIRS}
-	${JSONC_LIBRARY_DIRS}
 	${LIBISO_LIBRARY_DIRS}
 	${LIBUDF_LIBRARY_DIRS}
 	${TAGLIB_LIBRARY_DIRS}
@@ -86,7 +83,6 @@ set(SLIBS
 	${CDDA_LIBRARIES}
 	${PARANOIA_LIBRARIES}
 	${CUE_LIBRARIES}
-	${JSONC_LIBRARIES}
 	${LIBISO_LIBRARIES}
 	${LIBUDF_LIBRARIES}
 	${TAGLIB_LIBRARIES}
@@ -128,13 +124,11 @@ add_executable(netmd_wizard
 )
 
 set(MYCFLAGS
-    -W -Wall -Wformat-overflow=0 
-	-Wno-unused-result -Wformat=0
+    -W -Wall
 	${CDIO_CFLAGS_OTHER}
 	${CDDA_CFLAGS_OTHER}
 	${PARANOIA_CFLAGS_OTHER}
 	${CUE_CFLAGS_OTHER}
-	${JSONC_CFLAGS_OTHER}
 	${LIBISO_CFLAGS_OTHER}
 	${LIBUDF_CFLAGS_OTHER}
 	${TAGLIB_CFLAGS_OTHER}
