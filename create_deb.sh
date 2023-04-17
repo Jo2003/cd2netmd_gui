@@ -26,7 +26,7 @@ create_folders() {
     mkdir -p "${BUILD_FOLDER}/usr/share/doc/${PACKAGE}"
     mkdir -p "${BUILD_FOLDER}/usr/share/man/man7"
     mkdir -p "${BUILD_FOLDER}/usr/share/applications"
-    mkdir -p "${BUILD_FOLDER}/DEBIAN/software"
+    mkdir -p "${BUILD_FOLDER}/DEBIAN"
 }
 
 copy_content() {
@@ -99,6 +99,7 @@ udevadm control --reload-rules
 udevadm trigger
 
 EOF
+chmod +x "${BUILD_FOLDER}/DEBIAN/postinst"
 }
 
 create_deb() {
