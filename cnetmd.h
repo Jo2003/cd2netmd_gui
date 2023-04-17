@@ -283,5 +283,6 @@ protected:
     /// NetMD device name
     QString mDevName;
 
+    /// NetMD API
     netmd::CNetMdApi* mpApi;
 };

@@ -26,7 +26,7 @@ create_folders() {
     mkdir -p "${BUILD_FOLDER}/usr/share/doc/${PACKAGE}"
     mkdir -p "${BUILD_FOLDER}/usr/share/man/man7"
     mkdir -p "${BUILD_FOLDER}/usr/share/applications"
-    mkdir -p "${BUILD_FOLDER}/DEBIAN"
+    mkdir -p "${BUILD_FOLDER}/DEBIAN/software"
 }
 
 copy_content() {
@@ -92,6 +92,15 @@ EOF
     gzip -9 "${BUILD_FOLDER}/usr/share/doc/${PACKAGE}/changelog"
 }
 
+create_postinst() {
+    cat << EOF > "${BUILD_FOLDER}/DEBIAN/postinst"
+#!/bin/sh
+udevadm control --reload-rules
+udevadm trigger
+
+EOF
+}
+
 create_deb() {
     dpkg-deb --build "${BUILD_FOLDER}"
 }
@@ -138,4 +147,5 @@ create_changelog
 create_man_page
 create_copyright_file
 create_control_file
+create_postinst
 create_deb
