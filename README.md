@@ -15,6 +15,7 @@ It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and de
 - supports track-, group-, and disc rename / erase on NetMD (context menu)
 - supports simple group management on NetMD (context menu)
 - __supports gapless audio__ in LP2 mode using external encoder and disc-at-once transfer.
+- **supports gapless SP** on portable Sony devices.
 
 
 ## Usage ##
@@ -40,9 +41,11 @@ It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and de
 - [taglib](https://taglib.org/) for make reading tags much easier.
 - [ffmpeg](https://www.ffmpeg.org/) to encode _xxx_ to compatible wav files. 
 
-## Thanks
-A big thanks goes to [asivery](https://github.com/asivery) for his great help with the NetMD exploits which made gapless SP possible! 
-Furthermore I thank **Lars W.** for his tests and DaveFlash for the nice program icon!
+## Thanks to... 
+* **Lars W.** - my first tester which even paid me a (or more) beer.
+* [**asivery**](https://www.reddit.com/user/asivery/) for his great support to add the Sony firmware patching, which makes SP upload possible.
+* [**Sir68k**](https://www.reddit.com/u/Sir68k/) for discovering the Sony firmware exploit.
+
 
 ## Support me ##
 In case you find this tool useful, you may consider to [buy me a beer](https://paypal.me/Jo2003).

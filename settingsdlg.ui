@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>378</width>
-    <height>301</height>
+    <height>286</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,6 +49,48 @@
      </property>
      <property name="text">
       <string>On-the-fly Encoding</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>CDDB: </string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QCheckBox" name="checkCDDB">
+     <property name="text">
+      <string>Request CD info through CDDB</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>MD Track Grouping: </string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QCheckBox" name="checkLPGroup">
+     <property name="text">
+      <string>Group new tracks after LP transfer</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>MD Title: </string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QCheckBox" name="checkSPTitle">
+     <property name="text">
+      <string>Set MD disc title after SP transfer</string>
      </property>
     </widget>
    </item>
@@ -151,44 +193,7 @@
      </item>
     </layout>
    </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="label_6">
-     <property name="text">
-      <string>Log File:</string>
-     </property>
-    </widget>
-   </item>
    <item row="8" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushViewLog">
-       <property name="minimumSize">
-        <size>
-         <width>80</width>
-         <height>22</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>O&amp;pen</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="9" column="1">
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
       <spacer name="horizontalSpacer_4">
@@ -217,48 +222,6 @@
       </widget>
      </item>
     </layout>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_7">
-     <property name="text">
-      <string>MD Track Grouping: </string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label_8">
-     <property name="text">
-      <string>MD Title: </string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <widget class="QCheckBox" name="checkLPGroup">
-     <property name="text">
-      <string>Group new tracks after LP transfer</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="1">
-    <widget class="QCheckBox" name="checkSPTitle">
-     <property name="text">
-      <string>Set MD disc title after SP transfer</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_9">
-     <property name="text">
-      <string>CDDB: </string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
-    <widget class="QCheckBox" name="checkCDDB">
-     <property name="text">
-      <string>Request CD info through CDDB</string>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

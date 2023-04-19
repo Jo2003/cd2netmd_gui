@@ -217,11 +217,6 @@ void SettingsDlg::on_pushCleanup_clicked()
     qInfo() << "Temp file cleanup dome!";
 }
 
-void SettingsDlg::on_pushViewLog_clicked()
-{
-    QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(g_logFileName)));
-}
-
 void SettingsDlg::on_pushOK_clicked()
 {
     accept();

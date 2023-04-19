@@ -118,6 +118,7 @@ add_executable(netmd_wizard
     helpers.cpp
     mdtitle.cpp
     settingsdlg.cpp
+    statuswidget.cpp
     resources.qrc
     qdarkstyle/dark/style_dk.qrc
     qdarkstyle/light/style_lt.qrc

@@ -7,6 +7,7 @@
  * Alexander Sulfrian for the Linux Minidisc project.
  *
  * Asivery helped to make this possible!
+ * Sir68k discovered the Sony FW exploit!
  *
  * Copyright (C) 2023 Jo2003 (olenka.joerg@gmail.com)
  *

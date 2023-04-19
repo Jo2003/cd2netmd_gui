@@ -16,11 +16,16 @@
         <file alias="settings">res/setting.png</file>
         <file alias="cue">res/cue.png</file>
         <file alias="help">res/help.png</file>
+        <file alias="log">res/log_file.png</file>
     </qresource>
     <qresource prefix="/dark">
         <file alias="wait">res/wait_ani_dk.gif</file>
     </qresource>
     <qresource prefix="/light">
         <file alias="wait">res/wait_ani.gif</file>
+    </qresource>
+    <qresource prefix="/label">
+        <file alias="green">res/green_button.png</file>
+        <file alias="red">res/red_button.png</file>
     </qresource>
 </RCC>

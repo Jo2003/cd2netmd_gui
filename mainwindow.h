@@ -31,6 +31,7 @@
 #include "caboutdialog.h"
 #include "settingsdlg.h"
 #include "cdaoconfdlg.h"
+#include "statuswidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -270,6 +271,8 @@ private slots:
 
     void on_pushHelp_clicked();
 
+    void on_pushLog_clicked();
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
@@ -290,10 +293,10 @@ private:
     TransferQueue   mWorkQueue;
     
     /// MD device info
-    QLabel         *mpMDDevice;
+    StatusWidget   *mpMDDevice;
     
     /// CD device info
-    QLabel         *mpCDDevice;
+    StatusWidget   *mpCDDevice;
     
     /// which DAO handling active?
     CDaoConfDlg::DAO_Mode mDAOMode;
@@ -306,4 +309,10 @@ private:
 
     /// can the device SP upload
     bool mSpUpload;
+
+    /// show SP download support
+    StatusWidget   *mpSpUpload;
+
+    /// show on-the-fly support
+    StatusWidget   *mpOtfEncode;
 };

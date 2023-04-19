@@ -71,7 +71,8 @@ SOURCES += \
     helpers.cpp \
     mdtitle.cpp \
     settingsdlg.cpp \
-    audio.cpp
+    audio.cpp \
+    statuswidget.cpp
 
 HEADERS += \
     cdaoconfdlg.h \
@@ -94,7 +95,8 @@ HEADERS += \
     helpers.h \
     mdtitle.h \
     settingsdlg.h \
-    audio.h
+    audio.h \
+    statuswidget.h
 
 FORMS += \
     caboutdialog.ui \
@@ -102,7 +104,8 @@ FORMS += \
     cdaoconfdlg.ui \
     cnamingdialog.ui \
     mainwindow.ui \
-    settingsdlg.ui
+    settingsdlg.ui \
+    statuswidget.ui
 
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts

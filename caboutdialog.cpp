@@ -31,7 +31,7 @@ Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github
 <br> <br>
 If you like this program, please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!
 <br> <br>
-Thanks for following projects:<br>
+<b>Thanks for following projects:</b>
 <ul>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.gnu.org/software/libcdio/">libcdio</a> with CDDA paranoia extension.</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/nlohmann/json">json.hpp</a> - JSON for modern C++</li>
@@ -43,10 +43,14 @@ Thanks for following projects:<br>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.ffmpeg.org/">ffmpeg</a> - for encoding <b>xxx</b> to compatible wav files</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt</a> - One framework to rule them all</li>
 </ul>
-Big thanks to <b>asivery</b> for his great support with the SP upload feature.<br>
-Without him this wouldn't be possible!<br>
-Special thanks to my personal tester <b>Lars W.</b> - the first guy who paid me a beer (or two)!<br>
-Further thanks to DaveFlash for the nice program icon!)";
+<b>Further thanks to:</b>
+<ul>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/asivery">asivery</a> for his great support to add the Sony firmware patching, which makes SP upload possible.</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Sir68k">Sir68k</a> for discovering the Sony firmware exploit.</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Knolan1st">Lars W.</a> for his tests and the first ever beer I earned through this project</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/DaveFlash">DaveFlash</a> for the nice program icon and some nice ideas.</li>
+</ul>
+<br> <br>)";
     ui->textAbout->setHtml(text);
 #ifdef Q_OS_MAC
     QFont f = ui->textAbout->font();

@@ -89,7 +89,8 @@ In DAO modus the whole audio data will be extracted at once, encoded in one peac
 ## Thanks to... 
 
 * **Lars W.** - my first tester which even paid me a (or more) beer.
-* **asivery** for his great support to add the Sony firmware patching, which makes SP upload possible.
+* [**asivery**](https://www.reddit.com/user/asivery/) for his great support to add the Sony firmware patching, which makes SP upload possible.
+* [**Sir68k**](https://www.reddit.com/u/Sir68k/) for discovering the Sony firmware exploit.
 
 ## Support ##
 

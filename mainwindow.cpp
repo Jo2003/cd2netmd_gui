@@ -32,7 +32,8 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false)
+      mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false),
+      mpSpUpload(nullptr), mpOtfEncode(nullptr)
 {
     ui->setupUi(this);
 
@@ -73,9 +74,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->tableViewCD, &CCDTableView::filesDropped, this, &MainWindow::catchDropped);
     connect(ui->tableViewCD, &CCDTableView::audioLength, this, &MainWindow::audioLength);
 
-    mpMDDevice = new QLabel();
-    mpCDDevice = new QLabel();
+    mpMDDevice  = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
+    mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
+    mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP Download"));
+    mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF Encoding"));
 
+    ui->statusbar->addPermanentWidget(mpSpUpload);
+    ui->statusbar->addPermanentWidget(mpOtfEncode);
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
 }
@@ -211,9 +216,7 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
         ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
         ui->tableViewCD->setColumnWidth(1, (width / 100) * 18);
 
-        mpCDDevice->clear();
-        mpCDDevice->setText(mpRipper->deviceInfo());
-        mpCDDevice->show();
+        mpCDDevice->setText(mpRipper->deviceInfo().isEmpty() ? tr("Please re-load CD") : mpRipper->deviceInfo());
         enableDialogItems(true);
     }
 }
@@ -221,7 +224,9 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 void MainWindow::catchJson(QString j)
 {
     recreateTreeView(j);
-    if (mpMDmodel->discConf()->mOTFEnc == 0)
+    bool otf = !!mpMDmodel->discConf()->mOTFEnc;
+
+    if (!otf)
     {
         mpSettings->enaDisaOtf(false, false);
     }
@@ -233,6 +238,10 @@ void MainWindow::catchJson(QString j)
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
     qInfo() << "SP Upload supported: " << mSpUpload;
+
+    // support label ...
+    mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
+    mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
@@ -735,10 +744,8 @@ void MainWindow::recreateTreeView(const QString &json)
                             .arg(mpMDmodel->discConf()->mFreeTime %  60, 2, 10, QChar('0')));
     ui->labFreeTime->show();
 
-    mpMDDevice->clear();
-    mpMDDevice->setText(mpMDmodel->discConf()->mDevice);
+    mpMDDevice->setText(mpMDmodel->discConf()->mDevice.isEmpty() ? tr("Please re-load MD") : mpMDmodel->discConf()->mDevice);
     qInfo() << "Found NetMD device " << mpMDmodel->discConf()->mDevice;
-    mpMDDevice->show();
 }
 
 void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QString &text)
@@ -1207,5 +1214,11 @@ void MainWindow::on_pushHelp_clicked()
         QDesktopServices::openUrl(QUrl(QString("file:///%1/share/%2/resources/help/NetMD Wizard.html").arg(applFolder.canonicalPath()).arg(sBinName)));
     }
 #endif
+}
+
+
+void MainWindow::on_pushLog_clicked()
+{
+    QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(g_logFileName)));
 }
 
