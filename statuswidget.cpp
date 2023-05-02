@@ -19,9 +19,10 @@
 #include "ui_statuswidget.h"
 #include <QPixmap>
 
-StatusWidget::StatusWidget(QWidget *parent, const QString &icon, const QString &text, int iconSz)
+StatusWidget::StatusWidget(QWidget *parent, const QString &icon,
+                           const QString &text, const QString& stip, int iconSz)
     : QWidget(parent),
-      ui(new Ui::StatusWidget), mScale(iconSz)
+      ui(new Ui::StatusWidget), mScale(iconSz), mStatusTip(stip)
 {
     ui->setupUi(this);
 
@@ -30,6 +31,7 @@ StatusWidget::StatusWidget(QWidget *parent, const QString &icon, const QString &
         QPixmap pic(icon);
         pic = pic.scaled(mScale, mScale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         ui->icon->setPixmap(pic);
+        ui->icon->setStatusTip(mStatusTip);
     }
 
     ui->text->setText(text);
@@ -47,6 +49,12 @@ void StatusWidget::setText(const QString &text)
     ui->text->show();
 }
 
+void StatusWidget::setStatusTip(const QString &tip)
+{
+    mStatusTip = tip;
+    ui->icon->setStatusTip(mStatusTip);
+}
+
 void StatusWidget::setIcon(const QString &icon)
 {
     if (!icon.isEmpty())
@@ -55,6 +63,7 @@ void StatusWidget::setIcon(const QString &icon)
         pic = pic.scaled(mScale, mScale, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         ui->icon->clear();
         ui->icon->setPixmap(pic);
+        ui->icon->setStatusTip(mStatusTip);
         ui->icon->show();
     }
 }

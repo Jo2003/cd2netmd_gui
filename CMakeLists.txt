@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8.0)
 
-project(netmd_wizard VERSION 0.1.9.9 LANGUAGES CXX C)
+project(netmd_wizard VERSION 0.2.0.0 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -120,8 +120,8 @@ add_executable(netmd_wizard
     settingsdlg.cpp
     statuswidget.cpp
     resources.qrc
-    qdarkstyle/dark/style_dk.qrc
-    qdarkstyle/light/style_lt.qrc
+    qdarkstyle/dark/darkstyle.qrc
+    qdarkstyle/light/lightstyle.qrc
 )
 
 set(MYCFLAGS

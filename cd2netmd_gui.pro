@@ -117,8 +117,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     resources.qrc \
-    qdarkstyle/dark/style_dk.qrc \
-    qdarkstyle/light/style_lt.qrc
+    qdarkstyle/dark/darkstyle.qrc \
+    qdarkstyle/light/lightstyle.qrc
 
 !win32 {
     CONFIG(debug, debug|release):DESTDIR = debug

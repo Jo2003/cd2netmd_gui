@@ -26,6 +26,88 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
+
+/**
+@file CNetMdApi.h
+@mainpage
+# CNetMdApi
+This C++ API was written to ease the handling of NetMD devices. It is a synchronous API.
+So, function calls might block your program flow. If you want to use this API in an GUI app,
+better put the API calls into a background thread.
+
+## Namespace
+This API uses the namespace *netmd*.
+
+## Usage
+
+ - include the header file into your project:
+~~~{c++}
+#include "path/to/CNetMdApi.h"
+~~~
+
+ - create an instance of the API:
+~~~{c++}
+netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+~~~
+
+ - initialize the first found NetMD device:
+~~~{c++}
+if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+{
+    pNetMd->initDiscHeader();
+}
+~~~
+
+ - If you change or re-plug the device, simply run above code (init) again!
+
+## Examples
+### Track transfer
+Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).
+
+~~~{c++}
+#include <CNetMdApi.h>
+
+int main()
+{
+    netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+
+    if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+    {
+        pNetMd->initDiscHeader();
+
+        if (pNetMd->otfEncodeSupported())
+        {
+            pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
+        }
+        else
+        {
+            pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (SP)", netmd::NO_ONTHEFLY_CONVERSION);
+        }
+    }
+    return 0;
+}
+~~~
+
+### Erase disc and set new title
+~~~{c++}
+#include <CNetMdApi.h>
+
+int main()
+{
+    netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+
+    if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+    {
+        pNetMd->eraseDisc();
+        pNetMd->initDiscHeader();
+        pNetMd->setDiscTitle("Amazing MD");
+
+    }
+    return 0;
+}
+~~~
+
+*/
 #pragma once
 #include <cstdint>
 #include <sstream>
@@ -36,11 +118,11 @@ namespace netmd {
 /// disk format
 enum DiskFormat : uint8_t
 {
-    NETMD_DISKFORMAT_LP4       =   0,
-    NETMD_DISKFORMAT_LP2       =   2,
-    NETMD_DISKFORMAT_SP_MONO   =   4,
-    NETMD_DISKFORMAT_SP_STEREO =   6,
-    NO_ONTHEFLY_CONVERSION     = 0xf
+    NETMD_DISKFORMAT_LP4       =   0,   ///< LP4
+    NETMD_DISKFORMAT_LP2       =   2,   ///< LP2
+    NETMD_DISKFORMAT_SP_MONO   =   4,   ///< SP mono
+    NETMD_DISKFORMAT_SP_STEREO =   6,   ///< SP stereo
+    NO_ONTHEFLY_CONVERSION     = 0xf    ///< dont do on-the-fly encoding
 };
 
 /// NetMD errors
@@ -61,45 +143,45 @@ enum NetMdErr : int
 /// track times
 struct TrackTime
 {
-    int mMinutes;
-    int mSeconds;
-    int mTenthSecs;
+    int mMinutes;   ///< time in minutes
+    int mSeconds;   ///< time in seconds
+    int mTenthSecs; ///< time in 10ms
 };
 
 /// type safe protection flags
 enum class TrackProtection : uint8_t
 {
-    UNPROTECTED = 0x00,
-    PROTECTED   = 0x03,
-    UNKNOWN     = 0xFF
+    UNPROTECTED = 0x00, //!< track is unprotected
+    PROTECTED   = 0x03, //!< track  is protected
+    UNKNOWN     = 0xFF  //!< unknown track state
 };
 
 /// type safe encoding flags
 enum class AudioEncoding : uint8_t
 {
-    SP      = 0x90,
-    LP2     = 0x92,
-    LP4     = 0x93,
-    UNKNOWN = 0xff
+    SP      = 0x90, //!< SP encoding
+    LP2     = 0x92, //!< LP2 encoding
+    LP4     = 0x93, //!< LP4 encoding
+    UNKNOWN = 0xff  //!< unknown encoding
 };
 
 /// log severity
 enum typelog
 {
-    DEBUG,
-    INFO,
-    WARN,
-    CRITICAL,
-    CAPTURE //!< needed for log parcing!
+    DEBUG,      //!< debug information
+    INFO,       //!< information
+    WARN,       //!< more serious
+    CRITICAL,   //!< critical information
+    CAPTURE     //!< needed for log parcing!
 };
 
 /// NetMD time
 struct NetMdTime
 {
-    uint16_t hour;
-    uint8_t  minute;
-    uint8_t  second;
-    uint8_t  frame;
+    uint16_t hour;      //!< hour
+    uint8_t  minute;    //!< minute
+    uint8_t  second;    //!< second
+    uint8_t  frame;     //!< frame
 };
 
 /// Structure to hold the capacity information of a disc.
@@ -128,6 +210,7 @@ struct Group
     std::string mName;  //!< group name
 };
 
+/// netmd groups
 using Groups = std::vector<Group>;
 
 //--------------------------------------------------------------------------
@@ -204,7 +287,7 @@ public:
     //!
     //! @return     The device name.
     //--------------------------------------------------------------------------
-    std::string getDeviceName();
+    std::string getDeviceName() const;
 
     //--------------------------------------------------------------------------
     //! @brief      Sets the log level.
@@ -216,28 +299,28 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      Sets the log stream.
     //!
-    //! @param      os    The stream instance to log to
+    //! @param[in]  os The stream instance to log to
     //--------------------------------------------------------------------------
     static void setLogStream(std::ostream& os);
 
     //--------------------------------------------------------------------------
     //! @brief      request track count
     //!
-    //! @return     < 0 -> NetMdErr; else -> track count
+    //! @return     < 0 -> @ref NetMdErr; else -> track count
     //--------------------------------------------------------------------------
     int trackCount();
 
     //--------------------------------------------------------------------------
     //! @brief      request disc flags
     //!
-    //! @return     < 0 -> NetMdErr; else -> flags
+    //! @return     < 0 -> @ref NetMdErr; else -> flags
     //--------------------------------------------------------------------------
     int discFlags();
 
     //--------------------------------------------------------------------------
     //! @brief      erase MD
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int eraseDisc();
 
@@ -245,9 +328,9 @@ public:
     //! @brief      get track time
     //!
     //! @param[in]  trackNo    The track no
-    //! @param      trackTime  The track time
+    //! @param[out] trackTime  The track time
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int trackTime(int trackNo, TrackTime& trackTime);
 
@@ -256,7 +339,7 @@ public:
     //!
     //! @param[out] header  The buffer for disc header
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int rawDiscHeader(std::string& header);
 
@@ -265,7 +348,7 @@ public:
     //!
     //! @param[out] title  The title
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int discTitle(std::string& title);
 
@@ -274,14 +357,14 @@ public:
     //!
     //! @param[in]  title  The title
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int setDiscTitle(const std::string& title);
 
     //--------------------------------------------------------------------------
     //! @brief      Writes a disc header.
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int writeRawDiscHeader();
 
@@ -291,7 +374,7 @@ public:
     //! @param[in]  from  from position
     //! @param[in]  to    to position
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int moveTrack(uint16_t from, uint16_t to);
 
@@ -301,7 +384,7 @@ public:
     //! @param[in]  group  The group
     //! @param[in]  title  The title
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int setGroupTitle(uint16_t group, const std::string& title);
 
@@ -312,7 +395,7 @@ public:
     //! @param[in]  first  The first track
     //! @param[in]  last   The last track
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int createGroup(const std::string& title, int first, int last);
 
@@ -322,7 +405,7 @@ public:
     //! @param[in]  track  The track
     //! @param[in]  group  The group
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int addTrackToGroup(int track, int group);
 
@@ -332,7 +415,7 @@ public:
     //! @param[in]  track  The track
     //! @param[in]  group  The group
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int delTrackFromGroup(int track, int group);
 
@@ -341,7 +424,7 @@ public:
     //!
     //! @param[in]  group  The group
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int deleteGroup(int group);
 
@@ -350,7 +433,7 @@ public:
     //!
     //! @param[in]  track  The track number
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int deleteTrack(uint16_t track);
 
@@ -361,7 +444,7 @@ public:
     //! @param[out] encoding  The encoding flag
     //! @param[out] channel   The channel flag
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int trackBitRate(uint16_t track, AudioEncoding& encoding, uint8_t& channel);
 
@@ -371,7 +454,7 @@ public:
     //! @param[in]  track  The track number
     //! @param[out] flags  The track flags
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int trackFlags(uint16_t track, TrackProtection& flags);
 
@@ -381,7 +464,7 @@ public:
     //! @param[in]  track  The track number
     //! @param[out] title  The track title
     //!
-    //! @return     NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int trackTitle(uint16_t track, std::string& title);
 
@@ -402,12 +485,21 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
+    //! The audio file must be either an WAVE file (44.1kHz / 16 bit), or an
+    //! pre-encoded atrac3 file with a WAVE header. If your device supports
+    //! on-the-fly encoding (not common), you can set the DiskFormat to
+    //! @ref NETMD_DISKFORMAT_LP4 or @ref NETMD_DISKFORMAT_LP2. If you want best
+    //! audio quality, use @ref NO_ONTHEFLY_CONVERSION.
+    //!
+    //! In case your device supports the SP download through Sony Firmware
+    //! exploit, the input file might be a plain atrac 1 file.
+    //!
+    //!
     //! @param[in]  filename  The filename
     //! @param[in]  title     The title
     //! @param[in]  otf       The disk format
     //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int sendAudioFile(const std::string& filename, const std::string& title, DiskFormat otf);
 
@@ -417,18 +509,16 @@ public:
     //! @param[in]  trackNo  The track no
     //! @param[in]  title    The title
     //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int setTrackTitle(uint16_t trackNo, const std::string& title);
 
     //--------------------------------------------------------------------------
     //! @brief      get disc capacity
     //!
-    //! @param      dcap  The buffer for disc capacity
+    //! @param[out] dcap  The buffer for disc capacity
     //!
-    //! @return     NetMdErr
-    //! @see        NetMdErr
+    //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int discCapacity(DiscCapacity& dcap);
 

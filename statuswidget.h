@@ -37,11 +37,13 @@ public:
     /// \param parent widget
     /// \param icon string
     /// \param text string
+    /// \param stip string status tip
     /// \param iconSz size in pixel
     ///
     explicit StatusWidget(QWidget *parent = nullptr,
                           const QString& icon = "",
                           const QString& text = "",
+                          const QString& stip = "",
                           int iconSz = 16);
 
     ///
@@ -56,6 +58,12 @@ public:
     void setText(const QString& text);
 
     ///
+    /// \brief setStatusTip
+    /// \param tip string
+    ///
+    void setStatusTip(const QString& tip);
+
+    ///
     /// \brief setIcon
     /// \param icon string
     ///
@@ -64,4 +72,5 @@ public:
 private:
     Ui::StatusWidget *ui;
     int mScale;
+    QString mStatusTip;
 };

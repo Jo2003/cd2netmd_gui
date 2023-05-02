@@ -447,7 +447,7 @@
          </size>
         </property>
         <property name="statusTip">
-         <string>Disc-at-once transfer (all tracks). Gapless LP2 mode.</string>
+         <string>Disc-at-once transfer (all tracks). Gapless mode.</string>
         </property>
         <property name="text">
          <string>&amp;DAO Tranfer</string>
@@ -554,7 +554,7 @@
      <x>0</x>
      <y>0</y>
      <width>1165</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

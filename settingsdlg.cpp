@@ -113,12 +113,12 @@ void SettingsDlg::on_comboBox_currentIndexChanged(int index)
 
     if (index == 1) // dark
     {
-        styleFile.setFileName(":qdarkstyle/dark/style.qss");
+        styleFile.setFileName(":qdarkstyle/dark/darkstyle.qss");
         mpWaitAni = new QMovie(":/dark/wait", QByteArray(), this);
     }
     else if (index == 2) // light
     {
-        styleFile.setFileName(":qdarkstyle/light/style.qss");
+        styleFile.setFileName(":qdarkstyle/light/lightstyle.qss");
         mpWaitAni = new QMovie(":/light/wait", QByteArray(), this);
     }
     else

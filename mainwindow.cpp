@@ -76,8 +76,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     mpMDDevice  = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
     mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
-    mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP Download"));
-    mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF Encoding"));
+    mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
+    mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
 
     ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
@@ -240,7 +240,10 @@ void MainWindow::catchJson(QString j)
     qInfo() << "SP Upload supported: " << mSpUpload;
 
     // support label ...
+    mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
     mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
+
+    mpOtfEncode->setStatusTip(otf ? tr("on-the-fly encoding supported by device") : tr("on-the-fly encoding not supported by device"));
     mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
