@@ -510,7 +510,7 @@ void MainWindow::transferFinished(bool checkBusy)
 
                 for (auto& t : mWorkQueue)
                 {
-                    // add track name / -length to TOC data
+                    // add track name / length to TOC data
                     tocData.append({t.mTitle, static_cast<uint32_t>(std::round(t.mLength * 1000.0))});
 
                     // mark all tracks as done
@@ -1017,7 +1017,7 @@ void MainWindow::catchDropped(QStringList sl)
 
     for (const auto& url : sl)
     {
-        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag, mSpUpload) == 0)
+        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
         {
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;

@@ -33,8 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false),
-      mTocManip(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
-      mpTocManip(nullptr)
+      mpSpUpload(nullptr), mpOtfEncode(nullptr), mpTocManip(nullptr)
 {
     ui->setupUi(this);
 
@@ -238,7 +237,7 @@ void MainWindow::catchJson(QString j)
         mpSettings->enaDisaOtf(true, true);
     }
 
-    mTocManip = !!mpMDmodel->discConf()->mTocManip;
+    bool tocManip = !!mpMDmodel->discConf()->mTocManip;
 
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
@@ -251,8 +250,8 @@ void MainWindow::catchJson(QString j)
     mpOtfEncode->setStatusTip(otf ? tr("on-the-fly encoding supported by device") : tr("on-the-fly encoding not supported by device"));
     mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
 
-    mpTocManip->setStatusTip(mTocManip ? tr("TOC manipulation supported by device") : tr("TOC manipulation not supported by device"));
-    mpTocManip->setIcon(mTocManip ? ":label/green" : ":label/red");
+    mpTocManip->setStatusTip(tocManip ? tr("TOC manipulation supported by device") : tr("TOC manipulation not supported by device"));
+    mpTocManip->setIcon(tocManip ? ":label/green" : ":label/red");
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
@@ -493,7 +492,6 @@ void MainWindow::transferFinished(bool checkBusy)
 {
     if ((!checkBusy || !mpNetMD->busy()) && !mWorkQueue.isEmpty())
     {
-        int dc = 0;
         CNetMD::NetMDCmd netMdCmd;
         CXEnc::XEncCmd   xencCmd;
         QString          trackMode;
@@ -503,25 +501,24 @@ void MainWindow::transferFinished(bool checkBusy)
         {
             if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
             {
-                CNetMD::TocData tocData;
+                auto toMs = [](long blocks)->uint32_t
+                {
+                    return std::round((static_cast<double>(blocks) * 1000.0) / static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
+                };
 
-                // add disc name / -length to TOC data
-                tocData.append({ui->lineCDTitle->text(), blocksToMs(ui->tableViewCD->myModel()->audioLength())});
+                CNetMD::TocData tocData;
+                tocData.append({ui->lineCDTitle->text(), toMs(ui->tableViewCD->myModel()->audioLength())});
 
                 for (auto& t : mWorkQueue)
                 {
-                    // add track name / -length to TOC data
                     tocData.append({t.mTitle, static_cast<uint32_t>(std::round(t.mLength * 1000.0))});
 
                     // mark all tracks as done
                     t.mStep = WorkStep::DONE;
-
-                    // add to MD list
-                    addMDTrack(mpMDmodel->discConf()->mTrkCount, t.mTitle, trackMode, t.mLength);
                 }
 
-                // start TOC manipulation
                 mpNetMD->start(tocData);
+
             }
 
             if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
@@ -555,52 +552,49 @@ void MainWindow::transferFinished(bool checkBusy)
                     break;
                 }
             }
-        }
 
-        for (auto& j : mWorkQueue)
-        {
-            if (j.mStep == WorkStep::DONE)
+            int dc = 0;
+            for (auto& j : mWorkQueue)
             {
-                dc ++;
-            }
-        }
-
-        countLabel(ui->labMDTransfer, WorkStep::ENCODED, tr("MD-Transfer"));
-
-        if (dc == mWorkQueue.size())
-        {
-            if (trackMode != "SP")
-            {
-                if (mpSettings->lpTrackGroup())
+                if (j.mStep == WorkStep::DONE)
                 {
-                    addMDGroup(ui->lineCDTitle->text(),
-                               static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount - mWorkQueue.size() + 1),
-                               static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount));
+                    dc ++;
                 }
             }
-            else
+
+            countLabel(ui->labMDTransfer, WorkStep::ENCODED, tr("MD-Transfer"));
+
+            if (dc == mWorkQueue.size())
             {
-                if (mpSettings->spMdTitle())
+                if (trackMode != "SP")
                 {
-                    // title is already set on DAO SP mode
-                    if (mDAOMode != CDaoConfDlg::DAO_SP)
+                    if (mpSettings->lpTrackGroup())
+                    {
+                        addMDGroup(ui->lineCDTitle->text(),
+                                   static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount - mWorkQueue.size() + 1),
+                                   static_cast<int16_t>(mpMDmodel->discConf()->mTrkCount));
+                    }
+                }
+                else
+                {
+                    if (mpSettings->spMdTitle())
                     {
                         // set disc title
                         mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
+                        setMDTitle(ui->lineCDTitle->text());
                     }
-                    setMDTitle(ui->lineCDTitle->text());
                 }
-            }
 
-            for (auto& j : mWorkQueue)
-            {
-                qInfo() << "Delete temp. file" << j.mpFile->fileName();
-                delete j.mpFile;
+                for (auto& j : mWorkQueue)
+                {
+                    qInfo() << "Delete temp. file" << j.mpFile->fileName();
+                    delete j.mpFile;
+                }
+                mWorkQueue.clear();
+                mpRipper->removeTemp();
+                enableDialogItems(true);
+                QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
             }
-            mWorkQueue.clear();
-            mpRipper->removeTemp();
-            enableDialogItems(true);
-            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
         }
     }
 }
@@ -861,7 +855,7 @@ void MainWindow::on_pushDAO_clicked()
 
     if (pDaoConf)
     {
-        pDaoConf->tocManip(mTocManip);
+        pDaoConf->spUpload(mSpUpload);
         if (pDaoConf->exec() == QDialog::Accepted)
         {
             mDAOMode = pDaoConf->daoMode();
@@ -1017,7 +1011,7 @@ void MainWindow::catchDropped(QStringList sl)
 
     for (const auto& url : sl)
     {
-        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag, mSpUpload) == 0)
+        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
         {
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;

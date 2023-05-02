@@ -64,6 +64,7 @@ SOURCES += \
     cmdtreeview.cpp \
     cnamingdialog.cpp \
     cnetmd.cpp \
+    ctocmanip.cpp \
     cxenc.cpp \
     cffmpeg.cpp \
     main.cpp \
@@ -87,6 +88,7 @@ HEADERS += \
     cmdtreeview.h \
     cnamingdialog.h \
     cnetmd.h \
+    ctocmanip.h \
     cxenc.h \
     cffmpeg.h \
     defines.h \

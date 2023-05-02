@@ -24,7 +24,7 @@
 //------------------------------------------------------------------------------
 CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CDaoConfDlg), mSPUpload(false)
+    ui(new Ui::CDaoConfDlg), mTocManip(false)
 {
     ui->setupUi(this);
     QString s = R"(
@@ -75,7 +75,7 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 {
     DAO_Mode mode = DAO_Mode::DAO_WTF;
 
-    if (!mSPUpload)
+    if (!mTocManip)
     {
         mode = DAO_Mode::DAO_LP2;
     }
@@ -92,14 +92,14 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 }
 
 //--------------------------------------------------------------------------
-//! @brief      tell if SP uload is supported
+//! @brief      tell if TOC manipulation is supported
 //!
-//! @param      spu  support flag
+//! @param      tm  support flag
 //--------------------------------------------------------------------------
-void CDaoConfDlg::spUpload(bool spu)
+void CDaoConfDlg::tocManip(bool tm)
 {
-    mSPUpload = spu;
-    if (!mSPUpload)
+    mTocManip = tm;
+    if (!mTocManip)
     {
         ui->radioDaoSP->setEnabled(false);
     }

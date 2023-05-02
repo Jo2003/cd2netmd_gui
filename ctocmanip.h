@@ -1,13 +1,13 @@
 /**
- * Copyright (C) 2022 Jo2003 (olenka.joerg@gmail.com)
- * This file is part of cd2netmd_gui
+ * Copyright (C) 2023 Jo2003 (olenka.joerg@gmail.com)
+ * This file is part of NetMD Wizard
  *
- * cd2netmd is free software: you can redistribute it and/or modify
+ * NetMD Wizard is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * cd2netmd is distributed in the hope that it will be useful,
+ * NetMD Wizard is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -15,60 +15,59 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-
-#include <QDialog>
-
-namespace Ui {
-class CDaoConfDlg;
-}
-
+#include <QObject>
+#include <netmd++.h>
+#include <QVector>
 
 //------------------------------------------------------------------------------
-//! @brief      This class describes the dao config dialog.
+//! @brief      This class helps with TOC manipulation.
 //------------------------------------------------------------------------------
-class CDaoConfDlg : public QDialog
+class CTocManip : public QObject
 {
     Q_OBJECT
-
 public:
+
     //--------------------------------------------------------------------------
-    //! @brief      DAO modes
+    //! @brief      title description
     //--------------------------------------------------------------------------
-    enum DAO_Mode
+    struct TitleDescr
     {
-        DAO_SP,     ///< SP mode
-        DAO_LP2,    ///< LP2 mode
-        DAO_WTF     ///< wtf ...
+        QString mName;          //!< track / disc name
+        uint32_t mLengthInMs;   //!< track- or disc length in milli seconds
     };
 
     //--------------------------------------------------------------------------
-    //! @brief      Constructs a new instance.
-    //!
-    //! @param      parent  The parent widget
+    //! @brief      disc titles with length, index 0 is the disc entry
     //--------------------------------------------------------------------------
-    explicit CDaoConfDlg(QWidget *parent = nullptr);
-    
-    //--------------------------------------------------------------------------
-    //! @brief      Destroys the object.
-    //--------------------------------------------------------------------------
-    ~CDaoConfDlg();
+    using TitleVector = QVector<TitleDescr>;
 
     //--------------------------------------------------------------------------
-    //! @brief      give dao mode
+    //! @brief      constructs the object
     //!
-    //! @return     The dao mode.
+    //! @param parent[in] parent pointer
+    //! @param api[in]    NetMD API pointer
     //--------------------------------------------------------------------------
-    DAO_Mode daoMode() const;
+    explicit CTocManip(QObject *parent = nullptr, netmd::netmd_pp* api = nullptr);
 
     //--------------------------------------------------------------------------
-    //! @brief      tell if TOC manipulation is supported
+    //! @brief      do the TOC manipulation
     //!
-    //! @param      tm  support flag
+    //! @param[in]  trackData list of track titles and lengths
+    //!
+    //! @return     NetMdErr
     //--------------------------------------------------------------------------
-    void tocManip(bool spu);
+    int manipulateTOC(const TitleVector& trackData);
+
+    //--------------------------------------------------------------------------
+    //! @brief      add data to byte vector
+    //!
+    //! @param[in]  vec byte vectot to append data
+    //! @param[in]  data data pointer to data to add
+    //! @param[in]  dataSz size of data to copy
+    //--------------------------------------------------------------------------
+    static void addArrayData(netmd::NetMDByteVector &vec, const char *data, size_t dataSz);
 
 private:
-    Ui::CDaoConfDlg *ui;
-    bool mTocManip;
+    /// net md api pointer
+    netmd::netmd_pp* mpApi;
 };
-
