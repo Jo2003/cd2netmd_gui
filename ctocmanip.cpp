@@ -23,11 +23,10 @@ using namespace netmd;
 //--------------------------------------------------------------------------
 //! @brief      constructs the object
 //!
-//! @param parent[in] parent pointer
-//! @param api[in]    NetMD API pointer
+//! @param[in]  api    NetMD API pointer
 //--------------------------------------------------------------------------
-CTocManip::CTocManip(QObject *parent, netmd_pp* api)
-    : QObject(parent), mpApi(api)
+CTocManip::CTocManip(netmd_pp* api)
+    : mpApi(api)
 {
 }
 

@@ -15,16 +15,14 @@
  * You should have received a copy of the GNU General Public License
  */
 #pragma once
-#include <QObject>
 #include <netmd++.h>
 #include <QVector>
 
 //------------------------------------------------------------------------------
 //! @brief      This class helps with TOC manipulation.
 //------------------------------------------------------------------------------
-class CTocManip : public QObject
+class CTocManip
 {
-    Q_OBJECT
 public:
 
     //--------------------------------------------------------------------------
@@ -44,10 +42,9 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      constructs the object
     //!
-    //! @param parent[in] parent pointer
-    //! @param api[in]    NetMD API pointer
+    //! @param[in]  api    NetMD API pointer
     //--------------------------------------------------------------------------
-    explicit CTocManip(QObject *parent = nullptr, netmd::netmd_pp* api = nullptr);
+    CTocManip(netmd::netmd_pp* api = nullptr);
 
     //--------------------------------------------------------------------------
     //! @brief      do the TOC manipulation

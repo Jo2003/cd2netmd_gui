@@ -493,6 +493,7 @@ void MainWindow::transferFinished(bool checkBusy)
 {
     if ((!checkBusy || !mpNetMD->busy()) && !mWorkQueue.isEmpty())
     {
+        QString labText = tr("MD-Transfer");
         int dc = 0;
         CNetMD::NetMDCmd netMdCmd;
         CXEnc::XEncCmd   xencCmd;
@@ -501,30 +502,42 @@ void MainWindow::transferFinished(bool checkBusy)
 
         if (mDAOMode == CDaoConfDlg::DAO_SP)
         {
-            if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
+            if (mWorkQueue.at(0).mStep == WorkStep::DONE)
             {
-                CNetMD::TocData tocData;
-
-                // add disc name / -length to TOC data
-                tocData.append({ui->lineCDTitle->text(), blocksToMs(ui->tableViewCD->myModel()->audioLength())});
+                ui->progressMDTransfer->setValue(100);
 
                 for (auto& t : mWorkQueue)
                 {
-                    // add track name / -length to TOC data
-                    tocData.append({t.mTitle, static_cast<uint32_t>(std::round(t.mLength * 1000.0))});
-
                     // mark all tracks as done
                     t.mStep = WorkStep::DONE;
 
                     // add to MD list
-                    addMDTrack(mpMDmodel->discConf()->mTrkCount, t.mTitle, trackMode, t.mLength);
+                    addMDTrack(mpMDmodel->discConf()->mTrkCount, static_cast<const char*>(utf8ToMd(t.mTitle)), trackMode, t.mLength);
                 }
+            }
+            else if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
+            {
+                mWorkQueue[0].mStep = WorkStep::DONE;
+
+                CNetMD::TocData tocData;
+
+                // add disc name / -length to TOC data
+                tocData.append({static_cast<const char*>(utf8ToMd(ui->lineCDTitle->text())),
+                                blocksToMs(ui->tableViewCD->myModel()->audioLength())});
+
+                for (auto& t : mWorkQueue)
+                {
+                    // add track name / -length to TOC data
+                    tocData.append({static_cast<const char*>(utf8ToMd(t.mTitle)),
+                                    static_cast<uint32_t>(std::round(t.mLength * 1000.0))});
+                }
+
+                labText = tr("TOC edit");
 
                 // start TOC manipulation
                 mpNetMD->start(tocData);
             }
-
-            if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
+            else if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
             {
                 auto& disc = mWorkQueue[0];
                 disc.mStep = WorkStep::TRANSFER;
@@ -565,7 +578,7 @@ void MainWindow::transferFinished(bool checkBusy)
             }
         }
 
-        countLabel(ui->labMDTransfer, WorkStep::ENCODED, tr("MD-Transfer"));
+        countLabel(ui->labMDTransfer, WorkStep::ENCODED, labText);
 
         if (dc == mWorkQueue.size())
         {

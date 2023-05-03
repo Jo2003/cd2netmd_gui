@@ -24,7 +24,7 @@ CAboutDialog::CAboutDialog(QWidget *parent) :
     ui(new Ui::CAboutDialog)
 {
     ui->setupUi(this);
-    ui->labelName->setText(QString("%1 %2 %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
+    ui->labelName->setText(QString("%1 %2 (c) Jo2003, %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
     QString text =
 R"(<img src=':main/wizard' alt='wizard' width='128' height='128' boarder='0' /><br><b>NetMD Wizard - a tool like Sonys NetMD Simply Burner</b><br>
 Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a>
@@ -45,7 +45,7 @@ If you like this program, please support me through <a style="color: #3499b3; fo
 </ul>
 <b>Further thanks to:</b>
 <ul>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/asivery">asivery</a> for his great support to add the Sony firmware patching, which makes SP upload possible.</li>
+    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/asivery">asivery</a> for his great support to add the Sony firmware patching.</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Sir68k">Sir68k</a> for discovering the Sony firmware exploit.</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Knolan1st">Lars W.</a> for his tests and the first ever beer I earned through this project</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/DaveFlash">DaveFlash</a> for the nice program icon and some nice ideas.</li>

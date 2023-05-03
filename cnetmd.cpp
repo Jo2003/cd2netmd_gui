@@ -388,7 +388,7 @@ int CNetMD::delTrack(int trackNo)
 //--------------------------------------------------------------------------
 int CNetMD::doTocManip()
 {
-    CTocManip manip(this, mpApi);
+    CTocManip manip(mpApi);
     return manip.manipulateTOC(mTocData);
 }
 

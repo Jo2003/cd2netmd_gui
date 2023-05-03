@@ -574,7 +574,7 @@ public:
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(uint8_t resetWait = 10);
+    int finalizeTOC(uint8_t resetWait = 15);
 
 private:
     /// disc header
@@ -708,6 +708,9 @@ private:
 
     /// current group position
     CSG*      mpCurPos;
+
+    /// track we need to split
+    int       mDAOTrack;
 };
 
 
