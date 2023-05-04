@@ -44,26 +44,36 @@ struct SRipTrack
 
 using TransferQueue = QVector<SRipTrack>;
 
+enum TrackType
+{
+    AUDIO = 0,
+    DISC  = 1,
+    DATA  = 3,
+};
+
 struct STrackInfo
 {
     STrackInfo(const QString& title = "",
                const QString& fName = "",
                const QString& wName = "",
                int cdt = -1, long lba = 0,
-               long lenb = -1, uint32_t conv = 0)
+               long lenb = -1, uint32_t conv = 0,
+               TrackType tt = TrackType::AUDIO)
         : mTitle(title), mFileName(fName),
           mWaveFileName(wName), mCDTrackNo(cdt),
           mStartLba(lba), mLbCount(lenb),
-          mConversion(conv)
+          mConversion(conv),
+          mTType(tt)
     {}
 
-    QString  mTitle;
-    QString  mFileName;
-    QString  mWaveFileName;
-    int      mCDTrackNo;
-    long     mStartLba;
-    long     mLbCount;
-    uint32_t mConversion;
+    QString   mTitle;
+    QString   mFileName;
+    QString   mWaveFileName;
+    int       mCDTrackNo;
+    long      mStartLba;
+    long      mLbCount;
+    uint32_t  mConversion;
+    TrackType mTType;
 };
 
 ///
@@ -111,7 +121,7 @@ private:
     List_t mType = List_t::UNKNOWN;
 };
 
-static constexpr const char* PROGRAM_VERSION = "2.0.0";
+static constexpr const char* PROGRAM_VERSION = "2.0.3";
 static constexpr const char* PROGRAM_NAME    = "NetMD Wizard";
 
 enum LogLevel

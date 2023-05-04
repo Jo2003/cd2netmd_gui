@@ -181,6 +181,32 @@ void MainWindow::catchCDDBEntries(QStringList l)
 }
 
 //--------------------------------------------------------------------------
+//! @brief      revert track order changes for DAO
+//--------------------------------------------------------------------------
+void MainWindow::revertCDEntries()
+{
+    c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
+
+    // we grab the changed titel, but keep the original order
+    for (const auto& t : trks)
+    {
+        for (auto& b : mTracksBackup)
+        {
+            if (t.mCDTrackNo == b.mCDTrackNo)
+            {
+                b.mTitle = t.mTitle;
+                break;
+            }
+        }
+    }
+
+    // don't forget the disc title
+    mTracksBackup[0].mTitle = ui->lineCDTitle->text();
+
+    catchCDDBEntry(mTracksBackup);
+}
+
+//--------------------------------------------------------------------------
 //! @brief      get the one matching CDDB entry
 //!
 //! @param[in]  tracks audio tracks vector
@@ -189,6 +215,19 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 {
     if (!tracks.empty())
     {
+        // remove all data tracks from model
+        for (auto it = tracks.begin(); it != tracks.end();)
+        {
+            if (it->mTType == c2n::TrackType::DATA)
+            {
+                it = tracks.erase(it);
+            }
+            else
+            {
+                it ++;
+            }
+        }
+
         // backup tracks
         mTracksBackup = tracks;
 
@@ -241,8 +280,6 @@ void MainWindow::catchJson(QString j)
     mTocManip = !!mpMDmodel->discConf()->mTocManip;
 
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
-
-    qInfo() << "SP Upload supported: " << mSpUpload;
 
     // support label ...
     mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
@@ -810,7 +847,6 @@ void MainWindow::recreateTreeView(const QString &json)
     ui->labFreeTime->show();
 
     mpMDDevice->setText(mpMDmodel->discConf()->mDevice.isEmpty() ? tr("Please re-load MD") : mpMDmodel->discConf()->mDevice);
-    qInfo() << "Found NetMD device " << mpMDmodel->discConf()->mDevice;
 }
 
 void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QString &text)
@@ -894,8 +930,8 @@ void MainWindow::on_pushDAO_clicked()
     if (mTracksBackup.listType() == c2n::AudioTracks::CD)
     {
         // DAO can only be done from original CD
-        // revert any change which might be done
-        catchCDDBEntry(mTracksBackup);
+        // revert any change in track order or count
+        revertCDEntries();
     }
 
     enableDialogItems(false);

@@ -314,13 +314,13 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
     }
     else if (ext == "aea")
     {
-        // we might have found an Atrac 1 (SP) file
+        // we might have found an Atrac 1 (SP) file -
         // do some basic checks
         try
         {
             if (fi.size() < (2048 + 212))
             {
-                throw "File size to small for aztrac 1";
+                throw "File size to small for Atrac 1";
             }
 
             QFile atrac(fileName);
@@ -363,7 +363,7 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
             // the bitrate for atrac 1 is 292kbit/s, mind the header
             length = qRound((static_cast<double>(fi.size()) - 2048.0) / 292000.0 * 8.0 * 1000.0);
 
-            // mono uses half rate ...
+            // mono uses half bitrate ...
             if (channels == 1)
             {
                 length *= 2;
