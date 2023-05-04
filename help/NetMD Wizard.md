@@ -10,7 +10,7 @@ NetMD Wizard is a program to write audio data to your NetMD device.
 - reads CD-Text and requests CD information from CDDB (gnudb.org)
 - support on-the-fly LP encoding on supporting devices
 - gap-less audio transfer in LP mode (using external encoder)
-- gap-less audio transfer in SP mode (using external encoder) on supporting devices
+- gap-less audio transfer in SP mode on supporting devices
 - loads Cue Sheets and handles them as CD Audio
 - drag and drop of audio files
 - sorting and naming in the source widget
@@ -47,6 +47,7 @@ In Cue Sheet as well through drag and drop following audio file types are suppor
 | Mpeg Audio Layer 3                             | mp3            |
 | Advanced Audio Codec and Apple lossless (alac) | m4a, mp4       |
 | Free Lossless Audio Codec                      | flac           |
+| Atrac 1 (SP) audio                             | aea            |
 
 You can use the audio import windows to remove unwanted tracks (delete key), sort tracks via drag and drop or rename the tracks: ![Sorting](sorting.png)
 
@@ -56,7 +57,10 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transfered.
 
 ### DAO Mode (Disc-at-Once) ###
 
-In DAO modus the whole audio data will be extracted at once, encoded in one peace, cut in peaces and transfered to your NetMD device. This is so far the only possibility to get gap-less audio data on MD. This transfer type is supported not only when reading from CD. 
+* In **LP2 DAO** modus the whole audio data will be extracted at once, encoded in one peace through atracdenc, cut into peaces and transferred to your NetMD device. 
+
+* In **SP DAO** modus the whole audio data will be extracted at once, transferred at once to the NetMD device, and virtually split into peaces on the NetMD device itself through TOC edit. This is supported on Sony / Aiwa NetMD portables with any R or S firmware revision. 
+<span style='color:red; background-color: #fff6d1'>For DAO SP I'd highly recommend the usage of a blank MD. While editing the TOC, we'll take care for existing tracks. Nevertheless, there is a chance to corrupt the TOC on very fragmented discs, which ends up in an unplayable disc.</span>
 
 > Note: In DAO mode when reading from CD all sorting and deleting from tracks done in the source window will be reverted before the transfer starts.
 
@@ -88,8 +92,8 @@ In DAO modus the whole audio data will be extracted at once, encoded in one peac
 
 ## Thanks to... 
 
+* [**asivery**](https://www.reddit.com/user/asivery/) for his great support with the Sony firmware patching.
 * **Lars W.** - my first tester which even paid me a (or more) beer.
-* [**asivery**](https://www.reddit.com/user/asivery/) for his great support to add the Sony firmware patching, which makes SP upload possible.
 * [**Sir68k**](https://www.reddit.com/u/Sir68k/) for discovering the Sony firmware exploit.
 
 ## Support ##

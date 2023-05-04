@@ -40,6 +40,7 @@ public:
     /// disc config
     struct SDiscConf
     {
+       int mTocManip;   ///< TOC manipulation support
        int mSPUpload;   ///< SP upload supported
        int mOTFEnc;     ///< On-The-Fly encoding support
        int mTrkCount;   ///< track count

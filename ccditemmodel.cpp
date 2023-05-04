@@ -74,6 +74,8 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
                     .arg(m, 2, 10, QChar('0'))
                     .arg(fsec, 5, 'f', 2, QChar('0'));
             }
+        default:
+            return QVariant();
         }
     }
     else if ((role == Qt::EditRole) && (col == 0))

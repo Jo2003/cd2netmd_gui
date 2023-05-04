@@ -65,6 +65,18 @@ public:
     //--------------------------------------------------------------------------
     ~MainWindow();
 
+    //--------------------------------------------------------------------------
+    //! @brief      get ms value for CDDA block count
+    //!
+    //! @param      blonks  CDDA block count
+    //!
+    //! @return     time in milliseconds
+    //--------------------------------------------------------------------------
+    static inline uint32_t blocksToMs(long blocks)
+    {
+        return std::round((static_cast<double>(blocks) * 1000.0) / static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
+    }
+
 protected:
 
     //--------------------------------------------------------------------------
@@ -129,6 +141,11 @@ protected:
     //! @param[in]  text    The text
     //--------------------------------------------------------------------------
     void countLabel(QLabel *pLabel, WorkStep step, const QString& text);
+
+    //--------------------------------------------------------------------------
+    //! @brief      revert track order changes for DAO
+    //--------------------------------------------------------------------------
+    void revertCDEntries();
 
 private slots:
     //--------------------------------------------------------------------------
@@ -310,9 +327,15 @@ private:
     /// can the device SP upload
     bool mSpUpload;
 
+    /// does the device support forced TOC edit
+    bool mTocManip;
+
     /// show SP download support
     StatusWidget   *mpSpUpload;
 
     /// show on-the-fly support
     StatusWidget   *mpOtfEncode;
+
+    /// show TOC manipulation support
+    StatusWidget   *mpTocManip;
 };

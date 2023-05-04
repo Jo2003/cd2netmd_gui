@@ -156,11 +156,12 @@ int writeWaveHeader(QFile &wf, size_t byteCount)
 //! @param      fileName      The audio file name
 //! @param      conversion    The conversion vector @see AudioConv
 //! @param      length        length in mili seconds
-//! @param      pTag[in]      optional pointer to tag structure
+//! @param[in]  pTag          optional pointer to tag structure
+//! @param[in]  sp_upload     optional sp upload flag
 //!
 //! @return     0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
-int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag)
+int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag, bool sp_upload)
 {
     int ret    = 0;
     conversion = 0;
@@ -309,6 +310,79 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
             pTag->mTitle  = QString::fromStdString(f.tag()->title().to8Bit(true));
             pTag->mNumber = f.tag()->track();
             pTag->mYear   = f.tag()->year();
+        }
+    }
+    else if (ext == "aea")
+    {
+        // we might have found an Atrac 1 (SP) file -
+        // do some basic checks
+        try
+        {
+            if (fi.size() < (2048 + 212))
+            {
+                throw "File size to small for Atrac 1";
+            }
+
+            QFile atrac(fileName);
+            if (!atrac.open(QIODevice::ReadOnly))
+            {
+                throw "Can't open Atrac 1 file!";
+            }
+
+            char adata[2048] = {'\0',};
+            if (atrac.read(adata, 2048) != 2048)
+            {
+                throw "Can't read Atrac 1 header!";
+            }
+
+            // magic is 0x00, 0x08, 0x00, 0x00
+            constexpr uint8_t magic[] = {0x00, 0x08, 0x00, 0x00};
+            if (memcmp(adata, magic, 4))
+            {
+                throw "Atrac 1 magic header doesn't match!";
+            }
+
+            uint8_t channels = static_cast<uint8_t>(adata[264]);
+
+            if ((channels != 1) && (channels != 2))
+            {
+                throw "Wrong Atrac 1 channel count!";
+            }
+
+            // mono or stereo -> looks like a valid Atrac1 file
+            if (pTag != nullptr)
+            {
+                // we don't have much information to fill in ...
+                pTag->mAlbum  = "";
+                pTag->mArtist = "";
+                pTag->mTitle  = fi.baseName();
+                pTag->mNumber = 1;
+                pTag->mYear   = 1992;
+            }
+
+            // the bitrate for atrac 1 is 292kbit/s, mind the header
+            length = qRound((static_cast<double>(fi.size()) - 2048.0) / 292000.0 * 8.0 * 1000.0);
+
+            // mono uses half bitrate ...
+            if (channels == 1)
+            {
+                length *= 2;
+            }
+            ret = 0;
+
+            if (!sp_upload)
+            {
+                // if no SP upload is supported, we
+                // convert to Wave
+                conversion |= AudioConv::CONV_BPS;
+                conversion |= AudioConv::CONV_SAMPLERATE;
+                conversion |= AudioConv::CONV_CHANNELS;
+            }
+        }
+        catch (const char* e)
+        {
+            qInfo() << e;
+            ret = -1;
         }
     }
     else

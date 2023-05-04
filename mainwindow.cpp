@@ -33,7 +33,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false),
-      mpSpUpload(nullptr), mpOtfEncode(nullptr)
+      mTocManip(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
+      mpTocManip(nullptr)
 {
     ui->setupUi(this);
 
@@ -78,7 +79,9 @@ MainWindow::MainWindow(QWidget *parent)
     mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
     mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
     mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
+    mpTocManip  = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
 
+    ui->statusbar->addPermanentWidget(mpTocManip);
     ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
     ui->statusbar->addPermanentWidget(mpCDDevice);
@@ -132,10 +135,10 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
         xencCmd   = CXEnc::XEncCmd::DAO_LP2_ENCODE;
         trackMode = "LP2";
     }
-    else if (mDAOMode == CDaoConfDlg::DAO_SP)
-    {
-        xencCmd   = CXEnc::XEncCmd::DAO_SP_ENCODE;
-    }
+    // else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    // {
+    //     xencCmd   = CXEnc::XEncCmd::DAO_SP_ENCODE;
+    // }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
         if (mpSettings->onthefly())
@@ -178,6 +181,32 @@ void MainWindow::catchCDDBEntries(QStringList l)
 }
 
 //--------------------------------------------------------------------------
+//! @brief      revert track order changes for DAO
+//--------------------------------------------------------------------------
+void MainWindow::revertCDEntries()
+{
+    c2n::AudioTracks trks = ui->tableViewCD->myModel()->audioTracks();
+
+    // we grab the changed titel, but keep the original order
+    for (const auto& t : trks)
+    {
+        for (auto& b : mTracksBackup)
+        {
+            if (t.mCDTrackNo == b.mCDTrackNo)
+            {
+                b.mTitle = t.mTitle;
+                break;
+            }
+        }
+    }
+
+    // don't forget the disc title
+    mTracksBackup[0].mTitle = ui->lineCDTitle->text();
+
+    catchCDDBEntry(mTracksBackup);
+}
+
+//--------------------------------------------------------------------------
 //! @brief      get the one matching CDDB entry
 //!
 //! @param[in]  tracks audio tracks vector
@@ -186,6 +215,19 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 {
     if (!tracks.empty())
     {
+        // remove all data tracks from model
+        for (auto it = tracks.begin(); it != tracks.end();)
+        {
+            if (it->mTType == c2n::TrackType::DATA)
+            {
+                it = tracks.erase(it);
+            }
+            else
+            {
+                it ++;
+            }
+        }
+
         // backup tracks
         mTracksBackup = tracks;
 
@@ -235,9 +277,9 @@ void MainWindow::catchJson(QString j)
         mpSettings->enaDisaOtf(true, true);
     }
 
-    mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
+    mTocManip = !!mpMDmodel->discConf()->mTocManip;
 
-    qInfo() << "SP Upload supported: " << mSpUpload;
+    mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
     // support label ...
     mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
@@ -245,6 +287,9 @@ void MainWindow::catchJson(QString j)
 
     mpOtfEncode->setStatusTip(otf ? tr("on-the-fly encoding supported by device") : tr("on-the-fly encoding not supported by device"));
     mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
+
+    mpTocManip->setStatusTip(mTocManip ? tr("TOC manipulation supported by device") : tr("TOC manipulation not supported by device"));
+    mpTocManip->setIcon(mTocManip ? ":label/green" : ":label/red");
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
@@ -367,7 +412,7 @@ void MainWindow::ripFinished()
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
-            mWorkQueue[0].mStep = WorkStep::RIPPED;
+            mWorkQueue[0].mStep = (mDAOMode == CDaoConfDlg::DAO_LP2) ? WorkStep::RIPPED : WorkStep::ENCODED;
         }
 
         if (mWorkQueue.at(0).mStep == WorkStep::NONE)
@@ -485,33 +530,83 @@ void MainWindow::transferFinished(bool checkBusy)
 {
     if ((!checkBusy || !mpNetMD->busy()) && !mWorkQueue.isEmpty())
     {
+        QString labText = tr("MD-Transfer");
+        int dc = 0;
         CNetMD::NetMDCmd netMdCmd;
         CXEnc::XEncCmd   xencCmd;
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
 
-        for (auto& j : mWorkQueue)
+        if (mDAOMode == CDaoConfDlg::DAO_SP)
         {
-            if (j.mStep == WorkStep::TRANSFER)
+            if (mWorkQueue.at(0).mStep == WorkStep::DONE)
             {
-                j.mStep = WorkStep::DONE;
-                addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
-                break;
-            }
-        }
+                ui->progressMDTransfer->setValue(100);
 
-        for (auto& j : mWorkQueue)
-        {
-            if (j.mStep == WorkStep::ENCODED)
+                for (auto& t : mWorkQueue)
+                {
+                    // mark all tracks as done
+                    t.mStep = WorkStep::DONE;
+
+                    // add to MD list
+                    addMDTrack(mpMDmodel->discConf()->mTrkCount, static_cast<const char*>(utf8ToMd(t.mTitle)), trackMode, t.mLength);
+                }
+            }
+            else if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
             {
-                j.mStep = WorkStep::TRANSFER;
+                mWorkQueue[0].mStep = WorkStep::DONE;
+
+                CNetMD::TocData tocData;
+
+                // add disc name / -length to TOC data
+                tocData.append({static_cast<const char*>(utf8ToMd(ui->lineCDTitle->text())),
+                                blocksToMs(ui->tableViewCD->myModel()->audioLength())});
+
+                for (auto& t : mWorkQueue)
+                {
+                    // add track name / -length to TOC data
+                    tocData.append({static_cast<const char*>(utf8ToMd(t.mTitle)),
+                                    static_cast<uint32_t>(std::round(t.mLength * 1000.0))});
+                }
+
+                labText = tr("TOC edit");
+
+                // start TOC manipulation
+                mpNetMD->start(tocData);
+            }
+            else if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
+            {
+                auto& disc = mWorkQueue[0];
+                disc.mStep = WorkStep::TRANSFER;
+
                 ui->progressMDTransfer->setValue(0);
-                mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
-                break;
+                mpNetMD->start({netMdCmd, disc.mpFile->fileName(), "DAO All in One!"});
+            }
+        }
+        else
+        {
+            for (auto& j : mWorkQueue)
+            {
+                if (j.mStep == WorkStep::TRANSFER)
+                {
+                    j.mStep = WorkStep::DONE;
+                    addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
+                    break;
+                }
+            }
+
+            for (auto& j : mWorkQueue)
+            {
+                if (j.mStep == WorkStep::ENCODED)
+                {
+                    j.mStep = WorkStep::TRANSFER;
+                    ui->progressMDTransfer->setValue(0);
+                    mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
+                    break;
+                }
             }
         }
 
-        int dc = 0;
         for (auto& j : mWorkQueue)
         {
             if (j.mStep == WorkStep::DONE)
@@ -520,7 +615,7 @@ void MainWindow::transferFinished(bool checkBusy)
             }
         }
 
-        countLabel(ui->labMDTransfer, WorkStep::ENCODED, tr("MD-Transfer"));
+        countLabel(ui->labMDTransfer, WorkStep::ENCODED, labText);
 
         if (dc == mWorkQueue.size())
         {
@@ -537,8 +632,12 @@ void MainWindow::transferFinished(bool checkBusy)
             {
                 if (mpSettings->spMdTitle())
                 {
-                    // set disc title
-                    mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
+                    // title is already set on DAO SP mode
+                    if (mDAOMode != CDaoConfDlg::DAO_SP)
+                    {
+                        // set disc title
+                        mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
+                    }
                     setMDTitle(ui->lineCDTitle->text());
                 }
             }
@@ -748,7 +847,6 @@ void MainWindow::recreateTreeView(const QString &json)
     ui->labFreeTime->show();
 
     mpMDDevice->setText(mpMDmodel->discConf()->mDevice.isEmpty() ? tr("Please re-load MD") : mpMDmodel->discConf()->mDevice);
-    qInfo() << "Found NetMD device " << mpMDmodel->discConf()->mDevice;
 }
 
 void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QString &text)
@@ -765,6 +863,10 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
 
     if (((mDAOMode == CDaoConfDlg::DAO_LP2) || (mDAOMode == CDaoConfDlg::DAO_SP))
             && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
+    {
+        all = 1;
+    }
+    else if ((mDAOMode == CDaoConfDlg::DAO_SP) && (step == MainWindow::WorkStep::ENCODED))
     {
         all = 1;
     }
@@ -808,7 +910,7 @@ void MainWindow::on_pushDAO_clicked()
 
     if (pDaoConf)
     {
-        pDaoConf->spUpload(mSpUpload);
+        pDaoConf->tocManip(mTocManip);
         if (pDaoConf->exec() == QDialog::Accepted)
         {
             mDAOMode = pDaoConf->daoMode();
@@ -828,8 +930,8 @@ void MainWindow::on_pushDAO_clicked()
     if (mTracksBackup.listType() == c2n::AudioTracks::CD)
     {
         // DAO can only be done from original CD
-        // revert any change which might be done
-        catchCDDBEntry(mTracksBackup);
+        // revert any change in track order or count
+        revertCDEntries();
     }
 
     enableDialogItems(false);
@@ -964,7 +1066,7 @@ void MainWindow::catchDropped(QStringList sl)
 
     for (const auto& url : sl)
     {
-        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
+        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag, mSpUpload) == 0)
         {
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;

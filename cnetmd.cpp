@@ -27,7 +27,7 @@
 CNetMD::CNetMD(QObject *parent)
     : QThread(parent), mCurrJob(NetMDCmd::UNKNWON), mpApi(nullptr)
 {
-    mpApi = new netmd::CNetMdApi;
+    mpApi = new netmd::netmd_pp;
     mNameFLog  = QString("%1/cd2netmd_transfer_log.tmp").arg(QDir::tempPath());
     mTReadLog.setInterval(1000);
     mTReadLog.setSingleShot(false);
@@ -79,6 +79,20 @@ void CNetMD::start(NetMDStartup startup)
 }
 
 //--------------------------------------------------------------------------
+//! @brief      store data, start thread
+//!
+//! @param[in]  tocData  TOC data for manipulation
+//--------------------------------------------------------------------------
+void CNetMD::start(const TocData& tocData)
+{
+    mLog.clear();
+    mTocData = tocData;
+    mCurrJob.mCmd = NetMDCmd::TOC_MANIP;
+    mTReadLog.start();
+    QThread::start();
+}
+
+//--------------------------------------------------------------------------
 //! @brief init the NetMD device
 //--------------------------------------------------------------------------
 void CNetMD::initNetMdDevice()
@@ -102,7 +116,6 @@ void CNetMD::initNetMdDevice()
     }
 
     mpApi->initDevice();
-    mpApi->initDiscHeader();
     mDevName = QString::fromStdString(mpApi->getDeviceName());
 }
 
@@ -139,6 +152,7 @@ QByteArray CNetMD::getDiscInfo()
         tree.insert("title", s.c_str());
     }
     tree.insert("otf_enc", mpApi->otfEncodeSupported() ? 1 : 0);
+    tree.insert("toc_manip", mpApi->tocManipSupported() ? 1 : 0);
     tree.insert("device", mpApi->getDeviceName().c_str());
     tree.insert("sp_upload", mpApi->spUploadSupported() ? 1 : 0);
     if ((i = mpApi->trackCount()) > -1)
@@ -367,6 +381,17 @@ int CNetMD::delTrack(int trackNo)
     return mpApi->deleteTrack(trackNo);
 }
 
+//--------------------------------------------------------------------------
+//! @brief do TOC manipulation
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::doTocManip()
+{
+    CTocManip manip(mpApi);
+    return manip.manipulateTOC(mTocData);
+}
+
 void CNetMD::run()
 {
     int ret = 0;
@@ -417,6 +442,10 @@ void CNetMD::run()
 
     case NetMDCmd::DEL_TRACK:
         ret = delTrack(mCurrJob.miFirst);
+        break;
+
+    case NetMDCmd::TOC_MANIP:
+        ret = doTocManip();
         break;
 
     default:

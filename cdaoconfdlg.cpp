@@ -24,28 +24,28 @@
 //------------------------------------------------------------------------------
 CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CDaoConfDlg), mSPUpload(false)
+    ui(new Ui::CDaoConfDlg), mTocManip(false)
 {
     ui->setupUi(this);
     QString s = R"(
 <h3 id='disc-at-once-or-gapless-mode'>(D)isc (A)t (O)nce or Gapless Mode</h3>
 <p>DAO / gapless is supported in 2 modes. Both have there pros and cons.</p>
 <ul>
-<li><p><strong>DAO LP2 Mode:</strong> Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.</p>
+<li><p><strong>DAO LP2 Mode:</strong> Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transferred to NetMD.</p>
 <ul>
-<li><strong>Pro:</strong> Track information will be transfered as well.</li>
+<li><strong>Pro:</strong> Track information will be transferred as well.</li>
 <li><strong>Contra:</strong> Quality loss due to LP2 mode and external encoder. Playback only on MDLP capable devices.</li>
-
 </ul>
 </li>
-<li><p><strong>DAO SP Mode:</strong> Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transfered to NetMD.</p>
+<li><p><strong>DAO SP Mode:</strong> Disc / input will be extracted and transferred to the NetMD device at once. After that the audio will be split on the NetMD device itself through TOC edit.</p>
 <ul>
-<li><strong>Pro:</strong> Best quality. Playback on all MD devices. Track information will be transfered as well.</li>
-<li><strong>Contra:</strong> This is only supported on <strong>Sony Type S devices with firmware revision 1.2 or 1.6</strong>.</li>
-
+<li><strong>Pro:</strong> Best quality. Playback on all MD devices. Track information will be transferred as well.</li>
+<li><strong>Contra:</strong> This is only supported on Sony / Aiwa type R, and type S  devices.</li>
 </ul>
+<p style='color:red; background-color: #fff6d1'><strong>Note:</strong> For DAO SP I'd highly recommend the usage of a blank MD.
+While editing the TOC, we'll take care for existing tracks. Nevertheless, there is a chance to corrupt
+the TOC on very fragmented discs, which ends up in an unplayable disc.</p>
 </li>
-
 </ul>
 <blockquote><p>Please note: Any change on CD track list will be reverted before starting!</p>
 </blockquote>
@@ -75,7 +75,7 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 {
     DAO_Mode mode = DAO_Mode::DAO_WTF;
 
-    if (!mSPUpload)
+    if (!mTocManip)
     {
         mode = DAO_Mode::DAO_LP2;
     }
@@ -92,14 +92,14 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 }
 
 //--------------------------------------------------------------------------
-//! @brief      tell if SP uload is supported
+//! @brief      tell if TOC manipulation is supported
 //!
-//! @param      spu  support flag
+//! @param      tm  support flag
 //--------------------------------------------------------------------------
-void CDaoConfDlg::spUpload(bool spu)
+void CDaoConfDlg::tocManip(bool tm)
 {
-    mSPUpload = spu;
-    if (!mSPUpload)
+    mTocManip = tm;
+    if (!mTocManip)
     {
         ui->radioDaoSP->setEnabled(false);
     }

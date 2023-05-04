@@ -121,6 +121,15 @@ void CMDTreeModel::setupModelData()
         mDiscConf.mSPUpload = 0;
     }
 
+    if (mMDJson.find("toc_manip") != mMDJson.end())
+    {
+        mDiscConf.mTocManip = mMDJson["toc_manip"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mTocManip = 0;
+    }
+
     if (mMDJson.find("otf_enc") != mMDJson.end())
     {
         mDiscConf.mOTFEnc = mMDJson["otf_enc"].get<int>();

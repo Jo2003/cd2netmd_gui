@@ -220,7 +220,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
 
         cdio_paranoia_modeset(mpCDParanoia, paranoia ? (PARANOIA_MODE_FULL ^ PARANOIA_MODE_NEVERSKIP) : PARANOIA_MODE_DISABLE);
 
-        lsn_t   disctStart = cdio_cddap_disc_firstsector(mpCDAudio);
+        // lsn_t   disctStart = cdio_cddap_disc_firstsector(mpCDAudio);
         track_t firstTrack = cdio_get_first_track_num(mpCDIO);
         track_t lastTrack  = cdio_get_last_track_num(mpCDIO);
 
@@ -246,8 +246,23 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
         else
         {
             // track == -1 -> disc at once mode
-            trkStart = disctStart;
-            trkEnd   = cdio_cddap_disc_lastsector(mpCDAudio);
+
+            // first track might have data (Mixed Mode)
+            if (cdio_get_track_format(mpCDIO, firstTrack) != TRACK_FORMAT_AUDIO)
+            {
+                // start extraction from next track
+                firstTrack++;
+            }
+
+            // last track might have data (CD-Plus / CD-Extra)
+            if (cdio_get_track_format(mpCDIO, lastTrack) != TRACK_FORMAT_AUDIO)
+            {
+                // start extraction from next track
+                lastTrack--;
+            }
+
+            trkStart = cdio_cddap_track_firstsector(mpCDAudio, firstTrack);
+            trkEnd   = cdio_cddap_track_lastsector(mpCDAudio, lastTrack);
         }
 
         // get track size ...
@@ -486,6 +501,7 @@ int CJackTheRipper::cddbReqString()
 
         trackInfo.mCDTrackNo = 0;
         trackInfo.mStartLba  = 0;
+        trackInfo.mTType     = c2n::TrackType::DISC;
         trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) - cdio_get_track_lba(mpCDIO, firstTrack);
         parseCDText(pCdText, 0, trackInfo.mTitle);
         mAudioTracks.append(trackInfo);
@@ -493,6 +509,7 @@ int CJackTheRipper::cddbReqString()
         for (track_t t = firstTrack; t <= lastTrack; t++)
         {
             trackInfo.mCDTrackNo = t;
+            trackInfo.mTType = (cdio_get_track_format(mpCDIO, t) == TRACK_FORMAT_AUDIO) ? c2n::TrackType::AUDIO : c2n::TrackType::DATA;
             trackInfo.mStartLba  = cdio_get_track_lba(mpCDIO, t);
             trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, (t == lastTrack) ? CDIO_CDROM_LEADOUT_TRACK : t + 1) - trackInfo.mStartLba;
             parseCDText(pCdText, t, trackInfo.mTitle);

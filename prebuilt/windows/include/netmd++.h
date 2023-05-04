@@ -1,5 +1,5 @@
 /*
- * CNetMdApi.h
+ * netmd++.h
  *
  * This file is part of netmd++, a library for accessing NetMD devices.
  *
@@ -28,9 +28,9 @@
  */
 
 /**
-@file CNetMdApi.h
+@file netmd++.h
 @mainpage
-# CNetMdApi
+# netmd++
 This C++ API was written to ease the handling of NetMD devices. It is a synchronous API.
 So, function calls might block your program flow. If you want to use this API in an GUI app,
 better put the API calls into a background thread.
@@ -41,40 +41,38 @@ This API uses the namespace *netmd*.
 ## Usage
 
  - include the header file into your project:
-~~~{c++}
-#include "path/to/CNetMdApi.h"
+~~~
+#include "path/to/netmd++.h"
 ~~~
 
  - create an instance of the API:
-~~~{c++}
-netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+~~~
+netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 ~~~
 
  - initialize the first found NetMD device:
-~~~{c++}
-if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+~~~
+if (pNetMd != nullptr)
 {
-    pNetMd->initDiscHeader();
+    pNetMd->initDevice();
 }
 ~~~
 
- - If you change or re-plug the device, simply run above code (init) again!
+ - If you change or re-plug the device, simply run above code (initDevice()) again!
 
 ## Examples
 ### Track transfer
 Check for on-the-fly support and transfer a WAVE file to NetMD with on-the-fly encoding (LP2) or w/o encoding (SP).
 
-~~~{c++}
-#include <CNetMdApi.h>
+~~~
+#include <netmd++.h>
 
 int main()
 {
-    netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+    netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
     if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
     {
-        pNetMd->initDiscHeader();
-
         if (pNetMd->otfEncodeSupported())
         {
             pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
@@ -89,17 +87,16 @@ int main()
 ~~~
 
 ### Erase disc and set new title
-~~~{c++}
-#include <CNetMdApi.h>
+~~~
+#include <netmd++.h>
 
 int main()
 {
-    netmd::CNetMdApi* pNetMd = new netmd::CNetMdApi();
+    netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
     if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
     {
         pNetMd->eraseDisc();
-        pNetMd->initDiscHeader();
         pNetMd->setDiscTitle("Amazing MD");
 
     }
@@ -175,6 +172,17 @@ enum typelog
     CAPTURE     //!< needed for log parcing!
 };
 
+/// TOC sector names
+enum UTOCSector : uint16_t
+{
+    POS_ADDR,   //!< position and addresses of audio data
+    HW_TITLES,  //!< half width titles
+    TSTAMPS,    //!< time stamps
+    FW_TITLES,  //!< full width titles
+    UNKNWN_1,   //!< some unidentified TOC sector #1
+    UNKNON_2,   //!< some unidentified TOC sector #2
+};
+
 /// NetMD time
 struct NetMdTime
 {
@@ -213,6 +221,9 @@ struct Group
 /// netmd groups
 using Groups = std::vector<Group>;
 
+/// byte vector
+using NetMDByteVector = std::vector<uint8_t>;
+
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime
 //!
@@ -243,14 +254,30 @@ std::ostream& operator<<(std::ostream& o, const AudioEncoding& ae);
 //--------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& o, const TrackProtection& tp);
 
+//------------------------------------------------------------------------------
+//! @brief      Addition assignment operator for NetMDByteVector.
+//!
+//! @param      a     byte vector 1
+//! @param[in]  b     byte vector 2
+//!
+//! @return     The result of the addition assignment
+//------------------------------------------------------------------------------
+NetMDByteVector& operator+=(NetMDByteVector& a, const NetMDByteVector& b);
+
 /// disc header
 class CMDiscHeader;
 
 /// access device class
 class CNetMdDev;
 
-/// secure implmentation
+/// secure implementation
 class CNetMdSecure;
+
+/// the API class
+class CNetMdApi;
+
+/// use netmd_pp instead of CNetMdApi
+using  netmd_pp = CNetMdApi;
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes a C++ NetMD access library
@@ -274,13 +301,6 @@ public:
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
     int initDevice();
-
-    //--------------------------------------------------------------------------
-    //! @brief      Initializes the disc header.
-    //!
-    //! @return     NetMdErr
-    //--------------------------------------------------------------------------
-    int initDiscHeader();
 
     //--------------------------------------------------------------------------
     //! @brief      Gets the device name.
@@ -335,15 +355,6 @@ public:
     int trackTime(int trackNo, TrackTime& trackTime);
 
     //--------------------------------------------------------------------------
-    //! @brief      get raw disc header
-    //!
-    //! @param[out] header  The buffer for disc header
-    //!
-    //! @return     @ref NetMdErr
-    //--------------------------------------------------------------------------
-    int rawDiscHeader(std::string& header);
-
-    //--------------------------------------------------------------------------
     //! @brief      get disc title
     //!
     //! @param[out] title  The title
@@ -360,13 +371,6 @@ public:
     //! @return     @ref NetMdErr
     //--------------------------------------------------------------------------
     int setDiscTitle(const std::string& title);
-
-    //--------------------------------------------------------------------------
-    //! @brief      Writes a disc header.
-    //!
-    //! @return     @ref NetMdErr
-    //--------------------------------------------------------------------------
-    int writeRawDiscHeader();
 
     //--------------------------------------------------------------------------
     //! @brief      move a track (number)
@@ -483,6 +487,13 @@ public:
     bool otfEncodeSupported();
 
     //--------------------------------------------------------------------------
+    //! @brief      is TOC manipulation supported?
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool tocManipSupported();
+
+    //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
     //!
     //! The audio file must be either an WAVE file (44.1kHz / 16 bit), or an
@@ -529,6 +540,42 @@ public:
     //--------------------------------------------------------------------------
     Groups groups();
 
+    //--------------------------------------------------------------------------
+    //! @brief      prepare TOC manipulation
+    //!
+    //! @return     @ref NetMdErr
+    //--------------------------------------------------------------------------
+    int prepareTOCManip();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Reads an utoc sector.
+    //!
+    //! @param[in]  s     sector number
+    //!
+    //! @return     TOC sector data. (error if empty)
+    //--------------------------------------------------------------------------
+    NetMDByteVector readUTOCSector(UTOCSector s);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Writes an utoc sector.
+    //!
+    //! @param[in]  s     sector names
+    //! @param[in]  data  The data to be written
+    //!
+    //! @return     @ref NetMdErr
+    //--------------------------------------------------------------------------
+    int writeUTOCSector(UTOCSector s, const NetMDByteVector& data);
+
+    //--------------------------------------------------------------------------
+    //! @brief      finalize TOC through exploit
+    //!
+    //! @param[in]  resetWait  The optional reset wait time (15 seconds)
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int finalizeTOC(uint8_t resetWait = 15);
+
 private:
     /// disc header
     CMDiscHeader* mpDiscHeader;
@@ -536,8 +583,135 @@ private:
     /// access device class
     CNetMdDev* mpNetMd;
 
-    /// secure implmentation
+    /// secure implementation
     CNetMdSecure* mpSecure;
 };
+
+/// cluster / sector / group helper
+class CSG;
+
+namespace toc
+{
+    /// internally used TOC structure
+    struct TOC;
+}
+
+//------------------------------------------------------------------------------
+//! @brief      This class describes a net md TOC.
+//------------------------------------------------------------------------------
+class CNetMdTOC
+{
+public:
+
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]     trackCount  The track count
+    //! @param[in]     lenInMs     The length in milliseconds
+    //! @param         data        The TOC data
+    //--------------------------------------------------------------------------
+    CNetMdTOC(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Destroys the object.
+    //--------------------------------------------------------------------------
+    ~CNetMdTOC();
+
+    //--------------------------------------------------------------------------
+    //! @brief      import TOC data
+    //!
+    //! @param[in]  trackCount  The track count
+    //! @param[in]  lenInMs     The length in milliseconds
+    //! @param      data        The TOC data
+    //--------------------------------------------------------------------------
+    void import(int trackCount = 0, uint32_t lenInMs = 0, uint8_t* data = nullptr);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Adds a track.
+    //!
+    //! This function has to be used to split a DAO transferred disc audio
+    //! track into the parts as on the original disc. This functions has to
+    //! be called for all tracks in their correct order!
+    //! **Breaking the order will break the TOC!**
+    //!
+    //! @param[in]  no        track number (starting with 1)
+    //! @param[in]  lengthMs  The length in milliseconds
+    //! @param[in]  title     The track title
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      Sets the disc title.
+    //!
+    //! @param[in]  title  The title
+    //!
+    //! @return     0 -> ok; -1 -> error
+    //--------------------------------------------------------------------------
+    int setDiscTitle(const std::string& title);
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track count
+    //!
+    //! @return     number of tracks
+    //--------------------------------------------------------------------------
+    int trackCount() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get MD title
+    //!
+    //! @return     title
+    //--------------------------------------------------------------------------
+    std::string discTitle() const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track title
+    //!
+    //! @param[in]  trackNo  The track number
+    //!
+    //! @return     title
+    //--------------------------------------------------------------------------
+    std::string trackTitle(int trackNo) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get track info
+    //!
+    //! @param[in]  trackNo  The track number
+    //!
+    //! @return     track info
+    //--------------------------------------------------------------------------
+    std::string trackInfo(int trackNo) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      get disc info
+    //!
+    //! @return     disc info
+    //--------------------------------------------------------------------------
+    std::string discInfo() const;
+
+private:
+    /// TOC pointer
+    toc::TOC* mpToc;
+
+    /// group number where audio starts
+    uint32_t  mAudioStart;
+
+    /// group number where audio ends
+    uint32_t  mAudioEnd;
+
+    /// number of tracks for this TOC
+    int       mTracksCount;
+
+    /// complete length of all tracks in ms
+    uint32_t  mLengthInMs;
+
+    /// current group position
+    CSG*      mpCurPos;
+
+    /// track we need to split
+    int       mDAOTrack;
+};
+
 
 } // ~namespace

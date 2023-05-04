@@ -20,8 +20,9 @@
 #include <cstdio>
 #include <QTimer>
 #include <QByteArray>
-#include <CNetMdApi.h>
+#include <netmd++.h>
 #include <fstream>
+#include "ctocmanip.h"
 
 //------------------------------------------------------------------------------
 //! @brief      This class describes net md handling.
@@ -36,6 +37,7 @@ public:
     "groups": [],
     "otf_enc": 0,
     "sp_upload": 0,
+    "toc_manip": 0,
     "t_free": 0,
     "t_total": 0,
     "t_used": 0,
@@ -43,6 +45,8 @@ public:
     "tracks": [],
     "trk_count": 0
 })";
+
+    using TocData = CTocManip::TitleVector;
 
     /// actions to be done on NetMD
     enum class NetMDCmd : uint8_t
@@ -58,6 +62,7 @@ public:
         DEL_GROUP,          ///< delete group
         ERASE_DISC,         ///< erase disc
         DEL_TRACK,          ///< delete track
+        TOC_MANIP,          ///< TOC manipulation
         UNKNWON             ///< something different
     };
 
@@ -111,6 +116,13 @@ public:
     //! @param[in]  startup  The startup structure
     //--------------------------------------------------------------------------
     void start(NetMDStartup startup);
+
+    //--------------------------------------------------------------------------
+    //! @brief      store data, start thread
+    //!
+    //! @param[in]  tocData  TOC data for manipulation
+    //--------------------------------------------------------------------------
+    void start(const TocData& tocData);
 
     //--------------------------------------------------------------------------
     //! @brief      thread function
@@ -251,6 +263,13 @@ protected:
     int delTrack(int trackNo);
 
     //--------------------------------------------------------------------------
+    //! @brief do TOC manipulation
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int doTocManip();
+
+    //--------------------------------------------------------------------------
     //! @brief netmd_time to time_t
     //!
     //! @param[in] t netmd_time
@@ -264,6 +283,9 @@ protected:
 
     /// current job description
     NetMDStartup mCurrJob;
+
+    /// data for TOC manipulation
+    TocData mTocData;
     
     /// log file name
     QString mNameFLog;
@@ -284,5 +306,5 @@ protected:
     QString mDevName;
 
     /// NetMD API
-    netmd::CNetMdApi* mpApi;
+    netmd::netmd_pp* mpApi;
 };
