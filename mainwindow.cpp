@@ -366,7 +366,12 @@ void MainWindow::on_pushTransfer_clicked()
         QString trackTitle = r.data().toString();
         double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
-        mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
+        mWorkQueue.append({trackNo,
+                           trackTitle,
+                           new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"),
+                           trackTime,
+                           WorkStep::NONE,
+                           isCD});
     }
 
     if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
@@ -964,7 +969,12 @@ void MainWindow::on_pushDAO_clicked()
         QString trackTitle = r.data().toString();
         double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
-        mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
+        mWorkQueue.append({trackNo,
+                           trackTitle,
+                           new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"),
+                           trackTime,
+                           WorkStep::NONE,
+                           isCD});
     }
 
     if (mDAOMode == CDaoConfDlg::DAO_LP2)

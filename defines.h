@@ -40,6 +40,7 @@ struct SRipTrack
     QTemporaryFile* mpFile;
     double          mLength;
     WorkStep        mStep;
+    bool            mIsCD;
 };
 
 using TransferQueue = QVector<SRipTrack>;

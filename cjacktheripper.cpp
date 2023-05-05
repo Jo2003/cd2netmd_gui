@@ -337,6 +337,7 @@ void CJackTheRipper::extractWave()
 {
     QFileInfo fi;
     bool startCopy = true;
+    constexpr uint32_t DONE_MARK = 0xDEADBEEF;
 
     if ((miFlacTrack > 0) && (miFlacTrack < mAudioTracks.size()))
     {
@@ -362,9 +363,38 @@ void CJackTheRipper::extractWave()
     }
     else if (miFlacTrack == -1)
     {
+        // DAO stuff -> call ffmpeg to concatinate all audio files
+        // in only one call
+        QStringList srcFiles;
+
+        if (mAudioTracks[0].mConversion == DONE_MARK)
+        {
+            mAudioTracks[0].mConversion = 0;
+            noBusy();
+            getProgress(100);
+            emit finished();
+
+            // over and out
+            return;
+        }
+        else
+        {
+            // track 0 keeps disc title
+            for (int track = 1; track < mAudioTracks.size(); track ++)
+            {
+                srcFiles << mAudioTracks[track].mFileName;
+            }
+            // mark this as done for next call
+            mAudioTracks[0].mConversion = DONE_MARK;
+            mpFFMpeg->concatFiles(srcFiles, mFlacFName);
+            startCopy = false;
+        }
+/*
         // track 0 keeps disc title
         for (int track = 1; track < mAudioTracks.size(); track ++)
         {
+            srcFiles << mAudioTracks[track].mFileName;
+
             c2n::STrackInfo& ci = mAudioTracks[track];
             if (ci.mWaveFileName.isEmpty())
             {
@@ -386,6 +416,7 @@ void CJackTheRipper::extractWave()
                 }
             }
         }
+*/
     }
 
     if (startCopy)

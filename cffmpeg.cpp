@@ -39,7 +39,7 @@ int CFFMpeg::start(const QString& srcFileName, const QString trgFileName, const 
     QStringList params;
     mLog.clear();
 
-    params << "-i" << srcFileName;
+    params << "-y" << "-i" << srcFileName;
 
     if (conversion & audio::CONV_BPS)
     {
@@ -57,25 +57,83 @@ int CFFMpeg::start(const QString& srcFileName, const QString trgFileName, const 
     }
 
     params << trgFileName;
-	
+
+    return start(params);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      start encoder with params
+//!
+//! @param[in]  params the call parameters
+//! @param[in]  nativeArgs optional native arguments
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CFFMpeg::start(const QStringList& params, const QString& nativeArgs)
+{
 #ifdef Q_OS_MAC
-	// app folder
+    // app folder
     QString sAppDir = QApplication::applicationDirPath();
-	
+
     // find bundle dir ...
     QRegExp rx("^(.*)/MacOS");
     if (rx.indexIn(sAppDir) > -1)
     {
        // found section --> create path names ...
        QString encTool = QString("%1/%2").arg(sAppDir).arg(FFMPEG_CLI);
-	   qInfo() << encTool << params;
-	   run(encTool, params);
+       qInfo() << encTool << params;
+       run(encTool, params);
    }
 #else
-    qInfo() << FFMPEG_CLI << params;
-    run(FFMPEG_CLI, params);
+    qInfo() << FFMPEG_CLI << params << nativeArgs;
+    run(FFMPEG_CLI, params, ReadWrite, nativeArgs);
 #endif
     return 0;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      concat audio files to supported wave file
+//!
+//! @param[in]  sources  The source file names
+//! @param[in]  target   The target file name
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CFFMpeg::concatFiles(const QStringList& sources, const QString& target)
+{
+    // ffmpeg -i input1.wav -i input2.wav -i input3.wav -i input4.wav
+    // -filter_complex '[0:0][1:0][2:0][3:0]concat=n=4:v=0:a=1[out]'
+    // -map '[out]' output.wav
+
+    const char* concatTmpl1 = "[%1:0]";
+    const char* concatTmpl2 = R"("%1concat=n=%2:v=0:a=1[out]")";
+    QString concatComplex;
+    int i = 0;
+    QStringList params;
+
+    for(const auto& s : sources)
+    {
+        concatComplex += QString(concatTmpl1).arg(i);
+        params << "-i" << s;
+        i++;
+    }
+
+    // finish complex filter string
+    concatComplex = QString(concatTmpl2).arg(concatComplex).arg(sources.size());
+
+    // convert to wave, 44.1kHz, 16 bit
+    params << "-y";
+    params << "-acodec" << "pcm_s16le";
+    params << "-ar" << "44100";
+    params << "-ac" << "2";
+    params << "-filter_complex";
+#ifdef Q_OS_WIN
+    concatComplex += R"( -map "[out]" -f wav )" + target;
+#else
+    params << concatComplex << "-map" << R"("[out]")" << "-f" << "wav" << target;
+    concatComplex = "";
+#endif
+    return start(params, concatComplex);
 }
 
 void CFFMpeg::finishCopy(int exitCode, ExitStatus exitStatus)
@@ -128,7 +186,7 @@ void CFFMpeg::extractPercent()
         currPos += rxPosition.cap(3).toInt();
     }
 
-    if ((length != -1) && (currPos != -1))
+    if ((length != -1) && (currPos != -1) && (length != 0))
     {
         emit progress((currPos * 100) / length);
     }

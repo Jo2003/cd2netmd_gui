@@ -54,6 +54,26 @@ public:
     //--------------------------------------------------------------------------
     int start(const QString& srcFileName, const QString trgFileName, const uint32_t& conversion);
 
+    //--------------------------------------------------------------------------
+    //! @brief      start encoder with params
+    //!
+    //! @param[in]  params the call parameters
+    //! @param[in]  nativeArgs optional native arguments
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
+    int start(const QStringList& params, const QString& nativeArgs = "");
+
+    //--------------------------------------------------------------------------
+    //! @brief      concat audio files to supported wave file
+    //!
+    //! @param[in]  sources  The source file names
+    //! @param[in]  target   The target file name
+    //!
+    //! @return     0 on success
+    //--------------------------------------------------------------------------
+    int concatFiles(const QStringList &sources, const QString &target);
+
 private slots:
     //--------------------------------------------------------------------------
     //! @brief      Finishes a copy.
