@@ -1,0 +1,55 @@
+#!/bin/sh
+
+usage()
+{
+	echo "usage: $0 [OPTIONS]"
+cat << EOH
+
+options:
+	[--libs]
+	[--cflags]
+	[--version]
+	[--prefix]
+EOH
+	exit 1;
+}
+
+prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+exec_prefix=/Users/joergn/src/cd2netmd_gui/prebuilt/mac
+libdir=/Users/joergn/src/cd2netmd_gui/prebuilt/mac/lib
+includedir=/Users/joergn/src/cd2netmd_gui/prebuilt/mac/include
+
+flags=""
+
+if test $# -eq 0 ; then
+  usage
+fi
+
+while test $# -gt 0
+do
+  case $1 in
+    --libs)
+	  flags="$flags -L$libdir -ltag -lz"
+	  ;;
+    --cflags)
+	  flags="$flags -I$includedir -I$includedir/taglib"
+	  ;;
+    --version)
+	  echo 1.12
+	  ;;
+    --prefix)
+	  echo $prefix
+	  ;;
+	*)
+	  echo "$0: unknown option $1"
+	  echo
+	  usage
+	  ;;
+  esac
+  shift
+done
+
+if test -n "$flags"
+then
+  echo $flags
+fi
