@@ -555,9 +555,10 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
         {
             mWorkQueue.clear();
             mpRipper->thread()->terminate();
-            QMessageBox::critical(this, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
             mpRipper->removeTemp();
+            mpXEnc->thread()->terminate();
             enableDialogItems(true);
+            QMessageBox::critical(this, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
             return;
         }
 
@@ -671,10 +672,10 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 qInfo() << "Delete temp. file" << j.mpFile->fileName();
                 delete j.mpFile;
             }
-            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
             mWorkQueue.clear();
             mpRipper->removeTemp();
             enableDialogItems(true);
+            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
         }
     }
 }
