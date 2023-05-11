@@ -104,6 +104,62 @@ int main()
 }
 ~~~
 
+# MDs UTOC
+For the UTOC structure please have a look at this great site on [minidisc.org](https://www.minidisc.org/md_toc.html)
+
+## Addressing in UTOC
+ "The disc start and end addresses each consist of a cluster, sector, and sound group, all packed into 3 bytes.
+ The sound group is the MiniDisc's smallest addressable unit, representing 11.6ms of mono audio (212 bytes).
+ A sector contains 11 sound groups (2332 bytes). A cluster is an aggregate of 32 sectors (352 sound groups)
+ representing 2.03 seconds of stereo audio; it is the smallest unit of data that can be written to a MiniDisc.
+ In the 3 byte packing, there are 14 bits allocated to the cluster number, 6 bits to the sector,
+ and 4 bits to the soundgroup; this arrangement allows addressing of up to 9.2 hours of stereo audio."
+
+## Modifying the UTOC
+ 1. download the UTOC sectors 0 ... 2 from NetMD Device:
+~~~
+pNetMd->prepareTOCManip();
+NetMDByteVector tocData;
+
+for (int i = 0; i < 3; i++)
+{
+    tocData += pNetMd->readUTOCSector(static_cast<UTOCSector>(i));
+}
+~~~
+ 2. create toc class instance and add some track data
+~~~
+uint8_t *pData = new uint8_t[tocData.size()];
+for(size_t i = 0; i < tocData.size(); i++)
+{
+    pData[i] = toc.at(i);
+}
+netmd::CNetMdTOC utoc(8, 459'000, pData);
+utoc.addTrack(1, 60'000, "Funky Track One Minute Part #1");
+utoc.addTrack(2, 60'000, "Funky Track One Minute Part #2");
+~~~
+ 3. upload changed TOC data to NetMD
+~~~
+bool doit = true;
+for (int x = 0; x < 3; x++)
+{
+    tocData.clear();
+    addArrayData(tocData, &pData[2352 * x], 2352);
+    if (pNetMD->writeUTOCSector(static_cast<UTOCSector>(x), tocData) == NETMDERR_NO_ERROR)
+    {
+        std::cout << "TOC sector " << x << " written!" << std::endl;
+    }
+    else
+    {
+        doit = false;
+    }
+}
+
+if (doit)
+{
+    pNetMD->finalizeTOC();
+}
+delete [] pData;
+~~~
 */
 #pragma once
 #include <cstdint>
@@ -587,9 +643,6 @@ private:
     CNetMdSecure* mpSecure;
 };
 
-/// cluster / sector / group helper
-class CSG;
-
 namespace toc
 {
     /// internally used TOC structure
@@ -602,6 +655,15 @@ namespace toc
 class CNetMdTOC
 {
 public:
+    /// a fragment used in DAO track
+    struct DAOFragment
+    {
+        uint32_t mStart;    ///< start group
+        uint32_t mEnd;      ///< end group
+    };
+
+    /// type to store all DAO track fragments (for fragmented, non empty discs)
+    using DAOFragments = std::vector<DAOFragment>;
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
@@ -694,12 +756,6 @@ private:
     /// TOC pointer
     toc::TOC* mpToc;
 
-    /// group number where audio starts
-    uint32_t  mAudioStart;
-
-    /// group number where audio ends
-    uint32_t  mAudioEnd;
-
     /// number of tracks for this TOC
     int       mTracksCount;
 
@@ -707,10 +763,16 @@ private:
     uint32_t  mLengthInMs;
 
     /// current group position
-    CSG*      mpCurPos;
+    uint32_t  mCurPos;
 
     /// track we need to split
     int       mDAOTrack;
+
+    /// whole groups count of DAO track
+    uint32_t  mDAOGroups;
+
+    /// the fragments used for DAO track
+    DAOFragments mDAOFragments;
 };
 
 

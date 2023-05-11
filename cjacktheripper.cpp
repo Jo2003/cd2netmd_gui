@@ -389,34 +389,6 @@ void CJackTheRipper::extractWave()
             mpFFMpeg->concatFiles(srcFiles, mFlacFName);
             startCopy = false;
         }
-/*
-        // track 0 keeps disc title
-        for (int track = 1; track < mAudioTracks.size(); track ++)
-        {
-            srcFiles << mAudioTracks[track].mFileName;
-
-            c2n::STrackInfo& ci = mAudioTracks[track];
-            if (ci.mWaveFileName.isEmpty())
-            {
-                if (ci.mConversion)
-                {
-                    fi.setFile(ci.mFileName);
-                    ci.mWaveFileName = QString("%1/cd2netmd_audio_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
-
-                    if (!QFile::exists(ci.mWaveFileName))
-                    {
-                        mpFFMpeg->start(ci.mFileName, ci.mWaveFileName, ci.mConversion);
-                        startCopy = false;
-                        break;
-                    }
-                }
-                else
-                {
-                    ci.mWaveFileName = ci.mFileName;
-                }
-            }
-        }
-*/
     }
 
     if (startCopy)
@@ -725,6 +697,7 @@ CCopyShopThread::CCopyShopThread(QObject* parent, AudioTracks& cueMap, int track
 //!
 //! @return 0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
+/*
 int CCopyShopThread::conCatWave()
 {
     int ret = 0;
@@ -807,6 +780,7 @@ int CCopyShopThread::conCatWave()
 
     return ret;
 }
+*/
 
 //--------------------------------------------------------------------------
 //! @brief      pseudo update progress
@@ -828,7 +802,7 @@ void CCopyShopThread::run()
     if (mTrack == -1)
     {
         // DaO
-        conCatWave();
+        // conCatWave();
     }
     else if ((mTrack > 0) && (mTrack < mCueMap.size()))
     {

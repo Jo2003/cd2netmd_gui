@@ -38,7 +38,7 @@ public:
     //! @param[in]  program    The program
     //! @param[in]  arguments  The arguments
     //! @param[in]  mode       The mode
-    //! @param[in]  nativeArgs optional native arguments
+    //! @param[in]  nativeArgs optional native arguments (only used on Windows)
     //--------------------------------------------------------------------------
     void run(const QString &program,
              const QStringList &arguments,

@@ -128,7 +128,7 @@ int CFFMpeg::concatFiles(const QStringList& sources, const QString& target)
     params << "-ac" << "2";
     params << "-filter_complex";
 #ifdef Q_OS_WIN
-    concatComplex += R"( -map "[out]" -f wav )" + target;
+    concatComplex += R"( -map "[out]" -f wav ")" + target + R"(")";
 #else
     params << concatComplex << "-map" << R"("[out]")" << "-f" << "wav" << target;
     concatComplex = "";

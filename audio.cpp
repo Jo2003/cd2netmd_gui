@@ -157,11 +157,10 @@ int writeWaveHeader(QFile &wf, size_t byteCount)
 //! @param      conversion    The conversion vector @see AudioConv
 //! @param      length        length in mili seconds
 //! @param[in]  pTag          optional pointer to tag structure
-//! @param[in]  sp_upload     optional sp upload flag
 //!
 //! @return     0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
-int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag, bool sp_upload)
+int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, STag* pTag)
 {
     int ret    = 0;
     conversion = 0;
@@ -370,14 +369,10 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
             }
             ret = 0;
 
-            if (!sp_upload)
-            {
-                // if no SP upload is supported, we
-                // convert to Wave
-                conversion |= AudioConv::CONV_BPS;
-                conversion |= AudioConv::CONV_SAMPLERATE;
-                conversion |= AudioConv::CONV_CHANNELS;
-            }
+            // convert to Wave
+            conversion |= AudioConv::CONV_BPS;
+            conversion |= AudioConv::CONV_SAMPLERATE;
+            conversion |= AudioConv::CONV_CHANNELS;
         }
         catch (const char* e)
         {
