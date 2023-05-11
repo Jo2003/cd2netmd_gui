@@ -82,7 +82,7 @@ int CFFMpeg::start(const QStringList& params, const QString& nativeArgs)
        // found section --> create path names ...
        QString encTool = QString("%1/%2").arg(sAppDir).arg(FFMPEG_CLI);
        qInfo() << encTool << params;
-       run(encTool, params);
+       run(encTool, params, ReadWrite, nativeArgs);
    }
 #else
     qInfo() << FFMPEG_CLI << params << nativeArgs;
@@ -106,7 +106,11 @@ int CFFMpeg::concatFiles(const QStringList& sources, const QString& target)
     // -map '[out]' output.wav
 
     const char* concatTmpl1 = "[%1:0]";
+#ifdef Q_OS_WIN
     const char* concatTmpl2 = R"("%1concat=n=%2:v=0:a=1[out]")";
+#else
+	const char* concatTmpl2 = "%1concat=n=%2:v=0:a=1[out]";
+#endif
     QString concatComplex;
     int i = 0;
     QStringList params;
@@ -130,7 +134,7 @@ int CFFMpeg::concatFiles(const QStringList& sources, const QString& target)
 #ifdef Q_OS_WIN
     concatComplex += R"( -map "[out]" -f wav ")" + target + R"(")";
 #else
-    params << concatComplex << "-map" << R"("[out]")" << "-f" << "wav" << target;
+    params << concatComplex << "-map" << "[out]" << "-f" << "wav" << target;
     concatComplex = "";
 #endif
     return start(params, concatComplex);
