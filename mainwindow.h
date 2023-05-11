@@ -214,8 +214,9 @@ private slots:
     //! @brief      one transfer finished
     //!
     //! @param[in]  checkBusy  The check busy
+    //! @param[in]  ret        if given return value from last transfer
     //--------------------------------------------------------------------------
-    void transferFinished(bool checkBusy = false);
+    void transferFinished(bool checkBusy, int ret = -999);
     
     //--------------------------------------------------------------------------
     //! @brief      Adds a md group.

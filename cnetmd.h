@@ -162,8 +162,9 @@ signals:
     //! @brief      signal that thread finished
     //!
     //! @param[in]  <unnamed>  false 
+    //! @param[in]  <unnamed>  return value of last action
     //--------------------------------------------------------------------------
-    void finished(bool);
+    void finished(bool, int);
     
     //--------------------------------------------------------------------------
     //! @brief      signal thread progress in percent

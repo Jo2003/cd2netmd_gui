@@ -40,6 +40,7 @@ struct SRipTrack
     QTemporaryFile* mpFile;
     double          mLength;
     WorkStep        mStep;
+    bool            mIsCD;
 };
 
 using TransferQueue = QVector<SRipTrack>;
@@ -121,7 +122,7 @@ private:
     List_t mType = List_t::UNKNOWN;
 };
 
-static constexpr const char* PROGRAM_VERSION = "2.0.3";
+static constexpr const char* PROGRAM_VERSION = "2.0.4";
 static constexpr const char* PROGRAM_NAME    = "NetMD Wizard";
 
 enum LogLevel

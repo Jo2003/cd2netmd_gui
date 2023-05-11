@@ -26,10 +26,32 @@ CCliProcess::CCliProcess(QObject *parent)
     connect(this, &QProcess::readyReadStandardOutput, this, &CCliProcess::extractPercent);
 }
 
-void CCliProcess::run(const QString &program, const QStringList &arguments, QIODevice::OpenMode mode)
+//--------------------------------------------------------------------------
+//! @brief      run the process
+//!
+//! @param[in]  program    The program
+//! @param[in]  arguments  The arguments
+//! @param[in]  mode       The mode
+//! @param[in]  nativeArgs optional native arguments (only used on Windows)
+//--------------------------------------------------------------------------
+void CCliProcess::run(const QString &program, const QStringList &arguments,
+                      QIODevice::OpenMode mode, const QString& nativeArgs)
 {
     mLog.clear();
-    QProcess::start(program, arguments, mode);
+    QProcess::setProgram(program);
+    QStringList args = arguments;
+
+#ifdef Q_OS_WIN
+    if (!nativeArgs.isEmpty())
+    {
+        setNativeArguments(nativeArgs);
+    }
+#else
+    Q_UNUSED(nativeArgs)
+#endif // Q_OS_WIN
+
+    QProcess::setArguments(args);
+    QProcess::start(mode);
     waitForStarted();
 }
 

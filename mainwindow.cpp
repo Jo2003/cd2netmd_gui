@@ -366,7 +366,12 @@ void MainWindow::on_pushTransfer_clicked()
         QString trackTitle = r.data().toString();
         double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
-        mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
+        mWorkQueue.append({trackNo,
+                           trackTitle,
+                           new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"),
+                           trackTime,
+                           WorkStep::NONE,
+                           isCD});
     }
 
     if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
@@ -526,8 +531,17 @@ void MainWindow::encodeFinished(bool checkBusy)
     }
 }
 
-void MainWindow::transferFinished(bool checkBusy)
+//--------------------------------------------------------------------------
+//! @brief      one transfer finished
+//!
+//! @param[in]  checkBusy  The check busy
+//! @param[in]  ret        if given return value from last transfer
+//--------------------------------------------------------------------------
+void MainWindow::transferFinished(bool checkBusy, int ret)
 {
+    // handle default value
+    ret = -999 ? 0 : ret;
+
     if ((!checkBusy || !mpNetMD->busy()) && !mWorkQueue.isEmpty())
     {
         QString labText = tr("MD-Transfer");
@@ -536,6 +550,16 @@ void MainWindow::transferFinished(bool checkBusy)
         CXEnc::XEncCmd   xencCmd;
         QString          trackMode;
         transferConfig(netMdCmd, xencCmd, trackMode);
+
+        if (ret < 0)
+        {
+            mWorkQueue.clear();
+            mpRipper->thread()->terminate();
+            QMessageBox::critical(this, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
+            mpRipper->removeTemp();
+            enableDialogItems(true);
+            return;
+        }
 
         if (mDAOMode == CDaoConfDlg::DAO_SP)
         {
@@ -647,10 +671,10 @@ void MainWindow::transferFinished(bool checkBusy)
                 qInfo() << "Delete temp. file" << j.mpFile->fileName();
                 delete j.mpFile;
             }
+            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
             mWorkQueue.clear();
             mpRipper->removeTemp();
             enableDialogItems(true);
-            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
         }
     }
 }
@@ -964,7 +988,12 @@ void MainWindow::on_pushDAO_clicked()
         QString trackTitle = r.data().toString();
         double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
         selectionTime += trackTime;
-        mWorkQueue.append({trackNo, trackTitle, new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"), trackTime, WorkStep::NONE});
+        mWorkQueue.append({trackNo,
+                           trackTitle,
+                           new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"),
+                           trackTime,
+                           WorkStep::NONE,
+                           isCD});
     }
 
     if (mDAOMode == CDaoConfDlg::DAO_LP2)
@@ -1066,7 +1095,7 @@ void MainWindow::catchDropped(QStringList sl)
 
     for (const auto& url : sl)
     {
-        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag, mSpUpload) == 0)
+        if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
         {
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;

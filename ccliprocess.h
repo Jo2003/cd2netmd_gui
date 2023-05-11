@@ -38,8 +38,12 @@ public:
     //! @param[in]  program    The program
     //! @param[in]  arguments  The arguments
     //! @param[in]  mode       The mode
+    //! @param[in]  nativeArgs optional native arguments (only used on Windows)
     //--------------------------------------------------------------------------
-    void run(const QString &program, const QStringList &arguments, QIODevice::OpenMode mode = ReadWrite);
+    void run(const QString &program,
+             const QStringList &arguments,
+             QIODevice::OpenMode mode = ReadWrite,
+             const QString& nativeArgs = "");
     
     //--------------------------------------------------------------------------
     //! @brief      check if process is running (busy)

@@ -103,6 +103,7 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
                 }
                 else
                 {
+                    qWarning() << "Can't write TOC sector" << i << "!";
                     good = false;
                 }
             }
@@ -110,6 +111,10 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
             if (good)
             {
                 return mpApi->finalizeTOC(15);
+            }
+            else
+            {
+                ret = NETMDERR_USB;
             }
         }
         else

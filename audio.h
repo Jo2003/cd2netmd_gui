@@ -100,13 +100,11 @@ namespace audio {
     //! @param      conversion    The conversion vector @see AudioConv
     //! @param      length        length in mili seconds
     //! @param[in]  pTag          optional pointer to tag structure
-    //! @param[in]  sp_upload     optional sp upload flag
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
     int checkAudioFile(const QString& fileName, uint32_t& conversion,
-                       int& length, STag* pTag = nullptr,
-                       bool sp_upload = false);
+                       int& length, STag* pTag = nullptr);
 
     /// type generator
     template <Supported T> struct AudioProps;

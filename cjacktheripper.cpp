@@ -337,6 +337,7 @@ void CJackTheRipper::extractWave()
 {
     QFileInfo fi;
     bool startCopy = true;
+    constexpr uint32_t DONE_MARK = 0xDEADBEEF;
 
     if ((miFlacTrack > 0) && (miFlacTrack < mAudioTracks.size()))
     {
@@ -362,29 +363,31 @@ void CJackTheRipper::extractWave()
     }
     else if (miFlacTrack == -1)
     {
-        // track 0 keeps disc title
-        for (int track = 1; track < mAudioTracks.size(); track ++)
-        {
-            c2n::STrackInfo& ci = mAudioTracks[track];
-            if (ci.mWaveFileName.isEmpty())
-            {
-                if (ci.mConversion)
-                {
-                    fi.setFile(ci.mFileName);
-                    ci.mWaveFileName = QString("%1/cd2netmd_audio_decode_%2.wav").arg(QDir::tempPath()).arg(fi.baseName());
+        // DAO stuff -> call ffmpeg to concatinate all audio files
+        // in only one call
+        QStringList srcFiles;
 
-                    if (!QFile::exists(ci.mWaveFileName))
-                    {
-                        mpFFMpeg->start(ci.mFileName, ci.mWaveFileName, ci.mConversion);
-                        startCopy = false;
-                        break;
-                    }
-                }
-                else
-                {
-                    ci.mWaveFileName = ci.mFileName;
-                }
+        if (mAudioTracks[0].mConversion == DONE_MARK)
+        {
+            mAudioTracks[0].mConversion = 0;
+            noBusy();
+            getProgress(100);
+            emit finished();
+
+            // over and out
+            return;
+        }
+        else
+        {
+            // track 0 keeps disc title
+            for (int track = 1; track < mAudioTracks.size(); track ++)
+            {
+                srcFiles << mAudioTracks[track].mFileName;
             }
+            // mark this as done for next call
+            mAudioTracks[0].mConversion = DONE_MARK;
+            mpFFMpeg->concatFiles(srcFiles, mFlacFName);
+            startCopy = false;
         }
     }
 
@@ -694,6 +697,7 @@ CCopyShopThread::CCopyShopThread(QObject* parent, AudioTracks& cueMap, int track
 //!
 //! @return 0 -> ok; -1 -> error
 //--------------------------------------------------------------------------
+/*
 int CCopyShopThread::conCatWave()
 {
     int ret = 0;
@@ -776,6 +780,7 @@ int CCopyShopThread::conCatWave()
 
     return ret;
 }
+*/
 
 //--------------------------------------------------------------------------
 //! @brief      pseudo update progress
@@ -797,7 +802,7 @@ void CCopyShopThread::run()
     if (mTrack == -1)
     {
         // DaO
-        conCatWave();
+        // conCatWave();
     }
     else if ((mTrack > 0) && (mTrack < mCueMap.size()))
     {

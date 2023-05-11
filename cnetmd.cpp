@@ -458,7 +458,7 @@ void CNetMD::run()
         qCritical() << "libnetmd action returned with error: " << ret;
     }
 
-    emit finished(false);
+    emit finished(false, ret);
 }
 
 bool CNetMD::busy()
