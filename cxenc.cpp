@@ -75,7 +75,7 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength)
 int CXEnc::start(CXEnc::XEncCmd cmd, const c2n::TransferQueue &queue, double discLength)
 {
     mQueue  = queue;
-    return start(cmd, queue.at(0).mpFile->fileName(), discLength);
+    return start(cmd, queue.at(0).mFileName, discLength);
 }
 
 int CXEnc::atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int length)
@@ -183,7 +183,7 @@ int CXEnc::splitAtrac3()
             trkCount ++;
 
             // overwrite original wave file
-            QFile waveFile(t.mpFile->fileName());
+            QFile waveFile(t.mFileName);
 
             if (waveFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
             {
@@ -204,7 +204,7 @@ int CXEnc::splitAtrac3()
                     waveFile.write(fAtrac.readAll());
                 }
                 waveFile.close();
-                qInfo() << "Copied " << sz << "B ATRAC3 data to " << t.mpFile->fileName();
+                qInfo() << "Copied " << sz << "B ATRAC3 data to " << t.mFileName;
             }
         }
 
@@ -246,7 +246,7 @@ int CXEnc::splitAtrac1()
             trkCount ++;
 
             // overwrite original wave file
-            QFile aeaFile(t.mpFile->fileName());
+            QFile aeaFile(t.mFileName);
 
             if (aeaFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
             {
@@ -267,7 +267,7 @@ int CXEnc::splitAtrac1()
                     aeaFile.write(fAtrac.readAll());
                 }
                 aeaFile.close();
-                qInfo() << "Copied " << sz << "B ATRAC1 (SP) data to " << t.mpFile->fileName();
+                qInfo() << "Copied " << sz << "B ATRAC1 (SP) data to " << t.mFileName;
             }
         }
 

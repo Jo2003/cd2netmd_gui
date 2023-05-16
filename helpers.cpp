@@ -17,6 +17,8 @@
 #include "helpers.h"
 #include <QTextCodec>
 #include <QFileInfo>
+#include <QRandomGenerator>
+#include <QDateTime>
 #include "defines.h"
 #include "mdtitle.h"
 
@@ -207,4 +209,38 @@ uint64_t arrayToUint(const char start[], int sz)
     return result;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      create a temporary file name from template
+//!
+//! @param[in]  templ file name template,
+//!             'X' will be replaced by random char
+//!
+//! @return     file name
+//--------------------------------------------------------------------------
+QString tempFileName(const QString &templ)
+{
+    uint32_t seed = static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch() / 911);
+    QString ret = templ;
 
+    for (auto& c : ret)
+    {
+        if (c == 'X')
+        {
+            if ((seed % 3) == 0)
+            {
+                c = QRandomGenerator::global()->bounded(static_cast<uint32_t>('a'), static_cast<uint32_t>('z'));
+            }
+            else if ((seed % 3) == 1)
+            {
+                c = QRandomGenerator::global()->bounded(static_cast<uint32_t>('0'), static_cast<uint32_t>('9'));
+            }
+            else if ((seed % 3) == 2)
+            {
+                c = QRandomGenerator::global()->bounded(static_cast<uint32_t>('A'), static_cast<uint32_t>('Z'));
+            }
+            seed ++;
+        }
+    }
+
+    return ret;
+}

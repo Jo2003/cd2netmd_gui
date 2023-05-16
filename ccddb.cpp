@@ -86,6 +86,8 @@ int CCDDB::catchResponse(QNetworkReply *reply)
     }
     else
     {
+        qCritical() << reply->errorString();
+        emit match(mAudioTracks);
         ret = -1;
     }
 
@@ -150,7 +152,10 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
         if (results.isEmpty())
         {
             // no match
-            mAudioTracks[0].mTitle = tr("No CDDB Entry found!");
+            if (!mAudioTracks.isEmpty())
+            {
+                mAudioTracks[0].mTitle = tr("No CDDB Entry found!");
+            }
             emit match(mAudioTracks);
         }
         else if (results.size() == 1)

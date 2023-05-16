@@ -363,10 +363,10 @@ void CJackTheRipper::extractWave()
     }
     else if (miFlacTrack == -1)
     {
-        // DAO stuff -> call ffmpeg to concatinate all audio files
-        // in only one call
+        // DAO stuff
         QStringList srcFiles;
 
+        // all done already?
         if (mAudioTracks[0].mConversion == DONE_MARK)
         {
             mAudioTracks[0].mConversion = 0;
@@ -379,15 +379,48 @@ void CJackTheRipper::extractWave()
         }
         else
         {
-            // track 0 keeps disc title
-            for (int track = 1; track < mAudioTracks.size(); track ++)
-            {
-                srcFiles << mAudioTracks[track].mFileName;
-            }
             // mark this as done for next call
             mAudioTracks[0].mConversion = DONE_MARK;
-            mpFFMpeg->concatFiles(srcFiles, mFlacFName);
-            startCopy = false;
+
+            // something to concatinate?
+            for (int track = 1; track < mAudioTracks.size(); track ++)
+            {
+                if (!srcFiles.contains(mAudioTracks[track].mFileName))
+                {
+                    srcFiles << mAudioTracks[track].mFileName;
+                }
+            }
+
+            if (srcFiles.size() == 1)
+            {
+                // only one source file ...
+                for (auto& t : mAudioTracks)
+                {
+                    if (t.mFileName == srcFiles.at(0))
+                    {
+                        if (t.mConversion)
+                        {
+                            // convert this one file into target wave file
+                            mpFFMpeg->start(t.mFileName, mFlacFName, t.mConversion);
+                            startCopy = false;
+                        }
+                        else
+                        {
+                            // No need for conversion -
+                            // copy shop will make our copy instead ...
+                            t.mWaveFileName = t.mFileName;
+                        }
+                        break;
+                    }
+                }
+            }
+            else if (srcFiles.size() > 1)
+            {
+                // call ffmpeg to concatinate all audio files
+                // in only one call
+                mpFFMpeg->concatFiles(srcFiles, mFlacFName);
+                startCopy = false;
+            }
         }
     }
 
@@ -485,6 +518,8 @@ int CJackTheRipper::cddbReqString()
         return 0;
     }
 
+    bool doSignal = true;
+
     mAudioTracks.clear();
     mAudioTracks.setListType(c2n::AudioTracks::CD);
 
@@ -498,41 +533,51 @@ int CJackTheRipper::cddbReqString()
         firstTrack = cdio_get_first_track_num(mpCDIO);
         lastTrack  = cdio_get_last_track_num(mpCDIO);
 
-        qInfo() << "First track: " << firstTrack << "Last track: " << lastTrack;
-
-        cdtext_t* pCdText = cdio_get_cdtext(mpCDIO);
-
-        trackInfo.mCDTrackNo = 0;
-        trackInfo.mStartLba  = 0;
-        trackInfo.mTType     = c2n::TrackType::DISC;
-        trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) - cdio_get_track_lba(mpCDIO, firstTrack);
-        parseCDText(pCdText, 0, trackInfo.mTitle);
-        mAudioTracks.append(trackInfo);
-
-        for (track_t t = firstTrack; t <= lastTrack; t++)
+        if ((firstTrack == CDIO_INVALID_TRACK) || (lastTrack == CDIO_INVALID_TRACK))
         {
-            trackInfo.mCDTrackNo = t;
-            trackInfo.mTType = (cdio_get_track_format(mpCDIO, t) == TRACK_FORMAT_AUDIO) ? c2n::TrackType::AUDIO : c2n::TrackType::DATA;
-            trackInfo.mStartLba  = cdio_get_track_lba(mpCDIO, t);
-            trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, (t == lastTrack) ? CDIO_CDROM_LEADOUT_TRACK : t + 1) - trackInfo.mStartLba;
-            parseCDText(pCdText, t, trackInfo.mTitle);
-            mAudioTracks.append(trackInfo);
-        }
-#ifdef Q_OS_MAC
-        if (!pCdText)
-        {
-            mpDrUtil->start();
-        }
-#else
-        if (!pCdText && mbCDDB)
-        {
-            cddbRequest();
+            qInfo() << "Empty disc detected!";
         }
         else
         {
-            emit match(mAudioTracks);
-        }
+            qInfo() << "First track: " << firstTrack << "Last track: " << lastTrack;
+
+            cdtext_t* pCdText = cdio_get_cdtext(mpCDIO);
+
+            trackInfo.mCDTrackNo = 0;
+            trackInfo.mStartLba  = 0;
+            trackInfo.mTType     = c2n::TrackType::DISC;
+            trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) - cdio_get_track_lba(mpCDIO, firstTrack);
+            parseCDText(pCdText, 0, trackInfo.mTitle);
+            mAudioTracks.append(trackInfo);
+
+            for (track_t t = firstTrack; t <= lastTrack; t++)
+            {
+                trackInfo.mCDTrackNo = t;
+                trackInfo.mTType = (cdio_get_track_format(mpCDIO, t) == TRACK_FORMAT_AUDIO) ? c2n::TrackType::AUDIO : c2n::TrackType::DATA;
+                trackInfo.mStartLba  = cdio_get_track_lba(mpCDIO, t);
+                trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, (t == lastTrack) ? CDIO_CDROM_LEADOUT_TRACK : t + 1) - trackInfo.mStartLba;
+                parseCDText(pCdText, t, trackInfo.mTitle);
+                mAudioTracks.append(trackInfo);
+            }
+#ifdef Q_OS_MAC
+            if (!pCdText)
+            {
+                doSignal = false;
+                mpDrUtil->start();
+            }
+#else
+            if (!pCdText && mbCDDB)
+            {
+                doSignal = false;
+                cddbRequest();
+            }
 #endif // Q_OS_MAC
+        }
+    }
+
+    if (doSignal)
+    {
+        emit match(mAudioTracks);
     }
 
     return mAudioTracks.isEmpty() ? -1 : 0;
@@ -542,7 +587,7 @@ int CJackTheRipper::cddbReqString()
 //--------------------------------------------------------------------------
 //! @brief      CD-Text data created by CDRUtil
 //!
-//! @param[in]  percent  The percent
+//! @param[in]  cdtdata  CD-Text data
 //--------------------------------------------------------------------------
 void CJackTheRipper::macCDText(CDRUtil::CDTextData cdtdata)
 {
@@ -593,7 +638,10 @@ void CJackTheRipper::removeTemp()
     {
         if (c.mWaveFileName != c.mFileName)
         {
-            QFile::remove(c.mWaveFileName);
+            if (QFile::exists(c.mWaveFileName))
+            {
+                QFile::remove(c.mWaveFileName);
+            }
         }
     }
 }
@@ -693,96 +741,6 @@ CCopyShopThread::CCopyShopThread(QObject* parent, AudioTracks& cueMap, int track
 }
 
 //--------------------------------------------------------------------------
-//! @brief      concatinate audio files
-//!
-//! @return 0 -> ok; -1 -> error
-//--------------------------------------------------------------------------
-/*
-int CCopyShopThread::conCatWave()
-{
-    int ret = 0;
-    QStringList toConCat;
-
-    try
-    {
-        size_t sz      = 0;
-        size_t wholeSz = 0;
-
-        for (const auto& ci : mCueMap)
-        {
-            if (!ci.mWaveFileName.isEmpty())
-            {
-                if (!toConCat.contains(ci.mWaveFileName))
-                {
-                    toConCat << ci.mWaveFileName;
-                }
-            }
-        }
-
-        if (toConCat.size())
-        {
-            QFile tmpTrg(mName + ".raw");
-            if (tmpTrg.open(QIODevice::Truncate | QIODevice::ReadWrite))
-            {
-                for (const auto& s : toConCat)
-                {
-                    qInfo() << "Append" << s << "to" << tmpTrg.fileName();
-                    QFile src(s);
-                    if (src.open(QIODevice::ReadOnly))
-                    {
-                        if (!audio::stripWaveHeader(src, sz))
-                        {
-                            updPercent();
-                            tmpTrg.write(src.readAll());
-                            wholeSz += sz;
-                        }
-                        else
-                        {
-                            throw std::runtime_error(R"(Can't strip wave header.)");
-                        }
-                    }
-                    else
-                    {
-                        throw std::runtime_error(R"(Can't open wave file.)");
-                    }
-                }
-            }
-
-            QFile trg(mName);
-            if (trg.open(QIODevice::WriteOnly))
-            {
-                qInfo() << "Create" << mName << "from" << tmpTrg.fileName();
-                updPercent();
-                audio::writeWaveHeader(trg, wholeSz);
-                tmpTrg.seek(0);
-                trg.write(tmpTrg.readAll());
-            }
-            else
-            {
-                throw std::runtime_error(R"(Can't open target file.)");
-            }
-
-            tmpTrg.close();
-            tmpTrg.remove();
-        }
-        else
-        {
-            throw std::runtime_error(R"(Can't open raw target file.)");
-        }
-
-        updPercent();
-    }
-    catch (const std::exception& e)
-    {
-        qInfo() << e.what();
-        ret = -1;
-    }
-
-    return ret;
-}
-*/
-
-//--------------------------------------------------------------------------
 //! @brief      pseudo update progress
 //--------------------------------------------------------------------------
 void CCopyShopThread::updPercent()
@@ -801,8 +759,20 @@ void CCopyShopThread::run()
 {
     if (mTrack == -1)
     {
-        // DaO
-        // conCatWave();
+        // DAO
+        for (const auto& t : mCueMap)
+        {
+            updPercent();
+            if (!t.mWaveFileName.isEmpty() && (t.mWaveFileName == t.mFileName))
+            {
+                if (QFile::exists(mName))
+                {
+                    QFile::remove(mName);
+                }
+                QFile::copy(t.mWaveFileName, mName);
+                break;
+            }
+        }
     }
     else if ((mTrack > 0) && (mTrack < mCueMap.size()))
     {

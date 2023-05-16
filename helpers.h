@@ -68,3 +68,13 @@ QString titleFromFileName(const QString& fName);
 //! @return     uint64_t
 //--------------------------------------------------------------------------
 uint64_t arrayToUint(const char start[], int sz);
+
+//--------------------------------------------------------------------------
+//! @brief      create a temporary file name from template
+//!
+//! @param[in]  templ file name template,
+//!             'X' will be replaced by random char
+//!
+//! @return     file name
+//--------------------------------------------------------------------------
+QString tempFileName(const QString& templ);

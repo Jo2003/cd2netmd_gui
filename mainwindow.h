@@ -52,6 +52,13 @@ class MainWindow : public QMainWindow
         WRITE_LOCK = (1 << 6)
     };
 
+    enum ePopUp
+    {
+        INFORMATION,
+        WARNING,
+        CRITICAL
+    };
+
 public:
     //--------------------------------------------------------------------------
     //! @brief      creates the object
@@ -146,6 +153,16 @@ protected:
     //! @brief      revert track order changes for DAO
     //--------------------------------------------------------------------------
     void revertCDEntries();
+
+    //--------------------------------------------------------------------------
+    //! @brief      show a popup message delayed (asynchronous)
+    //!
+    //! @param      tp      Popup type
+    //! @param[in]  caption window title
+    //! @param[in]  msg     message text
+    //! @param[in]  wait    delay time in ms
+    //--------------------------------------------------------------------------
+    void delayedPopUp(ePopUp tp, const QString& caption, const QString& msg, int wait = 500);
 
 private slots:
     //--------------------------------------------------------------------------

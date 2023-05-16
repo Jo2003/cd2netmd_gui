@@ -259,8 +259,9 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
         ui->tableViewCD->setColumnWidth(1, (width / 100) * 18);
 
         mpCDDevice->setText(mpRipper->deviceInfo().isEmpty() ? tr("Please re-load CD") : mpRipper->deviceInfo());
-        enableDialogItems(true);
     }
+
+    enableDialogItems(true);
 }
 
 void MainWindow::catchJson(QString j)
@@ -294,14 +295,14 @@ void MainWindow::catchJson(QString j)
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
         // read only disc
-        QMessageBox::information(this, tr("Information"), tr("The MD in your drive isn't writeable.\n"
-                                                             "Replace it with a writeable disc and reload the MD!"));
+        delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive isn't writeable.\n"
+                                                                "Replace it with a writeable disc and reload the MD!"));
     }
     else if (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)
     {
         // write lock
-        QMessageBox::information(this, tr("Information"), tr("The MD in your drive is write locked.\n"
-                                                             "Remove the write lock and reload the MD!"));
+        delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive is write locked.\n"
+                                                                "Remove the write lock and reload the MD!"));
     }
 
     enableDialogItems(true);
@@ -368,7 +369,7 @@ void MainWindow::on_pushTransfer_clicked()
         selectionTime += trackTime;
         mWorkQueue.append({trackNo,
                            trackTitle,
-                           new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"),
+                           QDir::tempPath() + tempFileName("/cd2netmd.XXXXXX.tmp"),
                            trackTime,
                            WorkStep::NONE,
                            isCD});
@@ -388,17 +389,12 @@ void MainWindow::on_pushTransfer_clicked()
         // not enough space left on device
         time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
-        QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
         mWorkQueue.clear();
         enableDialogItems(true);
+        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t), 100);
     }
     else if (!mWorkQueue.isEmpty())
     {
-        for (auto& j : mWorkQueue)
-        {
-            j.mpFile->open();
-            j.mpFile->close();
-        }
         ripFinished();
     }
 }
@@ -424,7 +420,7 @@ void MainWindow::ripFinished()
         {
             mWorkQueue[0].mStep = WorkStep::RIP;
             ui->progressRip->setValue(0);
-            mpRipper->extractTrack(-1, mWorkQueue.at(0).mpFile->fileName(), mpSettings->paranoia());
+            mpRipper->extractTrack(-1, mWorkQueue.at(0).mFileName, mpSettings->paranoia());
         }
     }
     else
@@ -444,7 +440,7 @@ void MainWindow::ripFinished()
             {
                 j.mStep = WorkStep::RIP;
                 ui->progressRip->setValue(0);
-                mpRipper->extractTrack(j.mCDTrackNo, j.mpFile->fileName(), mpSettings->paranoia());
+                mpRipper->extractTrack(j.mCDTrackNo, j.mFileName, mpSettings->paranoia());
                 break;
             }
         }
@@ -520,7 +516,7 @@ void MainWindow::encodeFinished(bool checkBusy)
                 {
                     j.mStep = WorkStep::ENCODE;
                     ui->progressExtEnc->setValue(0);
-                    mpXEnc->start(xencCmd, j.mpFile->fileName(), j.mLength);
+                    mpXEnc->start(xencCmd, j.mFileName, j.mLength);
                     break;
                 }
             }
@@ -554,11 +550,20 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
         if (ret < 0)
         {
             mWorkQueue.clear();
-            mpRipper->thread()->terminate();
+            if (mpXEnc->thread()->isRunning())
+            {
+                mpXEnc->thread()->terminate();
+                mpXEnc->thread()->wait(1000);
+            }
+
+            if (mpRipper->thread()->isRunning())
+            {
+                mpRipper->thread()->terminate();
+                mpRipper->thread()->wait(1000);
+            }
             mpRipper->removeTemp();
-            mpXEnc->thread()->terminate();
             enableDialogItems(true);
-            QMessageBox::critical(this, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
+            delayedPopUp(ePopUp::CRITICAL, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
             return;
         }
 
@@ -605,7 +610,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 disc.mStep = WorkStep::TRANSFER;
 
                 ui->progressMDTransfer->setValue(0);
-                mpNetMD->start({netMdCmd, disc.mpFile->fileName(), "DAO All in One!"});
+                mpNetMD->start({netMdCmd, disc.mFileName, "DAO All in One!"});
             }
         }
         else
@@ -626,7 +631,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 {
                     j.mStep = WorkStep::TRANSFER;
                     ui->progressMDTransfer->setValue(0);
-                    mpNetMD->start({netMdCmd, j.mpFile->fileName(), j.mTitle});
+                    mpNetMD->start({netMdCmd, j.mFileName, j.mTitle});
                     break;
                 }
             }
@@ -669,13 +674,16 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
             for (auto& j : mWorkQueue)
             {
-                qInfo() << "Delete temp. file" << j.mpFile->fileName();
-                delete j.mpFile;
+                if (QFile::exists(j.mFileName))
+                {
+                    qInfo() << "Delete temp. file" << j.mFileName;
+                    QFile::remove(j.mFileName);
+                }
             }
             mWorkQueue.clear();
             mpRipper->removeTemp();
             enableDialogItems(true);
-            QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
+            delayedPopUp(ePopUp::INFORMATION, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
         }
     }
 }
@@ -965,7 +973,6 @@ void MainWindow::on_pushDAO_clicked()
     mpRipper->setAudioTracks(trks);
     bool isCD = (trks.listType() == c2n::AudioTracks::CD);
 
-
     mpSettings->enaDisaOtf(false, true);
     if (mDAOMode == CDaoConfDlg::DAO_LP2)
     {
@@ -991,7 +998,7 @@ void MainWindow::on_pushDAO_clicked()
         selectionTime += trackTime;
         mWorkQueue.append({trackNo,
                            trackTitle,
-                           new QTemporaryFile(QDir::tempPath() + "/cd2netmd.XXXXXX.tmp"),
+                           QDir::tempPath() + tempFileName("/cd2netmd.XXXXXX.tmp"),
                            trackTime,
                            WorkStep::NONE,
                            isCD});
@@ -1008,17 +1015,12 @@ void MainWindow::on_pushDAO_clicked()
         // not enough space left on device
         time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
-        QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
         mWorkQueue.clear();
         enableDialogItems(true);
+        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t), 100);
     }
     else if (!mWorkQueue.isEmpty())
     {
-        for (auto& j : mWorkQueue)
-        {
-            j.mpFile->open();
-            j.mpFile->close();
-        }
         ripFinished();
     }
 }
@@ -1351,9 +1353,32 @@ void MainWindow::on_pushHelp_clicked()
 #endif
 }
 
-
 void MainWindow::on_pushLog_clicked()
 {
     QDesktopServices::openUrl(QUrl(QString("file:///%1").arg(g_logFileName)));
+}
+
+//--------------------------------------------------------------------------
+//! @brief      show a popup message delayed (asynchronous)
+//!
+//! @param      tp      Popup type
+//! @param[in]  caption window title
+//! @param[in]  msg     message text
+//! @param[in]  wait    delay time in ms
+//--------------------------------------------------------------------------
+void MainWindow::delayedPopUp(ePopUp tp, const QString& caption, const QString& msg, int wait)
+{
+    switch(tp)
+    {
+    case ePopUp::CRITICAL:
+        QTimer::singleShot(wait, [=]()->void{QMessageBox::critical(this, caption, msg);});
+        break;
+    case ePopUp::INFORMATION:
+        QTimer::singleShot(wait, [=]()->void{QMessageBox::information(this, caption, msg);});
+        break;
+    case ePopUp::WARNING:
+        QTimer::singleShot(wait, [=]()->void{QMessageBox::warning(this, caption, msg);});
+        break;
+    }
 }
 
