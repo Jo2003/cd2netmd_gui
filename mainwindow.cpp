@@ -213,54 +213,53 @@ void MainWindow::revertCDEntries()
 //--------------------------------------------------------------------------
 void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 {
-    if (!tracks.empty())
+    // remove all data tracks from model
+    for (auto it = tracks.begin(); it != tracks.end();)
     {
-        // remove all data tracks from model
-        for (auto it = tracks.begin(); it != tracks.end();)
+        if (it->mTType == c2n::TrackType::DATA)
         {
-            if (it->mTType == c2n::TrackType::DATA)
-            {
-                it = tracks.erase(it);
-            }
-            else
-            {
-                it ++;
-            }
+            it = tracks.erase(it);
         }
-
-        // backup tracks
-        mTracksBackup = tracks;
-
-        time_t length = tracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC;
-
-        ui->labCDTime->clear();
-        ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
-                               .arg((length % 3600) / 60, 2, 10, QChar('0'))
-                               .arg(length % 60, 2, 10, QChar('0')));
-
-        ui->lineCDTitle->setText(tracks.at(0).mTitle);
-
-        // remove disc entry
-        tracks.removeFirst();
-
-        CCDItemModel *pModel = ui->tableViewCD->myModel();
-
-        if (pModel != nullptr)
+        else
         {
-            delete pModel;
+            it ++;
         }
-
-        pModel = new CCDItemModel(tracks, this);
-
-        ui->tableViewCD->setModel(pModel);
-        int width = ui->tableViewCD->width();
-
-        ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
-        ui->tableViewCD->setColumnWidth(1, (width / 100) * 18);
-
-        mpCDDevice->setText(mpRipper->deviceInfo().isEmpty() ? tr("Please re-load CD") : mpRipper->deviceInfo());
     }
 
+    // backup tracks
+    mTracksBackup = tracks;
+
+    time_t length = tracks.isEmpty() ? 0 : (tracks.at(0).mLbCount / CDIO_CD_FRAMES_PER_SEC);
+
+    ui->labCDTime->clear();
+    ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
+                           .arg((length % 3600) / 60, 2, 10, QChar('0'))
+                           .arg(length % 60, 2, 10, QChar('0')));
+
+    ui->lineCDTitle->setText(tracks.isEmpty() ? "<No Disc>" : tracks.at(0).mTitle);
+
+    // remove disc entry
+    if (!tracks.isEmpty())
+    {
+        tracks.removeFirst();
+    }
+
+    CCDItemModel *pModel = ui->tableViewCD->myModel();
+
+    if (pModel != nullptr)
+    {
+        delete pModel;
+    }
+
+    pModel = new CCDItemModel(tracks, this);
+
+    ui->tableViewCD->setModel(pModel);
+    int width = ui->tableViewCD->width();
+
+    ui->tableViewCD->setColumnWidth(0, (width / 100) * 80);
+    ui->tableViewCD->setColumnWidth(1, (width / 100) * 18);
+
+    mpCDDevice->setText(mpRipper->deviceInfo().isEmpty() ? tr("Please re-load CD") : mpRipper->deviceInfo());
     enableDialogItems(true);
 }
 
