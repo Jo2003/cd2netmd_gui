@@ -174,141 +174,62 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
 #endif
     if (!f.isNull())
     {
-        if (ext == "wav")
+        using WAVProps = TagLib::RIFF::WAV::Properties;
+        TagLib::AudioProperties* pProps = f.audioProperties();
+
+        // pre-set all conversion fags
+        conversion = AudioConv::CONV_FORMAT | AudioConv::CONV_BPS | AudioConv::CONV_SAMPLERATE | AudioConv::CONV_CHANNELS;
+        length     = -1;
+
+        if (pProps != nullptr)
         {
-            AudioProps<WAVE>::type props = reinterpret_cast<AudioProps<WAVE>::type>(f.audioProperties());
-            if (props->bitsPerSample() != 16)
+            if (ext == "wav")
             {
-                conversion |= AudioConv::CONV_BPS;
+                WAVProps* pWProps = nullptr;
+
+                if ((pWProps = dynamic_cast<WAVProps*>(pProps)) != nullptr)
+                {
+                    conversion ^= AudioConv::CONV_FORMAT;
+
+                    if (pWProps->bitsPerSample() == 16)
+                    {
+                        conversion ^= AudioConv::CONV_BPS;
+                    }
+                }
             }
 
-            if (props->sampleRate() != 44100)
+            if (pProps->sampleRate() == 44100)
             {
-                conversion |= AudioConv::CONV_SAMPLERATE;
+                conversion ^= AudioConv::CONV_SAMPLERATE;
             }
 
-            if (props->channels() > 2)
+            if (pProps->channels() == 2)
             {
-                conversion |= AudioConv::CONV_CHANNELS;
+                conversion ^= AudioConv::CONV_CHANNELS;
             }
 
-            length = props->lengthInMilliseconds();
-        }
-        else if ((ext == "m4a") || (ext == "mp4"))
-        {
-            AudioProps<M4A>::type props = reinterpret_cast<AudioProps<M4A>::type>(f.audioProperties());
-            conversion |= AudioConv::CONV_FORMAT;
-
-            if (props->bitsPerSample() != 16)
-            {
-                conversion |= AudioConv::CONV_BPS;
-            }
-
-            if (props->sampleRate() != 44100)
-            {
-                conversion |= AudioConv::CONV_SAMPLERATE;
-            }
-
-            if (props->channels() > 2)
-            {
-                conversion |= AudioConv::CONV_CHANNELS;
-            }
-
-            length = props->lengthInMilliseconds();
-        }
-        else if (ext == "mp3")
-        {
-            AudioProps<MP3>::type props = reinterpret_cast<AudioProps<MP3>::type>(f.audioProperties());
-            conversion |= AudioConv::CONV_FORMAT;
-            conversion |= AudioConv::CONV_BPS;
-
-            if (props->sampleRate() != 44100)
-            {
-                conversion |= AudioConv::CONV_SAMPLERATE;
-            }
-
-            if (props->channels() > 2)
-            {
-                conversion |= AudioConv::CONV_CHANNELS;
-            }
-
-            length = props->lengthInMilliseconds();
-        }
-        else if (ext == "ogg")
-        {
-            AudioProps<OGG>::type props = reinterpret_cast<AudioProps<OGG>::type>(f.audioProperties());
-            conversion |= AudioConv::CONV_FORMAT;
-            conversion |= AudioConv::CONV_BPS;
-
-            if (props->sampleRate() != 44100)
-            {
-                conversion |= AudioConv::CONV_SAMPLERATE;
-            }
-
-            if (props->channels() > 2)
-            {
-                conversion |= AudioConv::CONV_CHANNELS;
-            }
-
-            length = props->lengthInMilliseconds();
-        }
-        else if (ext == "flac")
-        {
-            AudioProps<FLAC>::type props = reinterpret_cast<AudioProps<FLAC>::type>(f.audioProperties());
-            conversion |= AudioConv::CONV_FORMAT;
-
-            if (props->bitsPerSample() != 16)
-            {
-                conversion |= AudioConv::CONV_BPS;
-            }
-
-            if (props->sampleRate() != 44100)
-            {
-                conversion |= AudioConv::CONV_SAMPLERATE;
-            }
-
-            if (props->channels() > 2)
-            {
-                conversion |= AudioConv::CONV_CHANNELS;
-            }
-
-            length = props->lengthInMilliseconds();
-        }
-        else if (ext == "ape")
-        {
-            AudioProps<APE>::type props = reinterpret_cast<AudioProps<APE>::type>(f.audioProperties());
-            conversion |= AudioConv::CONV_FORMAT;
-
-            if (props->bitsPerSample() != 16)
-            {
-                conversion |= AudioConv::CONV_BPS;
-            }
-
-            if (props->sampleRate() != 44100)
-            {
-                conversion |= AudioConv::CONV_SAMPLERATE;
-            }
-
-            if (props->channels() > 2)
-            {
-                conversion |= AudioConv::CONV_CHANNELS;
-            }
-
-            length = props->lengthInMilliseconds();
-        }
-        else
-        {
-            qWarning() << "Unsupported audio file extension:" << ext << "on file" << fi.fileName();
-            ret = -1;
+            length = pProps->lengthInMilliseconds();
         }
 
-        if ((pTag != nullptr) && (ret == 0))
+        if (pTag != nullptr)
         {
-            pTag->mAlbum  = QString::fromStdString(f.tag()->album().to8Bit(true));
-            pTag->mArtist = QString::fromStdString(f.tag()->artist().to8Bit(true));
-            pTag->mTitle  = QString::fromStdString(f.tag()->title().to8Bit(true));
-            pTag->mNumber = f.tag()->track();
-            pTag->mYear   = f.tag()->year();
+            if (f.tag() != nullptr)
+            {
+                pTag->mAlbum  = QString::fromStdString(f.tag()->album().to8Bit(true));
+                pTag->mArtist = QString::fromStdString(f.tag()->artist().to8Bit(true));
+                pTag->mTitle  = QString::fromStdString(f.tag()->title().to8Bit(true));
+                pTag->mNumber = f.tag()->track();
+                pTag->mYear   = f.tag()->year();
+            }
+            else
+            {
+                // we don't have much information to fill in ...
+                pTag->mAlbum  = "";
+                pTag->mArtist = "";
+                pTag->mTitle  = fi.baseName();
+                pTag->mNumber = 1;
+                pTag->mYear   = 1992;
+            }
         }
     }
     else if (ext == "aea")

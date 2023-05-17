@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false),
-      mTocManip(false), /* mpSpUpload(nullptr),*/ mpOtfEncode(nullptr),
+      mTocManip(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
       mpTocManip(nullptr)
 {
     ui->setupUi(this);
@@ -77,12 +77,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     mpMDDevice  = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
     mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
-    // mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
+    mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
     mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
     mpTocManip  = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
 
     ui->statusbar->addPermanentWidget(mpTocManip);
-    // ui->statusbar->addPermanentWidget(mpSpUpload);
+    ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
@@ -259,9 +259,8 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
         ui->tableViewCD->setColumnWidth(1, (width / 100) * 18);
 
         mpCDDevice->setText(mpRipper->deviceInfo().isEmpty() ? tr("Please re-load CD") : mpRipper->deviceInfo());
+        enableDialogItems(true);
     }
-
-    enableDialogItems(true);
 }
 
 void MainWindow::catchJson(QString j)
@@ -283,8 +282,8 @@ void MainWindow::catchJson(QString j)
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
     // support label ...
-    // mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
-    // mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
+    mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
+    mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
 
     mpOtfEncode->setStatusTip(otf ? tr("on-the-fly encoding supported by device") : tr("on-the-fly encoding not supported by device"));
     mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
@@ -295,14 +294,14 @@ void MainWindow::catchJson(QString j)
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
         // read only disc
-        delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive isn't writeable.\n"
-                                                                "Replace it with a writeable disc and reload the MD!"));
+        QMessageBox::information(this, tr("Information"), tr("The MD in your drive isn't writeable.\n"
+                                                             "Replace it with a writeable disc and reload the MD!"));
     }
     else if (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)
     {
         // write lock
-        delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive is write locked.\n"
-                                                                "Remove the write lock and reload the MD!"));
+        QMessageBox::information(this, tr("Information"), tr("The MD in your drive is write locked.\n"
+                                                             "Remove the write lock and reload the MD!"));
     }
 
     enableDialogItems(true);
@@ -389,9 +388,9 @@ void MainWindow::on_pushTransfer_clicked()
         // not enough space left on device
         time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
+        QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
         mWorkQueue.clear();
         enableDialogItems(true);
-        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t), 100);
     }
     else if (!mWorkQueue.isEmpty())
     {
@@ -563,7 +562,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             }
             mpRipper->removeTemp();
             enableDialogItems(true);
-            delayedPopUp(ePopUp::CRITICAL, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
+            QTimer::singleShot(500, [=]()->void{QMessageBox::critical(this, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));});
             return;
         }
 
@@ -683,7 +682,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             mWorkQueue.clear();
             mpRipper->removeTemp();
             enableDialogItems(true);
-            delayedPopUp(ePopUp::INFORMATION, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
+            QTimer::singleShot(500, [=]()->void{QMessageBox::information(this, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));});
         }
     }
 }
@@ -1015,9 +1014,9 @@ void MainWindow::on_pushDAO_clicked()
         // not enough space left on device
         time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
+        QMessageBox::warning(this, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t));
         mWorkQueue.clear();
         enableDialogItems(true);
-        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t), 100);
     }
     else if (!mWorkQueue.isEmpty())
     {
@@ -1244,16 +1243,16 @@ int MainWindow::parseCueFile(QString fileName)
                     {
                         if (length == -1)
                         {
-                            length = qRound((static_cast<double>(iLen) / 1000.0)
-                                            * static_cast<double>(CDIO_CD_FRAMES_PER_SEC)
-                                            - static_cast<double>(cueInfo.mStartLba));
+                            length = ((iLen * CDIO_CD_FRAMES_PER_SEC) / 1000) - cueInfo.mStartLba;
                         }
                     }
                     else
                     {
                         // unsupported audio (or whatever)
                         cd_delete(cd);
-                        tracks.clear();
+                        tracks = {
+                            {tr("Unsupported audio format in CUE sheet!")}
+                        };
                         qWarning() << "Unsupported audio format in CUE sheet!";
                         catchCDDBEntry(tracks);
                         return -1;
@@ -1371,13 +1370,7 @@ void MainWindow::delayedPopUp(ePopUp tp, const QString& caption, const QString& 
     switch(tp)
     {
     case ePopUp::CRITICAL:
-        QTimer::singleShot(wait, [=]()->void{QMessageBox::critical(this, caption, msg);});
-        break;
-    case ePopUp::INFORMATION:
-        QTimer::singleShot(wait, [=]()->void{QMessageBox::information(this, caption, msg);});
-        break;
-    case ePopUp::WARNING:
-        QTimer::singleShot(wait, [=]()->void{QMessageBox::warning(this, caption, msg);});
+        QTimer::singleShot(wait, [=]()->void{QMessageBox::critical(this, caption, msg)});
         break;
     }
 }

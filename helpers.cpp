@@ -22,6 +22,8 @@
 #include "defines.h"
 #include "mdtitle.h"
 
+static QStringList s_TempNames;
+
 static QMap<QString, QString> s_UmlautEnc = {
     {"à", "a"},
     {"À", "A"},
@@ -219,27 +221,40 @@ uint64_t arrayToUint(const char start[], int sz)
 //--------------------------------------------------------------------------
 QString tempFileName(const QString &templ)
 {
-    uint32_t seed = static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch() / 911);
+    uint32_t seed = static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch());
     QString ret = templ;
+    QRandomGenerator* pRand = QRandomGenerator::global();
 
-    for (auto& c : ret)
+    if (ret.contains(QChar('X')))
     {
-        if (c == 'X')
+        do
         {
-            if ((seed % 3) == 0)
+            for (auto& c : ret)
             {
-                c = QRandomGenerator::global()->bounded(static_cast<uint32_t>('a'), static_cast<uint32_t>('z'));
+                if (c == 'X')
+                {
+                    if ((seed % 3) == 0)
+                    {
+                        c = pRand->bounded(static_cast<uint32_t>('a'), static_cast<uint32_t>('z'));
+                    }
+                    else if ((seed % 3) == 1)
+                    {
+                        c = pRand->bounded(static_cast<uint32_t>('0'), static_cast<uint32_t>('9'));
+                    }
+                    else if ((seed % 3) == 2)
+                    {
+                        c = pRand->bounded(static_cast<uint32_t>('A'), static_cast<uint32_t>('Z'));
+                    }
+                    seed ++;
+                }
             }
-            else if ((seed % 3) == 1)
-            {
-                c = QRandomGenerator::global()->bounded(static_cast<uint32_t>('0'), static_cast<uint32_t>('9'));
-            }
-            else if ((seed % 3) == 2)
-            {
-                c = QRandomGenerator::global()->bounded(static_cast<uint32_t>('A'), static_cast<uint32_t>('Z'));
-            }
-            seed ++;
         }
+#ifdef Q_OS_WIN
+        while (s_TempNames.contains(ret, Qt::CaseSensitivity::CaseInsensitive));
+#else
+        while (s_TempNames.contains(ret, Qt::CaseSensitivity::CaseSensitive));
+#endif
+        s_TempNames << ret;
     }
 
     return ret;

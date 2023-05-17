@@ -106,12 +106,4 @@ namespace audio {
     int checkAudioFile(const QString& fileName, uint32_t& conversion,
                        int& length, STag* pTag = nullptr);
 
-    /// type generator
-    template <Supported T> struct AudioProps;
-    template <> struct AudioProps<APE>  { using type = TagLib::APE::Properties*;       }; // has bitsPerSample()
-    template <> struct AudioProps<FLAC> { using type = TagLib::FLAC::Properties*;      }; // has bitsPerSample()
-    template <> struct AudioProps<M4A>  { using type = TagLib::MP4::Properties*;       }; // has bitsPerSample()
-    template <> struct AudioProps<MP3>  { using type = TagLib::MPEG::Properties*;      }; // hasn't bitsPerSample()
-    template <> struct AudioProps<OGG>  { using type = TagLib::Vorbis::Properties*;    }; // hasn't bitsPerSample()
-    template <> struct AudioProps<WAVE> { using type = TagLib::RIFF::WAV::Properties*; }; // has bitsPerSample()
 }

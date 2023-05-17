@@ -56,6 +56,8 @@ int CFFMpeg::start(const QString& srcFileName, const QString trgFileName, const 
         params << "-ac" << "2";
     }
 
+    params << "-f" << "wav";
+
     params << trgFileName;
 
     return start(params);

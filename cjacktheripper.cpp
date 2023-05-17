@@ -687,35 +687,38 @@ CCDInitThread::CCDInitThread(QObject* parent, CdIo_t** ppCDIO, cdrom_drive_t** p
 
 void CCDInitThread::run()
 {
-    char **ppsz_cd_drives = nullptr;
-
-    if (mImgFile.isEmpty())
+    if (mDrvId != DRIVER_BINCUE)
     {
-        ppsz_cd_drives = cdio_get_devices_with_cap(nullptr, CDIO_FS_AUDIO, false);
-        if (ppsz_cd_drives && *ppsz_cd_drives)
-        {
-            mImgFile = *ppsz_cd_drives;
-            cdio_free_device_list(ppsz_cd_drives);
-        }
-    }
+        char **ppsz_cd_drives = nullptr;
 
-    if (!mImgFile.isEmpty())
-    {
-        *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), /* mDrvId */DRIVER_UNKNOWN);
-        if (*mppCDIO)
+        if (mImgFile.isEmpty())
         {
-            *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
-
-            if (*mppCDAudio)
+            ppsz_cd_drives = cdio_get_devices_with_cap(nullptr, CDIO_FS_AUDIO, false);
+            if (ppsz_cd_drives && *ppsz_cd_drives)
             {
-                if (cdio_cddap_open(*mppCDAudio) == 0)
-                {
-                    *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
-                }
+                mImgFile = *ppsz_cd_drives;
+                cdio_free_device_list(ppsz_cd_drives);
             }
-            else
+        }
+
+        if (!mImgFile.isEmpty())
+        {
+            *mppCDIO    = cdio_open(static_cast<const char*>(mImgFile.toUtf8()), /* mDrvId */DRIVER_UNKNOWN);
+            if (*mppCDIO)
             {
-                qInfo() << "Can't yet identify CDDA / image!";
+                *mppCDAudio = cdio_cddap_identify_cdio(*mppCDIO, CDDA_MESSAGE_FORGETIT, nullptr);
+
+                if (*mppCDAudio)
+                {
+                    if (cdio_cddap_open(*mppCDAudio) == 0)
+                    {
+                        *mppCDParanoia = cdio_paranoia_init(*mppCDAudio);
+                    }
+                }
+                else
+                {
+                    qInfo() << "Can't yet identify CDDA / image!";
+                }
             }
         }
     }

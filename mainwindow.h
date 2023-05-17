@@ -349,7 +349,7 @@ private:
     bool mTocManip;
 
     /// show SP download support
-    StatusWidget   *mpSpUpload;
+    // StatusWidget   *mpSpUpload;
 
     /// show on-the-fly support
     StatusWidget   *mpOtfEncode;
