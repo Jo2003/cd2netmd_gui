@@ -17,12 +17,13 @@
 #include "helpers.h"
 #include <QTextCodec>
 #include <QFileInfo>
-#include <QRandomGenerator>
 #include <QDateTime>
+#include <cstdlib>
 #include "defines.h"
 #include "mdtitle.h"
 
 static QStringList s_TempNames;
+static uint32_t s_Seed = 0;
 
 static QMap<QString, QString> s_UmlautEnc = {
     {"à", "a"},
@@ -221,33 +222,39 @@ uint64_t arrayToUint(const char start[], int sz)
 //--------------------------------------------------------------------------
 QString tempFileName(const QString &templ)
 {
-    uint32_t seed = static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch());
+    if (s_Seed == 0)
+    {
+        s_Seed = QDateTime::currentMSecsSinceEpoch();
+        std::srand(s_Seed);
+    }
     QString ret = templ;
-    QRandomGenerator* pRand = QRandomGenerator::global();
 
-    if (ret.contains(QChar('X')))
+    if (templ.contains(QChar('X')))
     {
         do
         {
+            ret = templ;
             for (auto& c : ret)
             {
                 if (c == 'X')
                 {
-                    if ((seed % 3) == 0)
+                    if ((s_Seed % 3) == 0)
                     {
-                        c = pRand->bounded(static_cast<uint32_t>('a'), static_cast<uint32_t>('z'));
+                        c = randRange('a', 'z');
                     }
-                    else if ((seed % 3) == 1)
+                    else if ((s_Seed % 3) == 1)
                     {
-                        c = pRand->bounded(static_cast<uint32_t>('0'), static_cast<uint32_t>('9'));
+                        c = randRange('0', '9');
                     }
-                    else if ((seed % 3) == 2)
+                    else if ((s_Seed % 3) == 2)
                     {
-                        c = pRand->bounded(static_cast<uint32_t>('A'), static_cast<uint32_t>('Z'));
+                        c = randRange('A', 'Z');
                     }
-                    seed ++;
+                    s_Seed ++;
                 }
             }
+            
+            qDebug() << ret;
         }
 #ifdef Q_OS_WIN
         while (s_TempNames.contains(ret, Qt::CaseSensitivity::CaseInsensitive));
@@ -258,4 +265,17 @@ QString tempFileName(const QString &templ)
     }
 
     return ret;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      create a pseudo random number in range a ... b
+//!
+//! @param[in]  a range start
+//! @param[in]  b range end
+//!
+//! @return     value in between a and b
+//--------------------------------------------------------------------------
+int randRange(int a, int b)
+{
+    return a + (std::rand() % (b - a));
 }

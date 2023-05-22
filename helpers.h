@@ -78,3 +78,13 @@ uint64_t arrayToUint(const char start[], int sz);
 //! @return     file name
 //--------------------------------------------------------------------------
 QString tempFileName(const QString& templ);
+
+//--------------------------------------------------------------------------
+//! @brief      create a pseudo random number in range a ... b
+//!
+//! @param[in]  a range start
+//! @param[in]  b range end
+//!
+//! @return     value in between a and b
+//--------------------------------------------------------------------------
+int randRange(int a, int b);
