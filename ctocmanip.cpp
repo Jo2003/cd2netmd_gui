@@ -110,7 +110,7 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
 
             if (good)
             {
-                return mpApi->finalizeTOC(15);
+                return mpApi->finalizeTOC();
             }
             else
             {

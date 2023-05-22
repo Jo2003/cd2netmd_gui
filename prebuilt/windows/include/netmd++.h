@@ -625,12 +625,14 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      finalize TOC through exploit
     //!
+    //! @param[in]  reset      do reset if true (default: false)
     //! @param[in]  resetWait  The optional reset wait time (15 seconds)
+    //!                        Only needed if reset is true
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(uint8_t resetWait = 15);
+    int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
 
 private:
     /// disc header

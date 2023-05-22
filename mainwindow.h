@@ -233,7 +233,7 @@ private slots:
     //! @param[in]  checkBusy  The check busy
     //! @param[in]  ret        if given return value from last transfer
     //--------------------------------------------------------------------------
-    void transferFinished(bool checkBusy, int ret = -999);
+    void transferFinished(bool checkBusy, int ret);
     
     //--------------------------------------------------------------------------
     //! @brief      Adds a md group.

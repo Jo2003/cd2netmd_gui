@@ -451,7 +451,7 @@ void MainWindow::ripFinished()
     if (noEnc)
     {
         // no encoding
-        transferFinished(true);
+        transferFinished(true, 0);
     }
     else
     {
@@ -482,7 +482,7 @@ void MainWindow::encodeFinished(bool checkBusy)
                 {
                     j.mStep = WorkStep::ENCODED;
                 }
-                transferFinished(true);
+                transferFinished(true, 0);
                 return;
             }
 
@@ -522,7 +522,7 @@ void MainWindow::encodeFinished(bool checkBusy)
         }
 
         countLabel(ui->labelExtEnc, WorkStep::RIPPED, tr("External-Encoder"));
-        transferFinished(true);
+        transferFinished(true, 0);
     }
 }
 
@@ -534,9 +534,7 @@ void MainWindow::encodeFinished(bool checkBusy)
 //--------------------------------------------------------------------------
 void MainWindow::transferFinished(bool checkBusy, int ret)
 {
-    // handle default value
-    ret = -999 ? 0 : ret;
-
+    qInfo() << "checkBusy:" << checkBusy << "ret:" << ret;
     if ((!checkBusy || !mpNetMD->busy()) && !mWorkQueue.isEmpty())
     {
         QString labText = tr("MD-Transfer");
@@ -576,10 +574,10 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 {
                     // mark all tracks as done
                     t.mStep = WorkStep::DONE;
-
-                    // add to MD list
-                    addMDTrack(mpMDmodel->discConf()->mTrkCount, static_cast<const char*>(utf8ToMd(t.mTitle)), trackMode, t.mLength);
                 }
+
+                // add to MD list
+                addMDTrack(mpMDmodel->discConf()->mTrkCount, tr("Re-insert MD for content!"), trackMode, 60.00);
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
             {
@@ -666,8 +664,12 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                     {
                         // set disc title
                         mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
+                        setMDTitle(ui->lineCDTitle->text());
                     }
-                    setMDTitle(ui->lineCDTitle->text());
+                    else
+                    {
+                        setMDTitle("DAO TOC Edit");
+                    }
                 }
             }
 
@@ -682,7 +684,12 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             mWorkQueue.clear();
             mpRipper->removeTemp();
             enableDialogItems(true);
-            delayedPopUp(ePopUp::INFORMATION, tr("Success"), tr("All (selected) tracks are transfered to MiniDisc!"));
+            QString info = tr("All (selected) tracks are transfered to MiniDisc!");
+            if (mDAOMode == CDaoConfDlg::DAO_SP)
+            {
+                info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please remove and re-insert the minidisc on your device as soon as possible!");
+            }
+            delayedPopUp(ePopUp::INFORMATION, tr("Success"), info);
         }
     }
 }
