@@ -546,18 +546,17 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
         if (ret < 0)
         {
-            mWorkQueue.clear();
-            if (mpXEnc->thread()->isRunning())
+            for (auto& t : mWorkQueue)
             {
-                mpXEnc->thread()->terminate();
-                mpXEnc->thread()->wait(1000);
+                // mark all tracks as failed
+                t.mStep = WorkStep::FAILED;
+
+                if (QFile::exists(t.mFileName))
+                {
+                    QFile::remove(t.mFileName);
+                }
             }
 
-            if (mpRipper->thread()->isRunning())
-            {
-                mpRipper->thread()->terminate();
-                mpRipper->thread()->wait(1000);
-            }
             mpRipper->removeTemp();
             enableDialogItems(true);
             delayedPopUp(ePopUp::CRITICAL, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));

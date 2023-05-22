@@ -30,7 +30,8 @@ enum class WorkStep : uint8_t
     ENCODE,     // transient
     ENCODED,    // steady
     TRANSFER,   // transient
-    DONE        // steady
+    DONE,       // steady
+    FAILED      // mark step(s) as failed.
 };
 
 struct SRipTrack
