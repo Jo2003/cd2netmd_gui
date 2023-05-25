@@ -165,6 +165,12 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
     int ret    = 0;
     conversion = 0;
 
+    if (!QFile::exists(fileName))
+    {
+        qWarning() << "Can't find" << fileName;
+        return -1;
+    }
+
     QFileInfo fi(fileName);
     QString ext = fi.suffix().toLower();
 #ifdef Q_OS_WIN
