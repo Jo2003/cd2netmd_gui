@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  */
 #include <QByteArray>
+#include <sstream>
 #include "ctocmanip.h"
 #include "defines.h"
 
@@ -85,6 +86,16 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
             }
 
             CNetMdTOC tocHlp(trackData.size() - 1, trackData.at(0).mLengthInMs, reinterpret_cast<uint8_t*>(tocData.data()));
+            std::ostringstream oss;
+
+            oss << std::endl
+                << "Read Disc Layout:" << std::endl
+                << "=================" << std::endl
+                << tocHlp.discInfo() << std::endl;
+            for(int j = 1; j <= tocHlp.trackCount(); j++)
+            {
+                oss << tocHlp.trackInfo(j);
+            }
 
             for (int j = 1; j < trackData.size(); j++)
             {
@@ -92,10 +103,15 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
             }
             tocHlp.setDiscTitle(trackData.at(0).mName.toStdString());
 
+            oss << "Finished Disc Layout:" << std::endl
+                << "=====================" << std::endl
+                << tocHlp.discInfo() << std::endl;
             for(int j = 1; j <= tocHlp.trackCount(); j++)
             {
-                qInfo() << tocHlp.trackInfo(j).c_str();
+                oss << tocHlp.trackInfo(j);
             }
+
+            qInfo() << oss.str().c_str();
 
             bool good = true;
             for (i = 0; i < 3; i++)

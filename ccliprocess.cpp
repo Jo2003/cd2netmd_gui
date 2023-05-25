@@ -42,10 +42,8 @@ void CCliProcess::run(const QString &program, const QStringList &arguments,
     QStringList args = arguments;
 
 #ifdef Q_OS_WIN
-    if (!nativeArgs.isEmpty())
-    {
-        setNativeArguments(nativeArgs);
-    }
+    // empty native args will clear last set args
+    setNativeArguments(nativeArgs);
 #else
     Q_UNUSED(nativeArgs)
 #endif // Q_OS_WIN

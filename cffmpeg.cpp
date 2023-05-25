@@ -149,6 +149,8 @@ void CFFMpeg::finishCopy(int exitCode, ExitStatus exitStatus)
         qInfo() << "File successfully decoded!";
     }
 
+    mLog += QString::fromUtf8(readAllStandardOutput());
+
     if (!mLog.isEmpty())
     {
         qDebug() << static_cast<const char*>(mLog.toUtf8());
