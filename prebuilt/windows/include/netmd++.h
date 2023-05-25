@@ -191,6 +191,7 @@ enum NetMdErr : int
     NETMDERR_OTHER         = -7,  ///< any other error
     NETMDERR_NOT_SUPPORTED = -8,  ///< not supported
     NETMDERR_INTERIM       = -9,  ///< interim
+    NETMDERR_AGAIN         = -10, ///< try again
 };
 
 /// track times
