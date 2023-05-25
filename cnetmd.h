@@ -141,8 +141,9 @@ private slots:
     //! @brief      the thread ended
     //!
     //! @param[in]  <unnamed>
+    //! @param[in]  <unnamed>
     //--------------------------------------------------------------------------
-    void procEnded(bool);
+    void procEnded(bool, int);
     
     //--------------------------------------------------------------------------
     //! @brief      extract percent from log
@@ -183,9 +184,9 @@ protected:
     //--------------------------------------------------------------------------
     //! @brief      get MD disc info
     //!
-    //! @return Json Byte Array
+    //! @return 0
     //--------------------------------------------------------------------------
-    QByteArray getDiscInfo();
+    int getDiscInfo();
 
     //--------------------------------------------------------------------------
     //! @brief write audio track to MD

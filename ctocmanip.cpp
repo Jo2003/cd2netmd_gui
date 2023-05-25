@@ -70,6 +70,11 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
         for (i = 0; i < 3; i++)
         {
             toc += mpApi->readUTOCSector(static_cast<UTOCSector>(i));
+            if (toc.size() != ((i + 1) * 2352))
+            {
+                qCritical() << "Error: Can't read UTOC sector" << i;
+                break;
+            }
         }
 
         if (toc.size() == 2352 * 3)

@@ -122,9 +122,9 @@ void CNetMD::initNetMdDevice()
 //--------------------------------------------------------------------------
 //! @brief      get MD disc info
 //!
-//! @return Json Byte Array
+//! @return 0
 //--------------------------------------------------------------------------
-QByteArray CNetMD::getDiscInfo()
+int CNetMD::getDiscInfo()
 {
     using namespace netmd;
 
@@ -133,7 +133,6 @@ QByteArray CNetMD::getDiscInfo()
     int i;
     uint16_t tc = 0;
 
-    QByteArray ret;
     std::string s;
     std::ostringstream os;
     
@@ -245,9 +244,17 @@ QByteArray CNetMD::getDiscInfo()
     tree.insert("tracks", tracks);
 
     QJsonDocument jdoc(tree);
-    ret = jdoc.toJson(QJsonDocument::Indented);
+    QByteArray ba = jdoc.toJson(QJsonDocument::Indented);
 
-    return ret;
+    if (ba.isEmpty())
+    {
+        ba = EMPTY_JSON_RESP;
+    }
+
+    emit jsonOut(static_cast<const char*>(ba));
+    qInfo() << static_cast<const char*>(ba);
+
+    return 0;
 }
 
 //--------------------------------------------------------------------------
@@ -399,15 +406,7 @@ void CNetMD::run()
     switch(mCurrJob.mCmd)
     {
     case NetMDCmd::DISCINFO:
-        {
-            QByteArray ba = getDiscInfo();
-            if (ba.isEmpty())
-            {
-                ba = EMPTY_JSON_RESP;
-            }
-            emit jsonOut(static_cast<const char*>(ba));
-            qInfo() << static_cast<const char*>(ba);
-        }
+        ret = getDiscInfo();
         break;
 
     case NetMDCmd::WRITE_TRACK_SP:
@@ -458,6 +457,12 @@ void CNetMD::run()
         qCritical() << "libnetmd action returned with error: " << ret;
     }
 
+    if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC)
+        || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
+    {
+        getDiscInfo();
+    }
+
     emit finished(false, ret);
 }
 
@@ -492,7 +497,7 @@ void CNetMD::extractPercent()
     }
 }
 
-void CNetMD::procEnded(bool)
+void CNetMD::procEnded(bool, int)
 {
     mTReadLog.stop();
 
@@ -503,11 +508,6 @@ void CNetMD::procEnded(bool)
     if (mfLog.isOpen())
     {
         mLog += QString::fromUtf8(mfLog.readAll());
-    }
-
-    if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC) || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
-    {
-        start({NetMDCmd::DISCINFO});
     }
 
     if (!mLog.isEmpty())
