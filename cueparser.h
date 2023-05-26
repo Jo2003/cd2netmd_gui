@@ -30,24 +30,23 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      track type
     //--------------------------------------------------------------------------
-    enum TrackType
-    {
-        AUDIO,  ///< Audio
-        DATA    ///< Data
-    };
+    using TrackType = c2n::TrackType;
 
     //--------------------------------------------------------------------------
     //! @brief      describes an audio track
     //--------------------------------------------------------------------------
     struct Track
     {
-        int mNo;            ///< track number (not index based)
-        TrackType mType;    ///< type \a TrackType
-        QString mTitle;     ///< track title
-        QString mPerformer; ///< artist / performer
-        QString mAudioFile; ///< audio file name
-        uint32_t mStartMs;  ///< start position in ms related to audio file
-        uint32_t mEndMs;    ///< end position related to audio file
+        int mNo;              ///< track number (not index based)
+        TrackType mType;      ///< type \a TrackType
+        QString mTitle;       ///< track title
+        QString mPerformer;   ///< artist / performer
+        QString mAudioFile;   ///< audio file name
+        uint32_t mStartMs;    ///< start position in ms related to audio file
+        uint32_t mEndMs;      ///< end position related to audio file
+        uint32_t mStartLba;   ///< start sector relative to pseudo CD
+        uint32_t mLbaCount;   ///< length in LBA
+        uint32_t mConversion; ///< any conversion needed?
 
         //----------------------------------------------------------------------
         //! @brief      Qstring conversion operator.
@@ -57,9 +56,11 @@ public:
             QString s;
             QTextStream ts(&s);
             ts << mNo << ") " << (!mPerformer.isEmpty() ? (mPerformer + " - ") : "") << mTitle << Qt::endl
-               << "\tFile: " << mAudioFile << Qt::endl
-               << "\tPosition: " << mStartMs << " ms ... " << mEndMs
-               << " ms, type: " << ((mType == AUDIO) ? "AUDIO" : "DATA");
+               << "\tFile: " << mAudioFile << ", type: " << ((mType == TrackType::AUDIO) ? "AUDIO" : "DATA") << Qt::endl
+               << "\ttime: " << mStartMs << " ms ... " << mEndMs
+               << " ms, lba start: " << mStartLba << ", count: " << mLbaCount
+               << ", conv.: " << QString::number(mConversion, 16) << "h";
+
             return s;
         }
     };
@@ -81,7 +82,7 @@ public:
         {
             QString s;
             QTextStream ts(&s);
-            ts << (!mPerformer.isEmpty() ? (mPerformer + " - ") : "") << mTitle << " (" << mLenInMs << " ms)\n";
+            ts << (!mPerformer.isEmpty() ? (mPerformer + " - ") : "") << mTitle << " (" << mLenInMs << " ms)" << Qt::endl;
             for (const auto& t : mTracks)
             {
                 ts << static_cast<QString>(t) << Qt::endl;
@@ -141,12 +142,22 @@ public:
     //!
     //! @return     track information or empty struct
     //--------------------------------------------------------------------------
-    const Track& track(int no);
+    const Track& track(int no) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      sanity check in Disc structure
+    //!
+    //! @return     true if valid; false if not
+    //--------------------------------------------------------------------------
+    bool isValid() const;
 
 private:
     /// stores disc information
     Disc  mDiscData{"", "", 0, {}};
 
     /// stores an empty track
-    Track mEmptyTrack{-1, DATA, "", "", "", 0, 0};
+    Track mEmptyTrack{-1, TrackType::DATA, "", "", "", 0, 0, 0, 0, 0};
+
+    /// validness flag
+    bool mValid{false};
 };

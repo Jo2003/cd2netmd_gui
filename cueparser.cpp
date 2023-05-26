@@ -55,15 +55,37 @@ CueParser::CueParser(const QString &cueFileName)
 int CueParser::parse(const QString &cueFileName)
 {
     int ret = 0;
+
+    // You thought this would be nice? You're wrong!
+
+    // get title string
     QRegExp rxpTitle("^TITLE\\s+(.*)$");
+
+    // get performer
     QRegExp rxpPerf("^PERFORMER\\s+(.*)$");
+
+    // get track
     QRegExp rxpTrack("^TRACK\\s+([0-9]+)\\s+([A-Za-z]+)$");
+
+    // get INDEX 01
     QRegExp rxpIndex("^INDEX\\s+01\\s+([0-9:]+)$");
+
+    // get audio file
     QRegExp rxpFile("^FILE\\s+(.*)\\s+([A-Za-z]+)$");
+
+    // pre-filter
     QRegExp rxpUse("^(TITLE|PERFORMER|TRACK|INDEX\\s+01|FILE).*$");
 
     QFile cueFile(cueFileName);
     QFileInfo cfi(cueFileName);
+
+    bool inTrack = false;
+    Track track;
+    QString file, lastFile;
+    TrackType ftype = TrackType::DATA, ttype = TrackType::DATA;
+    int audLengthMs = 0;
+    uint32_t audConv = 0;
+    mDiscData = {"", "", 0, {}};
 
     try
     {
@@ -72,29 +94,36 @@ int CueParser::parse(const QString &cueFileName)
             mCueThrow(-1, "Can't open cue file " << cueFileName);
         }
 
-        bool inTrack = false;
-        Track track;
-        QString file;
-        TrackType ftype = DATA, ttype = DATA;
-        mDiscData = {"", "", 0, {}};
         QTextStream in(&cueFile);
+
         while (!in.atEnd())
         {
             QString line = in.readLine().trimmed();
 
             // check for needed information
-            if (rxpUse.indexIn(line) > -1)
+            if (rxpUse.indexIn(line) > -1) // pre-filter!
             {
-                if (rxpFile.indexIn(line) > -1)
+                if (rxpFile.indexIn(line) > -1) // Audio file
                 {
+                    lastFile = file;
                     file = rxpFile.cap(1).replace(QChar('"'), "");
 
                     // remove any directory part
                     QFileInfo afi(file);
                     file = afi.fileName();
-                    ftype = (rxpFile.cap(2).toUpper() == "WAVE") ? AUDIO : DATA;
+
+                    if (lastFile != file)
+                    {
+                        // get additional information from audio file
+                        if (audio::checkAudioFile(cfi.canonicalPath() + "/" + file, audConv, audLengthMs) != 0)
+                        {
+                            mCueThrow(-4, "Can't recognize audio file " << file);
+                        }
+                    }
+
+                    ftype = (rxpFile.cap(2).toUpper() == "WAVE") ? TrackType::AUDIO : TrackType::DATA;
                 }
-                else if (rxpTitle.indexIn(line) > -1)
+                else if (rxpTitle.indexIn(line) > -1) // title (disc or track)
                 {
                     if (inTrack)
                     {
@@ -105,7 +134,7 @@ int CueParser::parse(const QString &cueFileName)
                         mDiscData.mTitle = rxpTitle.cap(1).replace(QChar('"'), "");
                     }
                 }
-                else if (rxpPerf.indexIn(line) > -1)
+                else if (rxpPerf.indexIn(line) > -1) // performer / artist (disc or track)
                 {
                     if (inTrack)
                     {
@@ -116,7 +145,7 @@ int CueParser::parse(const QString &cueFileName)
                         mDiscData.mPerformer = rxpPerf.cap(1).replace(QChar('"'), "");
                     }
                 }
-                else if (rxpTrack.indexIn(line) > -1)
+                else if (rxpTrack.indexIn(line) > -1) // track
                 {
                     if (inTrack)
                     {
@@ -130,18 +159,20 @@ int CueParser::parse(const QString &cueFileName)
                         mDiscData.mTracks.append(track);
 
                         // cleanup track structure
-                        track = {-1, DATA, "", "", "", 0, 0};
+                        track = {-1, TrackType::DATA, "", "", "", 0, 0, 0, 0, 0};
                     }
 
                     inTrack = true;
                     track.mNo = rxpTrack.cap(1).toUInt();
-                    ttype = (rxpTrack.cap(2).toUpper() == "AUDIO") ? AUDIO : DATA;
+                    ttype = (rxpTrack.cap(2).toUpper() == "AUDIO") ? TrackType::AUDIO : TrackType::DATA;
                 }
-                else if (rxpIndex.indexIn(line) > -1)
+                else if (rxpIndex.indexIn(line) > -1) // index 01
                 {
                     // file mentioned before INDEX 01 is the track file
-                    track.mAudioFile = file;
-                    track.mType = ((ttype == ftype) && (ftype == AUDIO)) ? AUDIO : DATA;
+                    track.mAudioFile  = file;
+                    track.mConversion = audConv;
+                    track.mEndMs      = static_cast<uint32_t>(audLengthMs);
+                    track.mType = ((ttype == ftype) && (ftype == TrackType::AUDIO)) ? TrackType::AUDIO : TrackType::DATA;
 
                     QString idx = rxpIndex.cap(1);
                     auto idxs = idx.split(QChar(':'));
@@ -149,26 +180,13 @@ int CueParser::parse(const QString &cueFileName)
                     {
                         uint32_t msec = idxs.at(0).toUInt() * 60 * 1000; // minutes
                         msec += idxs.at(1).toUInt() * 1000;              // seconds
-                        msec += idxs.at(2).toUInt() * 10;                // 100ts of seconds
+                        msec += idxs.at(2).toUInt() * 10;                // 100ths of seconds
                         track.mStartMs = msec;
 
                         // we must mark the end of the former track
-                        if (!mDiscData.mTracks.isEmpty())
+                        if (!mDiscData.mTracks.isEmpty() && msec)
                         {
-                            Track& lastTrack = mDiscData.mTracks[mDiscData.mTracks.size() - 1];
-                            if (msec)
-                            {
-                                lastTrack.mEndMs = msec;
-                            }
-                            else
-                            {
-                                uint32_t conv = 0;
-                                int length = 0;
-                                if (audio::checkAudioFile(cfi.canonicalPath() + "/" + lastTrack.mAudioFile, conv, length) == 0)
-                                {
-                                    lastTrack.mEndMs = static_cast<uint32_t>(length);
-                                }
-                            }
+                            mDiscData.mTracks[mDiscData.mTracks.size() - 1].mEndMs = msec;
                         }
                     }
                     else
@@ -197,20 +215,17 @@ int CueParser::parse(const QString &cueFileName)
                 track.mPerformer = mDiscData.mPerformer;
             }
 
-            uint32_t conv = 0;
-            int length = 0;
-            if (audio::checkAudioFile(cfi.canonicalPath() + "/" + track.mAudioFile, conv, length) == 0)
-            {
-                track.mEndMs = static_cast<uint32_t>(length);
-            }
-
             // store track
             mDiscData.mTracks.append(track);
         }
 
-        // compute disc length
-        for (const auto& t : mDiscData.mTracks)
+        // compute disc length and LBA stuff
+        uint32_t lba = 0;
+        for (auto& t : mDiscData.mTracks)
         {
+            t.mStartLba = lba;
+            t.mLbaCount = qRound((static_cast<double>(t.mEndMs - t.mStartMs) / 1000.0) * 75.0);
+            lba += t.mLbaCount;
             mDiscData.mLenInMs += t.mEndMs - t.mStartMs;
         }
 
@@ -225,6 +240,35 @@ int CueParser::parse(const QString &cueFileName)
     {
         qWarning() << "Unknown error while parsing cue file" << cueFileName;
         ret = -1;
+    }
+
+    // sanity check
+    if (ret == 0)
+    {
+        mValid = true;
+        if (!mDiscData.mTracks.isEmpty() && (mDiscData.mLenInMs > 0))
+        {
+            for (const auto& t : mDiscData.mTracks)
+            {
+                if ((t.mEndMs == 0)
+                    || t.mAudioFile.isEmpty()
+                    || ((t.mNo < 1) || (t.mNo > mDiscData.mTracks.size())))
+                {
+                    mValid = false;
+                    ret = -1;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            mValid = false;
+            ret = -1;
+        }
+    }
+    else
+    {
+        mValid = false;
     }
 
     return ret;
@@ -277,7 +321,7 @@ uint32_t CueParser::discLength() const
 //!
 //! @return     track information or empty struct
 //--------------------------------------------------------------------------
-const CueParser::Track &CueParser::track(int no)
+const CueParser::Track &CueParser::track(int no) const
 {
     if ((no <= mDiscData.mTracks.size()) && (no > -1))
     {
@@ -288,4 +332,14 @@ const CueParser::Track &CueParser::track(int no)
     {
         return mEmptyTrack;
     }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      sanity check in Disc structure
+//!
+//! @return     true if valid; false if not
+//--------------------------------------------------------------------------
+bool CueParser::isValid() const
+{
+    return mValid;
 }

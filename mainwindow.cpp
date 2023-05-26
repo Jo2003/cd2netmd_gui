@@ -24,7 +24,7 @@
 #include <QTimer>
 #include <QFileDialog>
 #include <QDesktopServices>
-#include <libcue.h>
+#include "cueparser.h"
 #include "helpers.h"
 
 using namespace c2n;
@@ -1177,161 +1177,72 @@ int MainWindow::parseCueFile(QString fileName)
     int ret = -1;
     c2n::STrackInfo cueInfo;
     c2n::AudioTracks tracks;
-    tracks.setListType(c2n::AudioTracks::CUE_SHEET);
-    QFile cuefile(fileName);
     QFileInfo fi(fileName);
-    QString lastSrcFile;
-    QString discPerformer;
+    tracks.setListType(c2n::AudioTracks::CUE_SHEET);
 
-    if (cuefile.open(QIODevice::ReadOnly))
+    CueParser* pParser = new CueParser(fileName);
+    if (pParser)
     {
-        Cd* cd = cue_parse_string(static_cast<const char*>(cuefile.readAll()));
-
-        if (cd != nullptr)
+        if (pParser->isValid())
         {
+            // all well ...
             ret = 0;
 
-            int noTracks = cd_get_ntrack(cd);
-            const char* tok;
-            QString track, performer, title;
-            long length = 0;
-
-            // disc title
-            Cdtext* cdt = cd_get_cdtext(cd);
-            tok = cue_cdtext_get(PTI_PERFORMER, cdt);
-
-            if (tok)
+            // disc info
+            QString discArtist = pParser->discPerfromer();
+            if (!discArtist.isEmpty())
             {
-                performer = QString(tok).trimmed();
-                discPerformer = performer;
-                track     = QString("%1 - ").arg(performer);
+                cueInfo.mTitle = discArtist + " - ";
+            }
+            cueInfo.mTitle += pParser->discTitle();
+
+            // in case no title is stored, use file name
+            if (cueInfo.mTitle.isEmpty())
+            {
+                cueInfo.mTitle = titleFromFileName(fileName);
             }
 
-            tok = cue_cdtext_get(PTI_TITLE, cdt);
-            if (tok)
+            if (cueInfo.mTitle.isEmpty())
             {
-                title = QString(tok).trimmed();
-                if (title.indexOf(performer) != -1)
-                {
-                    track = title;
-                }
-                else
-                {
-                    track += title;
-                }
+                cueInfo.mTitle = tr("<untitled>");
             }
-
-            if (track.isEmpty())
-            {
-                track = tr("<untitled>");
-            }
-
-            cueInfo.mTitle = track;
+            cueInfo.mLbCount = qRound((static_cast<double>(pParser->discLength()) / 1000.0) * 75.0);
             tracks.append(cueInfo);
 
-            // process other tracks
-            for (int i  = 1; i <= noTracks; i++)
+            // tracks ...
+            for (int i = 1; i <= pParser->trackCount(); i++)
             {
-                track = performer = title = "";
-                Track* t = cd_get_track(cd, i);
-                cdt = track_get_cdtext(t);
+                const CueParser::Track& t = pParser->track(i);
 
-                length = track_get_length(t);
-                cueInfo.mStartLba = track_get_start(t);
-                cueInfo.mFileName = QString("%1/%2").arg(fi.absolutePath()).arg(track_get_filename(t));
-
-                if ((lastSrcFile != cueInfo.mFileName) || (length == -1))
+                cueInfo.mFileName   = fi.canonicalPath() + "/" + t.mAudioFile;
+                cueInfo.mStartLba   = t.mStartLba;
+                cueInfo.mLbCount    = t.mLbaCount;
+                cueInfo.mCDTrackNo  = t.mNo;
+                cueInfo.mConversion = t.mConversion;
+                cueInfo.mTType      = t.mType;
+                cueInfo.mTitle      = "";
+                if (!t.mPerformer.isEmpty() && (t.mPerformer != discArtist))
                 {
-                    lastSrcFile = cueInfo.mFileName;
-
-                    int iLen = 0;
-                    if (!audio::checkAudioFile(cueInfo.mFileName, cueInfo.mConversion, iLen))
-                    {
-                        if (length == -1)
-                        {
-                            length = qRound((static_cast<double>(iLen) / 1000.0)
-                                            * static_cast<double>(CDIO_CD_FRAMES_PER_SEC)
-                                            - static_cast<double>(cueInfo.mStartLba));
-                        }
-                    }
-                    else
-                    {
-                        // unsupported audio (or whatever)
-                        cd_delete(cd);
-                        tracks.clear();
-                        qWarning() << "Unsupported audio format in CUE sheet!";
-                        catchCDDBEntry(tracks);
-                        return -1;
-                    }
+                    cueInfo.mTitle  = t.mPerformer + " - ";
                 }
-
-                cueInfo.mLbCount = length;
-                tok = cue_cdtext_get(PTI_PERFORMER, cdt);
-
-                if (tok)
-                {
-                    performer = QString(tok).trimmed();
-                    if (performer != discPerformer)
-                    {
-                        track = QString("%1 - ").arg(performer);
-                    }
-                }
-
-                tok = cue_cdtext_get(PTI_TITLE, cdt);
-                if (tok)
-                {
-                    title = QString(tok).trimmed();
-                    if (title.indexOf(performer) != -1)
-                    {
-                        track = title;
-                    }
-                    else
-                    {
-                        track += title;
-                    }
-                }
+                cueInfo.mTitle     += t.mTitle;
 
                 // in case no title is stored, use file name
-                if (track.isEmpty())
+                if (cueInfo.mTitle.isEmpty())
                 {
-                    track = titleFromFileName({track_get_filename(t)});
+                    cueInfo.mTitle = titleFromFileName(cueInfo.mFileName);
                 }
 
-                if (track.isEmpty())
+                if (cueInfo.mTitle.isEmpty())
                 {
-                    track = tr("<untitled>");
+                    cueInfo.mTitle = tr("<untitled>");
                 }
-
-                qDebug() << i << track << track_get_start(t) << track_get_length(t);
-                cueInfo.mTitle = track;
                 tracks.append(cueInfo);
             }
-
-            if (!tracks.empty())
-            {
-                length = 0;
-                for (const auto& t : tracks)
-                {
-                    if (t.mLbCount > 0)
-                    {
-                        length += t.mLbCount;
-                    }
-                    qInfo() << "Title extracted from CUE file: " << t.mTitle;
-                }
-                tracks[0].mLbCount = length;
-            }
-
-            cd_delete(cd);
         }
-        else
-        {
-            qWarning() << "Error parsing CUE file" << fileName;
-        }
+        delete pParser;
     }
-    else
-    {
-        qWarning() << "Can't open CUE file" << fileName;
-    }
+
     mpRipper->setDeviceInfo("Cue Sheet");
     catchCDDBEntry(tracks);
     return ret;
