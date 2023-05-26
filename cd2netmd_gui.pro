@@ -65,6 +65,7 @@ SOURCES += \
     cnamingdialog.cpp \
     cnetmd.cpp \
     ctocmanip.cpp \
+    cueparser.cpp \
     cxenc.cpp \
     cffmpeg.cpp \
     main.cpp \
@@ -89,6 +90,7 @@ HEADERS += \
     cnamingdialog.h \
     cnetmd.h \
     ctocmanip.h \
+    cueparser.h \
     cxenc.h \
     cffmpeg.h \
     defines.h \

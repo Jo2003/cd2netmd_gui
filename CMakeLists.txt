@@ -120,6 +120,7 @@ add_executable(netmd_wizard
     settingsdlg.cpp
     statuswidget.cpp
     ctocmanip.cpp
+    cueparser.cpp
     resources.qrc
     qdarkstyle/dark/darkstyle.qrc
     qdarkstyle/light/lightstyle.qrc
