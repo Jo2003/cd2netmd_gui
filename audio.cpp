@@ -103,7 +103,7 @@ int stripWaveHeader(QFile& fWave, size_t& waveDataSize)
     try
     {
         // read WAV header
-        QByteArray data = fWave.read(256);
+        QByteArray data = fWave.read(2048);
         int pos;
 
         if ((pos = data.indexOf("data")) == -1)

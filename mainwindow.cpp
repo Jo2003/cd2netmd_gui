@@ -1045,32 +1045,10 @@ void MainWindow::on_pushSettings_clicked()
 
 void MainWindow::on_pushLoadImg_clicked()
 {
-    QString selfilter;
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CD Image File"), "", tr("Cue Sheet (*.cue)"));
-    driver_id_t tp;
-
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Cue Sheet File"), "", tr("Cue Sheet (*.cue)"));
     if (!fileName.isEmpty())
     {
-        QFileInfo fi(fileName);
-        if (fi.completeSuffix().contains("toc"))
-        {
-            tp = DRIVER_CDRDAO;
-        }
-        else if (fi.completeSuffix().contains("cue"))
-        {
-            tp = DRIVER_BINCUE;
-        }
-        else if (fi.completeSuffix().contains("nrg"))
-        {
-            tp = DRIVER_NRG;
-        }
-        else
-        {
-            QMessageBox::critical(this, tr("Not supported!"), tr("Sorry! Chosen CD image file isn't supported!"));
-            return;
-        }
-
-        mpRipper->init(mpSettings->cddb(), tp, fileName);
+        parseCueFile(fileName);
     }
 }
 
@@ -1107,7 +1085,7 @@ void MainWindow::catchDropped(QStringList sl)
         {
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;
-            trackInfo.mLbCount  = ((length * CDIO_CD_FRAMES_PER_SEC) / 1000);
+            trackInfo.mLbCount  = qRound((static_cast<double>(length) / 1000.0) * static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
             wholeLength        += trackInfo.mLbCount;
 
             if (!tag.mTitle.isEmpty())

@@ -221,8 +221,15 @@ int CueParser::parse(const QString &cueFileName)
 
         // compute disc length and LBA stuff
         uint32_t lba = 0;
+        lastFile = "";
         for (auto& t : mDiscData.mTracks)
         {
+            if (lastFile != t.mAudioFile)
+            {
+                // new file means we start from 0
+                lba = 0;
+            }
+            lastFile = t.mAudioFile;
             t.mStartLba = lba;
             t.mLbaCount = qRound((static_cast<double>(t.mEndMs - t.mStartMs) / 1000.0) * 75.0);
             lba += t.mLbaCount;

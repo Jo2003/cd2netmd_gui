@@ -56,9 +56,7 @@ int CFFMpeg::start(const QString& srcFileName, const QString trgFileName, const 
         params << "-ac" << "2";
     }
 
-    params << "-f" << "wav";
-
-    params << trgFileName;
+    params << "-f" << "wav" << "-map_metadata" << "-1" << trgFileName;
 
     return start(params);
 }
@@ -128,15 +126,15 @@ int CFFMpeg::concatFiles(const QStringList& sources, const QString& target)
     concatComplex = QString(concatTmpl2).arg(concatComplex).arg(sources.size());
 
     // convert to wave, 44.1kHz, 16 bit
-    params << "-y";
-    params << "-acodec" << "pcm_s16le";
-    params << "-ar" << "44100";
-    params << "-ac" << "2";
-    params << "-filter_complex";
+    params << "-y"
+           << "-acodec" << "pcm_s16le"
+           << "-ar" << "44100"
+           << "-ac" << "2"
+           << "-filter_complex";
 #ifdef Q_OS_WIN
-    concatComplex += R"( -map "[out]" -f wav ")" + target + R"(")";
+    concatComplex += R"( -map "[out]" -f wav -map_metadata -1 ")" + target + R"(")";
 #else
-    params << concatComplex << "-map" << "[out]" << "-f" << "wav" << target;
+    params << concatComplex << "-map" << "[out]" << "-f" << "wav" << "-map_metadata" << "-1" << target;
     concatComplex = "";
 #endif
     return start(params, concatComplex);
@@ -153,7 +151,7 @@ void CFFMpeg::finishCopy(int exitCode, ExitStatus exitStatus)
 
     if (!mLog.isEmpty())
     {
-        qDebug() << static_cast<const char*>(mLog.toUtf8());
+        qDebug().noquote() << Qt::endl << static_cast<const char*>(mLog.toUtf8());
     }
 
     emit fileDone();

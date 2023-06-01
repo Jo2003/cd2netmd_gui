@@ -224,7 +224,7 @@ QString tempFileName(const QString &templ)
 {
     if (s_Seed == 0)
     {
-        s_Seed = QDateTime::currentMSecsSinceEpoch();
+        s_Seed = QDateTime::currentMSecsSinceEpoch() & 0xffffffff;
         std::srand(s_Seed);
     }
     QString ret = templ;
@@ -250,7 +250,8 @@ QString tempFileName(const QString &templ)
                     {
                         c = randRange('A', 'Z');
                     }
-                    s_Seed ++;
+
+                    s_Seed += randRange(0, 2);
                 }
             }
             
@@ -277,5 +278,5 @@ QString tempFileName(const QString &templ)
 //--------------------------------------------------------------------------
 int randRange(int a, int b)
 {
-    return a + (std::rand() % (b - a));
+    return a + (std::rand() % ((b + 1) - a));
 }

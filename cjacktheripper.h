@@ -59,12 +59,10 @@ public:
     //! @brief      Initializes from CD image / CD drive
     //!
     //! @param[in]  cddb if true, do cddb request
-    //! @param[in]  tp driver id type (optional)
-    //! @param[in]  name image file name (optional)
     //!
     //! @return     0 -> ok
     //--------------------------------------------------------------------------
-    int init(bool cddb, driver_id_t tp = DRIVER_UNKNOWN, const QString& name = QString());
+    int init(bool cddb);
     
     //--------------------------------------------------------------------------
     //! @brief      cleanup time
@@ -273,15 +271,11 @@ public:
     //! @param      ppCDIO        The pp cdio
     //! @param      ppCDAudio     The pp cd audio
     //! @param      ppCDParanoia  The pp cd paranoia
-    //! @param      drv           optional driver type
-    //! @param      imgFile       optional CD image file name
     //--------------------------------------------------------------------------
     CCDInitThread(QObject* parent,
                   CdIo_t** ppCDIO,
                   cdrom_drive_t** ppCDAudio,
-                  cdrom_paranoia_t** ppCDParanoia,
-                  driver_id_t drv = DRIVER_UNKNOWN,
-                  const QString& imgFile = QString());
+                  cdrom_paranoia_t** ppCDParanoia);
     
     //--------------------------------------------------------------------------
     //! @brief      thread function
@@ -292,8 +286,6 @@ protected:
     CdIo_t** mppCDIO;
     cdrom_drive_t** mppCDAudio;
     cdrom_paranoia_t** mppCDParanoia;
-    QString mImgFile;
-    driver_id_t mDrvId;
 
 signals:
     //--------------------------------------------------------------------------
