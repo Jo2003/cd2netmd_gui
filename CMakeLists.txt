@@ -31,7 +31,6 @@ find_library(LIB_USB NAMES usb-1.0 libusb-1.0 Hint /usr/lib/x86_64-linux-gnu)
 pkg_check_modules(CDIO REQUIRED libcdio)
 pkg_check_modules(CDDA REQUIRED libcdio_cdda)
 pkg_check_modules(PARANOIA REQUIRED libcdio_paranoia)
-pkg_check_modules(CUE REQUIRED libcue)
 pkg_check_modules(LIBISO REQUIRED libiso9660)
 pkg_check_modules(LIBUDF REQUIRED libudf)
 pkg_check_modules(TAGLIB REQUIRED taglib)
@@ -48,7 +47,6 @@ set(IDIRS
     ${CDIO_INCLUDE_DIRS}
 	${CDDA_INCLUDE_DIRS}
 	${PARANOIA_INCLUDE_DIRS}
-	${CUE_INCLUDE_DIRS}
 	${LIBISO_INCLUDE_DIRS}
 	${LIBUDF_INCLUDE_DIRS}
 	${TAGLIB_INCLUDE_DIRS}
@@ -66,7 +64,6 @@ set(LDIRS
 	${CDIO_LIBRARY_DIRS}
 	${CDDA_LIBRARY_DIRS}
 	${PARANOIA_LIBRARY_DIRS}
-	${CUE_LIBRARY_DIRS}
 	${LIBISO_LIBRARY_DIRS}
 	${LIBUDF_LIBRARY_DIRS}
 	${TAGLIB_LIBRARY_DIRS}
@@ -82,7 +79,6 @@ set(SLIBS
     ${CDIO_LIBRARIES}
 	${CDDA_LIBRARIES}
 	${PARANOIA_LIBRARIES}
-	${CUE_LIBRARIES}
 	${LIBISO_LIBRARIES}
 	${LIBUDF_LIBRARIES}
 	${TAGLIB_LIBRARIES}
@@ -120,6 +116,7 @@ add_executable(netmd_wizard
     settingsdlg.cpp
     statuswidget.cpp
     ctocmanip.cpp
+    cueparser.cpp
     resources.qrc
     qdarkstyle/dark/darkstyle.qrc
     qdarkstyle/light/lightstyle.qrc
@@ -130,7 +127,6 @@ set(MYCFLAGS
 	${CDIO_CFLAGS_OTHER}
 	${CDDA_CFLAGS_OTHER}
 	${PARANOIA_CFLAGS_OTHER}
-	${CUE_CFLAGS_OTHER}
 	${LIBISO_CFLAGS_OTHER}
 	${LIBUDF_CFLAGS_OTHER}
 	${TAGLIB_CFLAGS_OTHER}

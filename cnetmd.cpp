@@ -62,8 +62,6 @@ CNetMD::~CNetMD()
         mLogStream.close();
     }
 
-    QFile::remove(mNameFLog);
-
     if (mpApi != nullptr)
     {
         delete mpApi;
@@ -512,6 +510,6 @@ void CNetMD::procEnded(bool, int)
 
     if (!mLog.isEmpty())
     {
-        qInfo() << "\n" << static_cast<const char*>(mLog.toUtf8());
+        qInfo().noquote() << Qt::endl << static_cast<const char*>(mLog.toUtf8());
     }
 }
