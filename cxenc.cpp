@@ -98,8 +98,8 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength, co
 #else
         qInfo() << XENC_CLI << params;
         run(XENC_CLI, params);
-    }
 #endif
+    }
     return 0;
 }
 
