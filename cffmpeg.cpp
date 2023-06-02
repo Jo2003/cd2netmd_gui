@@ -163,13 +163,15 @@ void CFFMpeg::finishCopy(int exitCode, ExitStatus exitStatus)
 void CFFMpeg::extractPercent()
 {
     mLog += QString::fromUtf8(readAllStandardOutput());
-    int length = -1, currPos = -1;
+    int length = 0, currPos = 0, from = 0;
 
-    QRegExp rxDuration(R"(Duration: ([0-9]+):([0-9]+):([0-9]+).*)");
-    QRegExp rxPosition(R"(time=([0-9]+):([0-9]+):([0-9]+).*)");
+    QRegExp rxDuration("Duration:\\s+([0-9]+):([0-9]+):([0-9]+)");
+    QRegExp rxPosition("time=([0-9]+):([0-9]+):([0-9]+)");
 
-    if (mLog.indexOf(rxDuration) > -1)
+    while ((from = mLog.indexOf(rxDuration, from)) > -1)
     {
+        from += rxDuration.matchedLength();
+
         // hours
         length += rxDuration.cap(1).toInt() * 3600;
 
@@ -192,7 +194,7 @@ void CFFMpeg::extractPercent()
         currPos += rxPosition.cap(3).toInt();
     }
 
-    if ((length != -1) && (currPos != -1) && (length != 0))
+    if ((currPos != 0) && (length != 0))
     {
         emit progress((currPos * 100) / length);
     }

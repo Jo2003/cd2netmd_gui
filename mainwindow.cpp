@@ -268,14 +268,7 @@ void MainWindow::catchJson(QString j)
     recreateTreeView(j);
     bool otf = !!mpMDmodel->discConf()->mOTFEnc;
 
-    if (!otf)
-    {
-        mpSettings->enaDisaOtf(false, false);
-    }
-    else
-    {
-        mpSettings->enaDisaOtf(true, true);
-    }
+    mpSettings->enaDisaOtf(mpSettings->onthefly(true), otf);
 
     mTocManip = !!mpMDmodel->discConf()->mTocManip;
 

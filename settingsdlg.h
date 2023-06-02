@@ -62,9 +62,11 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      is on-the-fly-transfer enabled
     //!
+    //! @param[in]  statusOnly get checked status only (optional)
+    //!
     //! @return     true if enabled
     //--------------------------------------------------------------------------
-    bool onthefly() const;
+    bool onthefly(bool statusOnly = false) const;
     
     //--------------------------------------------------------------------------
     //! @brief      set / enable / diable on-the-fly checkbox

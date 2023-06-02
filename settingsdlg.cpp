@@ -55,9 +55,23 @@ bool SettingsDlg::paranoia() const
     return ui->checkParanoia->isChecked();
 }
 
-bool SettingsDlg::onthefly() const
+//--------------------------------------------------------------------------
+//! @brief      is on-the-fly-transfer enabled
+//!
+//! @param[in]  statusOnly get checked status only (optional)
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::onthefly(bool statusOnly) const
 {
-    return ui->checkOTFEnc->isChecked();
+    if (statusOnly)
+    {
+        return ui->checkOTFEnc->isChecked();
+    }
+    else
+    {
+        return ui->checkOTFEnc->isChecked() && ui->checkOTFEnc->isEnabled();
+    }
 }
 
 void SettingsDlg::enaDisaOtf(bool check, bool ena)
