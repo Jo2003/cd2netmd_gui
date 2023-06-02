@@ -17,6 +17,7 @@
 #pragma once
 #include "ccliprocess.h"
 #include <QFile>
+#include <QTimer>
 #include "defines.h"
 
 //------------------------------------------------------------------------------
@@ -80,10 +81,11 @@ public:
     //! @param[in]  cmd          The command
     //! @param[in]  tmpFileName  The temporary file name
     //! @param[in]  trackLength  The track length
+    //! @param[in]  at3tool      optional path to alternate encoder
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int start(XEncCmd cmd, const QString& tmpFileName, double trackLength);
+    int start(XEncCmd cmd, const QString& tmpFileName, double trackLength, const QString& at3tool = "");
     
     //--------------------------------------------------------------------------
     //! @brief      start the encoder
@@ -91,10 +93,11 @@ public:
     //! @param[in]  cmd         The command
     //! @param[in]  queue       The queue
     //! @param[in]  discLength  The disc length
+    //! @param[in]  at3tool     optional path to alternate encoder
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int start(XEncCmd cmd, const c2n::TransferQueue& queue, double discLength);
+    int start(XEncCmd cmd, const c2n::TransferQueue& queue, double discLength, const QString& at3tool = "");
 
 protected:
     //--------------------------------------------------------------------------
@@ -135,6 +138,12 @@ protected:
     //--------------------------------------------------------------------------
     int splitAtrac1();
 
+protected slots:
+    //--------------------------------------------------------------------------
+    //! @brief      extract percentage from log file
+    //--------------------------------------------------------------------------
+    void extractPercent() override;
+
 private slots:
     //--------------------------------------------------------------------------
     //! @brief      Finishes a copy.
@@ -164,4 +173,13 @@ protected:
     
     /// disc- / file - length
     double mLength;
+
+    /// do we use the alternate encoder?
+    bool mbAltEnc;
+
+    /// stores current progress step
+    int mProgressIt;
+
+    /// used for external encoer for progress update
+    QTimer mProgUpd;
 };

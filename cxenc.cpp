@@ -18,32 +18,52 @@
 #include <QRegExp>
 #include <QApplication>
 #include <QtEndian>
+#include <QDir>
 #include "cxenc.h"
 #include "helpers.h"
+#include "audio.h"
 #include <cmath>
 
 CXEnc::CXEnc(QObject *parent)
-    : CCliProcess(parent), mCurrCmd(XEncCmd::NONE), mLength(0)
+    : CCliProcess(parent), mCurrCmd(XEncCmd::NONE), mLength(0), mbAltEnc(false), mProgressIt(0)
 {
     connect(this, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &CXEnc::finishCopy);
+    mProgUpd.setInterval(1100);
+    mProgUpd.setSingleShot(false);
+    connect(&mProgUpd, &QTimer::timeout, this, &CXEnc::extractPercent);
 }
 
-int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength)
+int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength, const QString &at3tool)
 {
     QStringList params;
     mLog.clear();
     mCurrCmd       = cmd;
     mLength        = trackLength;
-    mAtracFileName = tmpFileName + ".aea";
+    mbAltEnc       = (!at3tool.isEmpty() && (mCurrCmd != XEncCmd::DAO_SP_ENCODE));
+    mAtracFileName = tmpFileName + (mbAltEnc ? ".at3" : ".aea");
 
     switch (cmd)
     {
     case XEncCmd::DAO_LP2_ENCODE:
     case XEncCmd::LP2_ENCODE:
-        params << "-e" << "atrac3" << "--bitrate=128" << "-i" << tmpFileName << "-o" << mAtracFileName;
+        if (mbAltEnc)
+        {
+            params << "-e" << "-br" << "132" << QDir::toNativeSeparators(tmpFileName) << QDir::toNativeSeparators(mAtracFileName);
+        }
+        else
+        {
+            params << "-e" << "atrac3" << "--bitrate=128" << "-i" << tmpFileName << "-o" << mAtracFileName;
+        }
         break;
     case XEncCmd::LP4_ENCODE:
-        params << "-e" << "atrac3" << "--bitrate=64" << "-i" << tmpFileName << "-o" << mAtracFileName;
+        if (mbAltEnc)
+        {
+            params << "-e" << "-br" << "66" << QDir::toNativeSeparators(tmpFileName) << QDir::toNativeSeparators(mAtracFileName);
+        }
+        else
+        {
+            params << "-e" << "atrac3" << "--bitrate=64" << "-i" << tmpFileName << "-o" << mAtracFileName;
+        }
         break;
     case XEncCmd::DAO_SP_ENCODE:
         params << "-e" << "atrac1" << "-i" << tmpFileName << "-o" << mAtracFileName;
@@ -51,31 +71,42 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength)
     default:
         return -1;
     }
-	
-#ifdef Q_OS_MAC
-	// app folder
-    QString sAppDir = QApplication::applicationDirPath();
-	
-    // find bundle dir ...
-    QRegExp rx("^(.*)/MacOS");
-    if (rx.indexIn(sAppDir) > -1)
+
+    if (mbAltEnc)
     {
-       // found section --> create path names ...
-       QString encTool = QString("%1/%2").arg(sAppDir).arg(XENC_CLI);
-	   qInfo() << encTool << params;
-	   run(encTool, params);
-   }
+        mProgressIt = 0;
+        mProgUpd.start();
+        qInfo() << "Using alternate encoder.";
+        qInfo() << at3tool << params;
+        run(at3tool, params);
+    }
+    else
+    {
+#ifdef Q_OS_MAC
+        // app folder
+        QString sAppDir = QApplication::applicationDirPath();
+
+        // find bundle dir ...
+        QRegExp rx("^(.*)/MacOS");
+        if (rx.indexIn(sAppDir) > -1)
+        {
+           // found section --> create path names ...
+           QString encTool = QString("%1/%2").arg(sAppDir).arg(XENC_CLI);
+           qInfo() << encTool << params;
+           run(encTool, params);
+       }
 #else
-    qInfo() << XENC_CLI << params;
-    run(XENC_CLI, params);
+        qInfo() << XENC_CLI << params;
+        run(XENC_CLI, params);
+    }
 #endif
     return 0;
 }
 
-int CXEnc::start(CXEnc::XEncCmd cmd, const c2n::TransferQueue &queue, double discLength)
+int CXEnc::start(CXEnc::XEncCmd cmd, const c2n::TransferQueue &queue, double discLength, const QString& at3tool)
 {
     mQueue  = queue;
-    return start(cmd, queue.at(0).mFileName, discLength);
+    return start(cmd, queue.at(0).mFileName, discLength, at3tool);
 }
 
 int CXEnc::atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int length)
@@ -142,7 +173,7 @@ int CXEnc::atrac1Header(QFile& aeaFile, XEncCmd cmd, size_t dataSz, int length)
     header[1] = 8;
     header[264] = 2;
     char* pTitle = reinterpret_cast<char*>(&header[4]);
-    strcpy(pTitle, "Temp AEA Track by NetMD Wizard");
+    strncpy(pTitle, "Temp AEA Track by NetMD Wizard", 31);
 
     uint32_t blockCount = dataSz / ATRAC_SP_BLOCK_ALIGN;
 
@@ -165,18 +196,26 @@ int CXEnc::splitAtrac3()
     if (fAtrac.open(QIODevice::ReadOnly))
     {
         // get file size
-        QFileInfo atracInfo(fAtrac);
-        size_t sz = atracInfo.size() - ATRAC3_HEADER_SIZE;
+        size_t sz;
 
-        // drop atrac 3 header
-        char buff[ATRAC3_HEADER_SIZE];
-        size_t read = 0;
-        do { read += fAtrac.read(buff + read, ATRAC3_HEADER_SIZE - read); } while(read < ATRAC3_HEADER_SIZE);
+        if (mbAltEnc)
+        {
+            audio::stripWaveHeader(fAtrac, sz);
+        }
+        else
+        {
+            QFileInfo atracInfo(fAtrac);
+            sz = atracInfo.size() - ATRAC3_HEADER_SIZE;
+            fAtrac.seek(ATRAC3_HEADER_SIZE);
+        }
 
         // average blocks per second
         double blocksPerSec = (static_cast<double>(sz) / static_cast<double>(ATRAC3_LP2_BLOCK_ALIGN)) / mLength;
 
         int trkCount = 0;
+        size_t copied = 0;
+        uint32_t copyBlocks;
+        size_t cpSz;
 
         for (const auto& t : mQueue)
         {
@@ -187,24 +226,24 @@ int CXEnc::splitAtrac3()
 
             if (waveFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
             {
-                uint32_t copyBlocks = static_cast<uint32_t>(ceil(t.mLength * blocksPerSec));
-                size_t sz = copyBlocks * ATRAC3_LP2_BLOCK_ALIGN;
-
-                // create wave header
-                atrac3WaveHeader(waveFile, mCurrCmd, sz, t.mLength);
-
                 // copy atrac data
                 if (trkCount < mQueue.size())
                 {
-                    waveFile.write(fAtrac.read(sz));
+                    copyBlocks = static_cast<uint32_t>(ceil(t.mLength * blocksPerSec));
+                    cpSz = copyBlocks * ATRAC3_LP2_BLOCK_ALIGN;
+                    copied += cpSz;
                 }
                 else
                 {
                     // last track -> read all
-                    waveFile.write(fAtrac.readAll());
+                    cpSz = sz - copied;
                 }
+
+                // create wave header
+                atrac3WaveHeader(waveFile, mCurrCmd, cpSz, t.mLength);
+                waveFile.write(fAtrac.read(cpSz));
                 waveFile.close();
-                qInfo() << "Copied " << sz << "B ATRAC3 data to " << t.mFileName;
+                qInfo() << "Copied " << cpSz << "B ATRAC3 data to " << t.mFileName;
             }
         }
 
@@ -232,9 +271,7 @@ int CXEnc::splitAtrac1()
         size_t sz = atracInfo.size() - ATRAC_SP_HEADER_SIZE;
 
         // drop atrac 1 header
-        char buff[ATRAC_SP_HEADER_SIZE];
-        size_t read = 0;
-        do { read += fAtrac.read(buff + read, ATRAC_SP_HEADER_SIZE - read); } while(read < ATRAC_SP_HEADER_SIZE);
+        fAtrac.seek(ATRAC_SP_HEADER_SIZE);
 
         // average blocks per second
         double blocksPerSec = (static_cast<double>(sz) / static_cast<double>(AT_SP_STEREO_BLOCK_SIZE)) / mLength;
@@ -278,6 +315,29 @@ int CXEnc::splitAtrac1()
     return 0;
 }
 
+//--------------------------------------------------------------------------
+//! @brief      extract percentage from log file
+//--------------------------------------------------------------------------
+void CXEnc::extractPercent()
+{
+    if (mbAltEnc)
+    {
+        mLog += QString::fromUtf8(readAllStandardOutput());
+
+        // show some progress even if we don't know it
+        emit progress(mProgressIt);
+        mProgressIt += 10;
+        if (mProgressIt > 90)
+        {
+            mProgressIt = 10;
+        }
+    }
+    else
+    {
+        CCliProcess::extractPercent();
+    }
+}
+
 void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
 {
     if ((exitCode == 0) && (exitStatus == ExitStatus::NormalExit))
@@ -293,8 +353,18 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
                 if (fAtrac.open(QIODevice::ReadOnly))
                 {
                     // get file size
-                    QFileInfo atracInfo(fAtrac);
-                    size_t sz = atracInfo.size() - ATRAC3_HEADER_SIZE;
+                    size_t sz;
+
+                    if (mbAltEnc)
+                    {
+                        audio::stripWaveHeader(fAtrac, sz);
+                    }
+                    else
+                    {
+                        QFileInfo atracInfo(fAtrac);
+                        sz = atracInfo.size() - ATRAC3_HEADER_SIZE;
+                        fAtrac.seek(ATRAC3_HEADER_SIZE);
+                    }
 
                     // overwrite original wave file
                     QFile waveFile(mAtracFileName.mid(0, mAtracFileName.lastIndexOf(QChar('.'))));
@@ -304,12 +374,7 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
                         // create wave header
                         atrac3WaveHeader(waveFile, mCurrCmd, sz, mLength);
 
-                        char buff[ATRAC3_HEADER_SIZE];
-                        size_t read = 0;
-
-                        // drop atrac 3 header
-                        do { read += fAtrac.read(buff + read, ATRAC3_HEADER_SIZE - read); } while(read < ATRAC3_HEADER_SIZE);
-                        waveFile.write(fAtrac.readAll());
+                        waveFile.write(fAtrac.read(sz));
                         waveFile.close();
                         qInfo() << "Copied " << sz << "B ATRAC3 data to " << waveFile.fileName();
                     }
@@ -332,6 +397,11 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
         default:
             break;
         }
+    }
+
+    if (mbAltEnc)
+    {
+        mProgUpd.stop();
     }
 
     if (!mLog.isEmpty())
