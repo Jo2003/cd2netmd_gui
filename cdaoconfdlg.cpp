@@ -42,9 +42,8 @@ CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
 <li><strong>Pro:</strong> Best quality. Playback on all MD devices. Track information will be transferred as well.</li>
 <li><strong>Contra:</strong> This is only supported on Sony / Aiwa type R, and type S  devices.</li>
 </ul>
-<p style='color:red; background-color: #fff6d1'><strong>Note:</strong> For DAO SP I'd highly recommend the usage of a blank MD.
-While editing the TOC, we'll take care for existing tracks. Nevertheless, there is a chance to corrupt
-the TOC on very fragmented discs, which ends up in an unplayable disc.</p>
+<p style='color:red; background-color: #fff6d1'><strong>Note:</strong> For DAO SP I'd recommend the usage of a blank MD.
+While we take care for existing content, you might end up with issues on very fragmented discs.</p>
 </li>
 </ul>
 <blockquote><p>Please note: Any change on CD track list will be reverted before starting!</p>

@@ -2,32 +2,67 @@
 A tool like Sonys NetMD Simple Burner to transfer audio from CD to NetMD. It is written in C++ using the Qt framework.
 It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and derivates) 18.04 and newer.
 
-![cd2netmd_gui](https://github.com/Jo2003/cd2netmd_gui/releases/download/v.0.1.7.5/cd2netmd_gui_dark.png)
+![cd2netmd_gui](https://github.com/Jo2003/cd2netmd_gui/blob/main/help/complete_view.png?raw=true)
 
 ## Features ##
-- reads CD using libcdio
-- supports CDDA paranoia
-- reads __Cue Sheets__
-- reads CD-TEXT
-- requests track title from CDDB (gnudb.org)
-- supports on-the-fly MDLP encoding on SHARP IM-DR4x0, Sony MDS-JB980, and Sony MDS-JE780
-- support external MDLP encoding for other NetMD devices
-- supports track-, group-, and disc rename / erase on NetMD (context menu)
-- supports simple group management on NetMD (context menu)
-- __supports gapless audio__ in LP2 mode using external encoder and disc-at-once transfer.
-- **supports gapless SP** on portable Sony devices.
 
+- reads CD Audio through libcdio with optional CD Paranoia support
+- reads CD-Text and requests CD information from CDDB (gnudb.org)
+- ships with *atracdenc*, supports the other, *well known*, alternate ATRAC3 encoder
+- support on-the-fly LP encoding on supporting devices
+- **gap-less** audio transfer in LP mode (using external encoder)
+- **gap-less** audio transfer in SP mode on supporting devices
+- loads Cue Sheets and handles them as CD Audio
+- drag and drop of audio files
+- sorting and naming in the source widget
+- naming, grouping in the MD tree widget
+- supports Windows, Mac, and Linux
 
 ## Usage ##
-- For Windows only make sure you have installed WebUSB driver through [Zadig](https://zadig.akeo.ie/) tool.
-- Start the program.
-- Place a CD-Audio in your CD-Drive, place a NetMD in your NetMD drive and press button (Re-)load CD and (Re-)load NetMD.
-- Instead loading a CD you can also browse for a Cue Sheet file.
-- When both discs are displayed, chose tracks from CD, set the transfer settings to your needs and press the Transfer button.
-- In case you want gapless audio (e.g. for live CD or project records), press button DAO Transfer.
-- DAO Transfer will rip the CD into one track, encode the audio through external encoder and transfer the split encode to NetMD.
-- DAO also works for Cue Sheets.
-- Track management on NetMD is done through context menu. 
+
+> Note: Before using this tool under Windows you have to install the WebUSB library. This can be done using the [zadig tool](https://zadig.akeo.ie/).
+
+Hopefully usage doesn't need much instruction. In a nutshell:
+
+1. Import Audio Data
+2. Load the Minidisc
+3. Choose the audio quality
+4. Press the button "Transfer".
+
+### Import Audio Data
+
+You have various possibilities to import audio data into the program:
+
+- CD & Cue Sheet (through button 'Reload CD', 'Load CUE Sheet')
+- Drag and Drop Audio Files
+  
+
+In Cue Sheet as well through drag and drop following audio file types are supported:
+
+| Audio File                                     | File Extension |
+| ---------------------------------------------- | -------------- |
+| WAVE (Raw PCM data with wave header)           | wav            |
+| OGG Vorbis                                     | ogg            |
+| Monkey Audio compressed WAVE files.            | ape            |
+| Mpeg Audio Layer 3                             | mp3            |
+| Advanced Audio Codec and Apple lossless (alac) | m4a, mp4       |
+| Free Lossless Audio Codec                      | flac           |
+| Atrac 1 (SP) audio                             | aea            |
+
+You can use the audio import windows to remove unwanted tracks (delete key), sort tracks via drag and drop or rename the tracks.
+
+In Cue Sheet mode and when using a CD Audio, selected tracks will be transfered. If no track is selected, all tracks will be transfered. 
+
+> Note: If you have inserted audio files through drag and drop all files will be transfered to MD. This is because I assume that you only drop wanted audio files to the program. 
+
+### DAO Mode (Disc-at-Once) ###
+
+* In **LP2 DAO** modus the whole audio data will be extracted at once, encoded in one peace through the atrac encoder, cut into peaces and transferred to your NetMD device. 
+
+* In **SP DAO** modus the whole audio data will be extracted at once, transferred at once to the NetMD device, and virtually split into peaces on the NetMD device itself through TOC edit. This is supported on Sony- and Aiwa NetMD portables with any R or S firmware revision. 
+  <span style='color:red; background-color: #fff6d1'>For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs.</span>
+
+> Note: In DAO mode when reading from CD all sorting and deleting from tracks done in the source window will be reverted before the transfer starts.
 
 ## Projects used / Thanks to ##
 - [atracdenc](https://github.com/dcherednik/atracdenc) - the external ATRAC encoder
@@ -36,7 +71,6 @@ It supports Windows 7 64bit and newer, MacOS 10.13 and newer, and Ubuntu (and de
 - [webminidisc](https://github.com/cybercase/webminidisc) for inspiration
 - [PLATINUM-MD](https://github.com/gavinbenda/platinum-md) for a good start with linux-minidisc
 - [MSYS2](https://www.msys2.org/) for the Windows build environment of choice
-- [libcue](https://github.com/Jo2003/libcue) for making Cue Sheet parsing a bit easier.
 - [libcdio](https://www.gnu.org/software/libcdio/) for reading CDs on multi platform.
 - [taglib](https://taglib.org/) for make reading tags much easier.
 - [ffmpeg](https://www.ffmpeg.org/) to encode _xxx_ to compatible wav files. 

@@ -8,6 +8,7 @@ NetMD Wizard is a program to write audio data to your NetMD device.
 
 - reads CD Audio through libcdio with optional CD Paranoia support
 - reads CD-Text and requests CD information from CDDB (gnudb.org)
+- ships with *atracdenc*, supports the other, *well known*, alternate ATRAC3 encoder
 - support on-the-fly LP encoding on supporting devices
 - gap-less audio transfer in LP mode (using external encoder)
 - gap-less audio transfer in SP mode on supporting devices
@@ -57,10 +58,10 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transfered.
 
 ### DAO Mode (Disc-at-Once) ###
 
-* In **LP2 DAO** modus the whole audio data will be extracted at once, encoded in one peace through atracdenc, cut into peaces and transferred to your NetMD device. 
+* In **LP2 DAO** modus the whole audio data will be extracted at once, encoded in one peace through the atrac encoder, cut into peaces and transferred to your NetMD device. 
 
-* In **SP DAO** modus the whole audio data will be extracted at once, transferred at once to the NetMD device, and virtually split into peaces on the NetMD device itself through TOC edit. This is supported on Sony / Aiwa NetMD portables with any R or S firmware revision. 
-<span style='color:red; background-color: #fff6d1'>For DAO SP I'd highly recommend the usage of a blank MD. While editing the TOC, we'll take care for existing tracks. Nevertheless, there is a chance to corrupt the TOC on very fragmented discs, which ends up in an unplayable disc.</span>
+* In **SP DAO** modus the whole audio data will be extracted at once, transferred at once to the NetMD device, and virtually split into peaces on the NetMD device itself through TOC edit. This is supported on Sony- and Aiwa NetMD portables with any R or S firmware revision. 
+<span style='color:red; background-color: #fff6d1'>For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs.</span>
 
 > Note: In DAO mode when reading from CD all sorting and deleting from tracks done in the source window will be reverted before the transfer starts.
 
@@ -85,7 +86,6 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transfered.
 - [webminidisc](https://github.com/cybercase/webminidisc) for inspiration
 - [PLATINUM-MD](https://github.com/gavinbenda/platinum-md) for a good start with linux-minidisc
 - [MSYS2](https://www.msys2.org/) for the Windows build environment of choice
-- [libcue](https://github.com/Jo2003/libcue) for making Cue Sheet parsing a bit easier.
 - [libcdio](https://www.gnu.org/software/libcdio/) for reading CDs on multi platform.
 - [taglib](https://taglib.org/) for make reading tags much easier.
 - [ffmpeg](https://www.ffmpeg.org/) to encode _xxx_ to compatible wav files. 

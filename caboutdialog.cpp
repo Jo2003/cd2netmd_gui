@@ -38,7 +38,6 @@ If you like this program, please support me through <a style="color: #3499b3; fo
     <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/dcherednik/atracdenc">atracdenc</a> - ATRAC Decoder Encoder</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/netmd">linux-minidisc</a></li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/cybercase/webminidisc">webminidisc</a> - the idea behind all of that</li>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/libcue/">libcue</a> - for making Cue Sheet parsing a bit easier</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://taglib.org/">taglib</a> - for make reading tags much easier</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.ffmpeg.org/">ffmpeg</a> - for encoding <b>xxx</b> to compatible wav files</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.qt.io/">Qt</a> - One framework to rule them all</li>
