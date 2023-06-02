@@ -191,6 +191,7 @@ enum NetMdErr : int
     NETMDERR_OTHER         = -7,  ///< any other error
     NETMDERR_NOT_SUPPORTED = -8,  ///< not supported
     NETMDERR_INTERIM       = -9,  ///< interim
+    NETMDERR_AGAIN         = -10, ///< try again
 };
 
 /// track times
@@ -625,12 +626,14 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      finalize TOC through exploit
     //!
+    //! @param[in]  reset      do reset if true (default: false)
     //! @param[in]  resetWait  The optional reset wait time (15 seconds)
+    //!                        Only needed if reset is true
     //!
     //! @return     NetMdErr
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
-    int finalizeTOC(uint8_t resetWait = 15);
+    int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
 
 private:
     /// disc header

@@ -17,7 +17,6 @@
 #include "cjacktheripper.h"
 #include <QVector>
 #include <QFileInfo>
-#include <libcue.h>
 #include <stdexcept>
 #include <QDir>
 #include "cffmpeg.h"

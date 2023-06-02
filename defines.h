@@ -19,6 +19,15 @@
 #include <QTemporaryFile>
 #include <cstdint>
 #include <QtDebug>
+#include <QtGlobal>
+
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+namespace Qt
+{
+    static constexpr auto endl = ::endl;
+}
+#endif
 
 namespace c2n {
 

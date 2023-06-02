@@ -262,7 +262,7 @@ void SettingsDlg::on_pushAtTool_clicked()
 #ifdef Q_OS_WIN
     QString fileName = QFileDialog::getOpenFileName(this, tr("Get alternate ATRAC3 encoder"), "", tr("Program File (*.exe)"));
 #else
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Get alternate ATRAC3 encoder"), "", tr("Program File (*.*)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Get alternate ATRAC3 encoder"), "", tr("Program File (*)"));
 #endif
     if (!fileName.isEmpty())
     {
