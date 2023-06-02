@@ -492,7 +492,8 @@ void MainWindow::encodeFinished(bool checkBusy)
                 ui->progressExtEnc->setValue(0);
                 mpXEnc->start(xencCmd, mWorkQueue,
                               static_cast<double>(ui->tableViewCD->myModel()->audioLength())
-                              / static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
+                              / static_cast<double>(CDIO_CD_FRAMES_PER_SEC),
+                              mpSettings->at3tool());
             }
         }
         else
@@ -515,7 +516,8 @@ void MainWindow::encodeFinished(bool checkBusy)
                 {
                     j.mStep = WorkStep::ENCODE;
                     ui->progressExtEnc->setValue(0);
-                    mpXEnc->start(xencCmd, j.mFileName, j.mLength);
+                    mpXEnc->start(xencCmd, j.mFileName, j.mLength,
+                                  mpSettings->at3tool());
                     break;
                 }
             }

@@ -24,6 +24,7 @@
 #include <QDir>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QFileDialog>
 #include "defines.h"
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
@@ -45,6 +46,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("sp_title", ui->checkSPTitle->isChecked());
     set.setValue("lp_group", ui->checkLPGroup->isChecked());
     set.setValue("cddb", ui->checkCDDB->isChecked());
+    set.setValue("at3tool", ui->lineAtTool->text());
     delete ui;
 }
 
@@ -100,6 +102,20 @@ SettingsDlg::Theme SettingsDlg::theme() const
     default:
         return Theme::STANDARD;
     }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get location of at3tool (if there)
+//!
+//! @return     file path to at3tool
+//--------------------------------------------------------------------------
+QString SettingsDlg::at3tool() const
+{
+    if (QFile::exists(ui->lineAtTool->text()))
+    {
+        return ui->lineAtTool->text();
+    }
+    return "";
 }
 
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
@@ -195,6 +211,11 @@ void SettingsDlg::loadSettings()
         ui->checkCDDB->setChecked(true);
     }
 
+    if (set.contains("at3tool"))
+    {
+        ui->lineAtTool->setText(set.value("at3tool").toString());
+    }
+
     emit loadingComplete();
 }
 
@@ -220,5 +241,18 @@ void SettingsDlg::on_pushCleanup_clicked()
 void SettingsDlg::on_pushOK_clicked()
 {
     accept();
+}
+
+void SettingsDlg::on_pushAtTool_clicked()
+{
+#ifdef Q_OS_WIN
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Get alternate ATRAC3 encoder"), "", tr("Program File (*.exe)"));
+#else
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Get alternate ATRAC3 encoder"), "", tr("Program File (*.*)"));
+#endif
+    if (!fileName.isEmpty())
+    {
+        ui->lineAtTool->setText(fileName);
+    }
 }
 
