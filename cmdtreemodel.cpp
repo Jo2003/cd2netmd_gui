@@ -121,6 +121,15 @@ void CMDTreeModel::setupModelData()
         mDiscConf.mSPUpload = 0;
     }
 
+    if (mMDJson.find("pcm_speedup") != mMDJson.end())
+    {
+        mDiscConf.mPCMSpeedup = mMDJson["pcm_speedup"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mPCMSpeedup = 0;
+    }
+
     if (mMDJson.find("toc_manip") != mMDJson.end())
     {
         mDiscConf.mTocManip = mMDJson["toc_manip"].get<int>();

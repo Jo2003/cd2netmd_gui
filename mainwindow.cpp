@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false),
-      mTocManip(false), /* mpSpUpload(nullptr),*/ mpOtfEncode(nullptr),
+      mTocManip(false), mpPCMSpeedup(nullptr), mpOtfEncode(nullptr),
       mpTocManip(nullptr)
 {
     ui->setupUi(this);
@@ -75,14 +75,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->tableViewCD, &CCDTableView::filesDropped, this, &MainWindow::catchDropped);
     connect(ui->tableViewCD, &CCDTableView::audioLength, this, &MainWindow::audioLength);
 
-    mpMDDevice  = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
-    mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
-    // mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
-    mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
-    mpTocManip  = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
+    mpMDDevice   = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
+    mpCDDevice   = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
+    mpPCMSpeedup = new StatusWidget(this, ":label/red", tr("PCM"), tr("Marker for PCM upload speedup"));
+    mpOtfEncode  = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
+    mpTocManip   = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
 
     ui->statusbar->addPermanentWidget(mpTocManip);
-    // ui->statusbar->addPermanentWidget(mpSpUpload);
+    ui->statusbar->addPermanentWidget(mpPCMSpeedup);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
@@ -267,16 +267,18 @@ void MainWindow::catchJson(QString j)
 {
     recreateTreeView(j);
     bool otf = !!mpMDmodel->discConf()->mOTFEnc;
+    bool pcmSpUp = !!mpMDmodel->discConf()->mPCMSpeedup;
 
     mpSettings->enaDisaOtf(mpSettings->onthefly(true), otf);
+    mpSettings->enaDisaPCM(mpSettings->pcmSpeedup(true), pcmSpUp);
 
     mTocManip = !!mpMDmodel->discConf()->mTocManip;
 
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
     // support label ...
-    // mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
-    // mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
+    mpPCMSpeedup->setStatusTip(pcmSpUp ? tr("PCM upload speedup supported by device") : tr("PCM upload speedup not supported by device"));
+    mpPCMSpeedup->setIcon(pcmSpUp ? ":label/green" : ":label/red");
 
     mpOtfEncode->setStatusTip(otf ? tr("on-the-fly encoding supported by device") : tr("on-the-fly encoding not supported by device"));
     mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
@@ -387,6 +389,10 @@ void MainWindow::on_pushTransfer_clicked()
     }
     else if (!mWorkQueue.isEmpty())
     {
+        if (mpSettings->pcmSpeedup())
+        {
+            mpNetMD->pcmSpeedup();
+        }
         ripFinished();
     }
 }
@@ -1021,6 +1027,10 @@ void MainWindow::on_pushDAO_clicked()
     }
     else if (!mWorkQueue.isEmpty())
     {
+        if (mpSettings->pcmSpeedup())
+        {
+            mpNetMD->pcmSpeedup();
+        }
         ripFinished();
     }
 }

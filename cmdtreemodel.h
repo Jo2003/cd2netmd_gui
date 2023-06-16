@@ -43,6 +43,7 @@ public:
        int mTocManip;   ///< TOC manipulation support
        int mSPUpload;   ///< SP upload supported
        int mOTFEnc;     ///< On-The-Fly encoding support
+       int mPCMSpeedup; ///< supports PCM upload speedup
        int mTrkCount;   ///< track count
        int mTotTime;    ///< total disc time
        int mFreeTime;   ///< free disc time

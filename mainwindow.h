@@ -348,8 +348,8 @@ private:
     /// does the device support forced TOC edit
     bool mTocManip;
 
-    /// show SP download support
-    // StatusWidget   *mpSpUpload;
+    /// show PCM Speedup support
+    StatusWidget   *mpPCMSpeedup;
 
     /// show on-the-fly support
     StatusWidget   *mpOtfEncode;

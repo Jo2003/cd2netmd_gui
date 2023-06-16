@@ -635,6 +635,21 @@ public:
     //--------------------------------------------------------------------------
     int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
 
+    //--------------------------------------------------------------------------
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
+    //--------------------------------------------------------------------------
+    bool pcmSpeedupSupported();
+
+    //--------------------------------------------------------------------------
+    //! @brief      apply PCM speedup patch
+    //!
+    //! @return     NetMdErr
+    //! @see        NetMdErr
+    //--------------------------------------------------------------------------
+    int applyPCMSpeedupPatch();
+
 private:
     /// disc header
     CMDiscHeader* mpDiscHeader;

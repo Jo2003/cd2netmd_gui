@@ -105,6 +105,23 @@ public:
     bool cddb() const;
 
     //--------------------------------------------------------------------------
+    //! @brief      set / enable / diable PCM speedup checkbox
+    //!
+    //! @param[in]  check  The checked value
+    //! @param[in]  ena    The enaable value
+    //--------------------------------------------------------------------------
+    void enaDisaPCM(bool check, bool ena);
+
+    //--------------------------------------------------------------------------
+    //! @brief      enable PCM speedup
+    //!
+    //! @param[in]  statusOnly get checked status only (optional)
+    //!
+    //! @return     true if enabled
+    //--------------------------------------------------------------------------
+    bool pcmSpeedup(bool statusOnly = false) const;
+
+    //--------------------------------------------------------------------------
     //! @brief      get active theme
     //!
     //! @return     active theme

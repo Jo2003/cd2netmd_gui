@@ -152,6 +152,7 @@ int CNetMD::getDiscInfo()
     tree.insert("toc_manip", mpApi->tocManipSupported() ? 1 : 0);
     tree.insert("device", mpApi->getDeviceName().c_str());
     tree.insert("sp_upload", mpApi->spUploadSupported() ? 1 : 0);
+    tree.insert("pcm_speedup", mpApi->pcmSpeedupSupported() ? 1 : 0);
     if ((i = mpApi->trackCount()) > -1)
     {
         tree.insert("trk_count", i);
@@ -253,6 +254,14 @@ int CNetMD::getDiscInfo()
     qInfo() << static_cast<const char*>(ba);
 
     return 0;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      enable PCM speedup
+//--------------------------------------------------------------------------
+void CNetMD::pcmSpeedup()
+{
+    mpApi->applyPCMSpeedupPatch();
 }
 
 //--------------------------------------------------------------------------

@@ -47,6 +47,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("lp_group", ui->checkLPGroup->isChecked());
     set.setValue("cddb", ui->checkCDDB->isChecked());
     set.setValue("at3tool", ui->lineAtTool->text());
+    set.setValue("pcmSpeedup", ui->checkPCMSpeedup->isChecked());
     delete ui;
 }
 
@@ -98,6 +99,37 @@ bool SettingsDlg::lpTrackGroup() const
 bool SettingsDlg::cddb() const
 {
     return ui->checkCDDB->isChecked();
+}
+
+//--------------------------------------------------------------------------
+//! @brief      set / enable / diable PCM speedup checkbox
+//!
+//! @param[in]  check  The checked value
+//! @param[in]  ena    The enaable value
+//--------------------------------------------------------------------------
+void SettingsDlg::enaDisaPCM(bool check, bool ena)
+{
+    ui->checkPCMSpeedup->setChecked(check);
+    ui->checkPCMSpeedup->setEnabled(ena);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      enable PCM speedup
+//!
+//! @param[in]  statusOnly get checked status only (optional)
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::pcmSpeedup(bool statusOnly) const
+{
+    if (statusOnly)
+    {
+        return ui->checkPCMSpeedup->isChecked();
+    }
+    else
+    {
+        return ui->checkPCMSpeedup->isChecked() && ui->checkPCMSpeedup->isEnabled();
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -228,6 +260,11 @@ void SettingsDlg::loadSettings()
     if (set.contains("at3tool"))
     {
         ui->lineAtTool->setText(set.value("at3tool").toString());
+    }
+
+    if (set.contains("pcmSpeedup"))
+    {
+        ui->checkPCMSpeedup->setChecked(set.value("pcmSpeedup").toBool());
     }
 
     emit loadingComplete();
