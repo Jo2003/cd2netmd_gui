@@ -271,6 +271,7 @@ void MainWindow::catchJson(QString j)
     mpSettings->enaDisaOtf(mpSettings->onthefly(true), otf);
 
     mTocManip = !!mpMDmodel->discConf()->mTocManip;
+    mpSettings->enaDisaDevReset(mpSettings->devReset(true), mTocManip);
 
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
@@ -571,7 +572,10 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 }
 
                 // add to MD list
-                addMDTrack(mpMDmodel->discConf()->mTrkCount, tr("Re-insert MD for content!"), trackMode, 60.00);
+                if (ret != CNetMD::TOCMANIP_DEV_RESET) // TOC Manipulation done, device reset done
+                {
+                    addMDTrack(1, tr("Re-insert MD for content!"), trackMode, 60.00);
+                }
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
             {
@@ -593,7 +597,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 labText = tr("TOC edit");
 
                 // start TOC manipulation
-                mpNetMD->start(tocData);
+                mpNetMD->start(tocData, mpSettings->devReset());
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
             {
@@ -660,7 +664,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                         mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
                         setMDTitle(ui->lineCDTitle->text());
                     }
-                    else
+                    else if (ret != CNetMD::TOCMANIP_DEV_RESET)
                     {
                         setMDTitle("DAO TOC Edit");
                     }
@@ -679,7 +683,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             mpRipper->removeTemp();
             enableDialogItems(true);
             QString info = tr("All (selected) tracks are transfered to MiniDisc!");
-            if (mDAOMode == CDaoConfDlg::DAO_SP)
+            if ((mDAOMode == CDaoConfDlg::DAO_SP) && (ret != CNetMD::TOCMANIP_DEV_RESET))
             {
                 info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please remove and re-insert the minidisc on your device as soon as possible!");
             }

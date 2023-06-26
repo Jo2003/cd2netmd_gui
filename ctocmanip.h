@@ -50,10 +50,11 @@ public:
     //! @brief      do the TOC manipulation
     //!
     //! @param[in]  trackData list of track titles and lengths
+    //! @param[in]  resetDev reset device after TOC edit
     //!
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
-    int manipulateTOC(const TitleVector& trackData);
+    int manipulateTOC(const TitleVector& trackData, bool resetDev);
 
     //--------------------------------------------------------------------------
     //! @brief      add data to byte vector

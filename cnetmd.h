@@ -46,6 +46,9 @@ public:
     "trk_count": 0
 })";
 
+    /// special marker for TOC edit done + device reset done
+    static constexpr int TOCMANIP_DEV_RESET = 999;
+
     using TocData = CTocManip::TitleVector;
 
     /// actions to be done on NetMD
@@ -121,8 +124,9 @@ public:
     //! @brief      store data, start thread
     //!
     //! @param[in]  tocData  TOC data for manipulation
+    //! @param[in]  resetDev reset device after TOC edit
     //--------------------------------------------------------------------------
-    void start(const TocData& tocData);
+    void start(const TocData& tocData, bool resetDev);
 
     //--------------------------------------------------------------------------
     //! @brief      thread function
@@ -267,9 +271,11 @@ protected:
     //--------------------------------------------------------------------------
     //! @brief do TOC manipulation
     //!
+    //! @param[in]  resetDev reset device after TOC edit
+    //!
     //! @return 0 -> success; else -> error
     //--------------------------------------------------------------------------
-    int doTocManip();
+    int doTocManip(bool devReset);
 
     //--------------------------------------------------------------------------
     //! @brief netmd_time to time_t

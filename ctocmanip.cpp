@@ -50,10 +50,11 @@ void CTocManip::addArrayData(NetMDByteVector& vec, const char* data, size_t data
 //! @brief      do the TOC manipulation
 //!
 //! @param[in]  trackData list of track titles and lengths
+//! @param[in]  resetDev reset device after TOC edit
 //!
 //! @return     NetMdErr
 //--------------------------------------------------------------------------
-int CTocManip::manipulateTOC(const TitleVector &trackData)
+int CTocManip::manipulateTOC(const TitleVector &trackData, bool resetDev)
 {
     if (!mpApi)
     {
@@ -131,7 +132,7 @@ int CTocManip::manipulateTOC(const TitleVector &trackData)
 
             if (good)
             {
-                return mpApi->finalizeTOC();
+                return mpApi->finalizeTOC(resetDev);
             }
             else
             {

@@ -19,6 +19,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <QTextCodec>
 #include <iomanip>
 #include "cnetmd.h"
 #include "defines.h"
@@ -80,12 +81,14 @@ void CNetMD::start(NetMDStartup startup)
 //! @brief      store data, start thread
 //!
 //! @param[in]  tocData  TOC data for manipulation
+//! @param[in]  resetDev reset device after TOC edit
 //--------------------------------------------------------------------------
-void CNetMD::start(const TocData& tocData)
+void CNetMD::start(const TocData& tocData, bool resetDev)
 {
     mLog.clear();
     mTocData = tocData;
     mCurrJob.mCmd = NetMDCmd::TOC_MANIP;
+    mCurrJob.miFirst = resetDev ? 1 : 0;
     mTReadLog.start();
     QThread::start();
 }
@@ -389,12 +392,14 @@ int CNetMD::delTrack(int trackNo)
 //--------------------------------------------------------------------------
 //! @brief do TOC manipulation
 //!
+//! @param[in]  resetDev reset device after TOC edit
+//!
 //! @return 0 -> success; else -> error
 //--------------------------------------------------------------------------
-int CNetMD::doTocManip()
+int CNetMD::doTocManip(bool devReset)
 {
     CTocManip manip(mpApi);
-    return manip.manipulateTOC(mTocData);
+    return manip.manipulateTOC(mTocData, devReset);
 }
 
 void CNetMD::run()
@@ -442,7 +447,10 @@ void CNetMD::run()
         break;
 
     case NetMDCmd::TOC_MANIP:
-        ret = doTocManip();
+        if (((ret = doTocManip(!!mCurrJob.miFirst)) == 0) && !!mCurrJob.miFirst)
+        {
+            ret = TOCMANIP_DEV_RESET;
+        }
         break;
 
     default:
@@ -450,13 +458,14 @@ void CNetMD::run()
         break;
     }
 
-    if (ret != 0)
+    if (ret < 0)
     {
         qCritical() << "libnetmd action returned with error: " << ret;
     }
 
     if ((mCurrJob.mCmd == NetMDCmd::ERASE_DISC)
-        || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK))
+        || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK)
+        || (ret == TOCMANIP_DEV_RESET)) // TOC edit successful, dev reset done
     {
         getDiscInfo();
     }
