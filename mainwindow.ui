@@ -450,7 +450,7 @@
          <string>Disc-at-once transfer (all tracks). Gapless mode.</string>
         </property>
         <property name="text">
-         <string>&amp;DAO Tranfer</string>
+         <string>&amp;DAO Transfer</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
