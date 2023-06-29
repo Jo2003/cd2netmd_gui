@@ -803,7 +803,7 @@ void MainWindow::enableDialogItems(bool ena)
 
         ui->labelCDRip->setText(tr("CD-RIP: "));
         ui->labelExtEnc->setText(tr("External-Encoder: "));
-        ui->labMDTransfer->setText(tr("MD-Tranfer: "));
+        ui->labMDTransfer->setText(tr("MD-Transfer: "));
 
         ui->labAnimation->clear();
         ui->labAnimation->setMovie(mpSettings->waitAni());
