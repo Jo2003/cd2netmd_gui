@@ -384,7 +384,7 @@ void MainWindow::on_pushTransfer_clicked()
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
         mWorkQueue.clear();
         enableDialogItems(true);
-        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t), 100);
+        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("No space left on MD to transfer your selected titles. You need %1 more.").arg(t), 100);
     }
     else if (!mWorkQueue.isEmpty())
     {
@@ -682,10 +682,10 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             mWorkQueue.clear();
             mpRipper->removeTemp();
             enableDialogItems(true);
-            QString info = tr("All (selected) tracks are transfered to MiniDisc!");
+            QString info = tr("All (selected) tracks were transferred to MiniDisc!");
             if ((mDAOMode == CDaoConfDlg::DAO_SP) && (ret != CNetMD::TOCMANIP_DEV_RESET))
             {
-                info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please remove and re-insert the minidisc on your device as soon as possible!");
+                info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please re-insert the minidisc in your device as soon as possible!");
             }
             delayedPopUp(ePopUp::INFORMATION, tr("Success"), info);
         }
@@ -1021,7 +1021,7 @@ void MainWindow::on_pushDAO_clicked()
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
         mWorkQueue.clear();
         enableDialogItems(true);
-        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("Not enough space left on MD to transfer CD title. You need %1 more.").arg(t), 100);
+        delayedPopUp(ePopUp::WARNING, tr("Error"), tr("No space left on MD to transfer your selected titles. You need %1 more.").arg(t), 100);
     }
     else if (!mWorkQueue.isEmpty())
     {

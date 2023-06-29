@@ -26,7 +26,7 @@ CAboutDialog::CAboutDialog(QWidget *parent) :
     ui->setupUi(this);
     ui->labelName->setText(QString("%1 %2 (c) Jo2003, %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
     QString text =
-R"(<img src=':main/wizard' alt='wizard' width='128' height='128' boarder='0' /><br><b>NetMD Wizard - a tool like Sonys NetMD Simply Burner</b><br>
+R"(<img src=':main/wizard' alt='wizard' width='128' height='128' boarder='0' /><br><b>NetMD Wizard - a tool like Sonys NetMD Simple Burner</b><br>
 Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a>
 <br> <br>
 If you like this program, please support me through <a style="color: #3499b3; font-weight: bold;" href="https://paypal.me/Jo2003">Paypal</a>!
@@ -46,16 +46,20 @@ If you like this program, please support me through <a style="color: #3499b3; fo
 <ul>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/asivery">asivery</a> for his great support to add the Sony firmware patching.</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Sir68k">Sir68k</a> for discovering the Sony firmware exploit.</li>
-    <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Knolan1st">Lars W.</a> for his tests and the first ever beer I earned through this project</li>
+    <li><b style="color: #3499b3;">donlaszlo</b> for his tests and the first ever beer I earned through this project</li>
+    <li><b style="color: #3499b3;">Ozzey</b> for his code reviews</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/DaveFlash">DaveFlash</a> for the nice program icon and some nice ideas.</li>
 </ul>
 <br> <br>)";
     ui->textAbout->setHtml(text);
-#ifdef Q_OS_MAC
     QFont f = ui->textAbout->font();
+#ifdef Q_OS_MAC
     f.setPointSize(f.pointSize() + 4);
-    ui->textAbout->setFont(f);
+#else
+    f.setPointSize(f.pointSize() + 1);
 #endif
+    ui->textAbout->setFont(f);
+
 }
 
 CAboutDialog::~CAboutDialog()

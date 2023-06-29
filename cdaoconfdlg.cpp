@@ -28,33 +28,31 @@ CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
 {
     ui->setupUi(this);
     QString s = R"(
-<h3 id='disc-at-once-or-gapless-mode'>(D)isc (A)t (O)nce or Gapless Mode</h3>
+<b style="font-size: x-large;">(D)isc (A)t (O)nce or Gapless Mode</b> - Please read careful!
 <p>DAO / gapless is supported in 2 modes. Both have there pros and cons.</p>
-<ul>
-<li><p><strong>DAO LP2 Mode:</strong> Disc / input will be extracted and compressed at once. After that audio will be split in tracks and transferred to NetMD.</p>
-<ul>
-<li><strong>Pro:</strong> Track information will be transferred as well.</li>
-<li><strong>Contra:</strong> Quality loss due to LP2 mode and external encoder. Playback only on MDLP capable devices.</li>
-</ul>
-</li>
-<li><p><strong>DAO SP Mode:</strong> Disc / input will be extracted and transferred to the NetMD device at once. After that the audio will be split on the NetMD device itself through TOC edit.</p>
-<ul>
-<li><strong>Pro:</strong> Best quality. Playback on all MD devices. Track information will be transferred as well.</li>
-<li><strong>Contra:</strong> This is only supported on Sony / Aiwa type R, and type S  devices.</li>
-</ul>
-<p style='color:red; background-color: #fff6d1'><strong>Note:</strong> For DAO SP I'd recommend the usage of a blank MD.
-While we take care for existing content, you might end up with issues on very fragmented discs.</p>
-</li>
-</ul>
+<b style="font-size: large;">DAO LP2 Mode</b>
+<p>The audio content will be extracted and compressed at once. After that, the audio will be split into tracks
+and transferred to your NetMD device. You have to expect quality loss due to LP2 mode and the usage of an
+external encoder. Playback is only supported on MDLP capable devices.</p>
+<b style="font-size: large;">DAO SP Mode</b>
+<p>The audio content will be extracted and transferred to the NetMD device at once.
+After that the audio data will be split directly on the NetMD device through TOC edit. This gives you the best possible quality.
+Playback is supported on all MD devices. Unfortunately, this is only supported on Sony / Aiwa portable type R, and type S devices.</p>
+<table style="margin: 4px"><tr><td style="color:red; background-color: #fff6d1; padding: 3px; border: 3px solid red;">
+For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs.
+Furthermore, take care that there is no pending TOC edit on your NetMD device before starting the DAO upload. Simply press 'stop' on your device
+<b>&rarr; right now &larr;</b> before going on!
+</td></tr></table>
 <blockquote><p>Please note: Any change on CD track list will be reverted before starting!</p>
-</blockquote>
-)";
+</blockquote>)";
     ui->textBrowser->setHtml(s);
-#ifdef Q_OS_MAC
     QFont f = ui->textBrowser->font();
+#ifdef Q_OS_MAC
     f.setPointSize(f.pointSize() + 4);
-    ui->textBrowser->setFont(f);
+#else
+    f.setPointSize(f.pointSize() + 1);
 #endif
+    ui->textBrowser->setFont(f);
 }
 
 //------------------------------------------------------------------------------
