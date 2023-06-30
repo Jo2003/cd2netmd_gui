@@ -149,7 +149,7 @@ int CNetMD::getDiscInfo()
         {
             s = "<untitled>";
         }
-        tree.insert("title", s.c_str());
+        tree.insert("title", mdToUtf8(s.c_str()));
     }
     tree.insert("otf_enc", mpApi->otfEncodeSupported() ? 1 : 0);
     tree.insert("toc_manip", mpApi->tocManipSupported() ? 1 : 0);
@@ -185,7 +185,7 @@ int CNetMD::getDiscInfo()
             int first = g.mFirst;
             int last  = (g.mLast == -1) ? first : g.mLast;
             QJsonObject group;
-            group.insert("name", g.mName.c_str());
+            group.insert("name", mdToUtf8(g.mName.c_str()));
             group.insert("first", first);
             group.insert("last", last);
             groups.append(group);
@@ -239,7 +239,7 @@ int CNetMD::getDiscInfo()
             s = s.substr(3);
         }
 
-        track.insert("name", s.c_str());
+        track.insert("name", mdToUtf8(s.c_str()));
         tracks.append(track);
     }
     tree.insert("tracks", tracks);
@@ -308,7 +308,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
 int CNetMD::addGroup(const QString& name, int first, int last)
 {
     qInfo() << "add group" << name << "first track:" << first << "last track:" << last << "to" << mDevName;
-    return mpApi->createGroup(name.toStdString(), first, last);
+    return mpApi->createGroup(static_cast<const char*>(utf8ToMd(name)), first, last);
 }
 
 //--------------------------------------------------------------------------
@@ -321,7 +321,7 @@ int CNetMD::addGroup(const QString& name, int first, int last)
 int CNetMD::renameDisc(const QString& name)
 {
     qInfo() << "rename MD to" << name << "on" << mDevName;
-    return mpApi->setDiscTitle(name.toStdString());
+    return mpApi->setDiscTitle(static_cast<const char*>(utf8ToMd(name)));
 }
 
 //--------------------------------------------------------------------------
@@ -335,7 +335,7 @@ int CNetMD::renameDisc(const QString& name)
 int CNetMD::renameTrack(const QString& name, int trackNo)
 {
     qInfo() << "rename track" << trackNo << "to" << name << "on" << mDevName;
-    return mpApi->setTrackTitle(trackNo, name.toStdString());
+    return mpApi->setTrackTitle(trackNo, static_cast<const char*>(utf8ToMd(name)));
 }
 
 //--------------------------------------------------------------------------
@@ -349,7 +349,7 @@ int CNetMD::renameTrack(const QString& name, int trackNo)
 int CNetMD::renameGroup(const QString& name, int groupNo)
 {
     qInfo() << "rename group" << groupNo << "to" << name << "on" << mDevName;
-    return mpApi->setGroupTitle(groupNo, name.toStdString());
+    return mpApi->setGroupTitle(groupNo, static_cast<const char*>(utf8ToMd(name)));
 }
 
 //--------------------------------------------------------------------------
