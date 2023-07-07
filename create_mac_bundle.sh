@@ -11,7 +11,7 @@ QTTRANS=/Users/joergn/Qt5.12.12/5.12.12/clang_64/translations
 echo "Creating APP bundle for ${APPNAME} ..."
 
 echo "Official name is ${OFFNAME} ..."
-VER="$(sed -n 's/.*PROGRAM_VERSION[^0-9]*\([0-9.]*\).*/\1/p' defines.h)-$(date +%Y%m%d)"
+VER="$(sed -n 's/.*GIT_VERSION[^0-9]\+\([^\"]\+\).*/\1/p' git_version.h)"
 
 # create destination folder name ...
 DSTFOLDER="${APPNAME}_mac_${VER}"

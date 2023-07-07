@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8.0)
 
-project(netmd_wizard VERSION 0.2.0.0 LANGUAGES CXX C)
+project(netmd_wizard VERSION 0.2.1.2 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,6 +40,8 @@ SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "-g")
 SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
 
 add_definitions(-DQT_DEPRECATED_WARNINGS -DQT_MESSAGELOGCONTEXT -DNO_PROGRAM)
+
+add_custom_target(git_version_h COMMAND ${CMAKE_SOURCE_DIR}/upd_git_version.sh)
 
 # include directories
 set(IDIRS
@@ -121,6 +123,8 @@ add_executable(netmd_wizard
     qdarkstyle/dark/darkstyle.qrc
     qdarkstyle/light/lightstyle.qrc
 )
+
+target_add_dependencies(netmd_wizard git_version_h)
 
 set(MYCFLAGS
     -W -Wall

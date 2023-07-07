@@ -21,6 +21,12 @@ INCLUDEPATH += include
 
 TARGET = netmd_wizard
 
+versionTarget.target = git_version.h
+versionTarget.depends = FORCE
+versionTarget.commands = $$PWD/upd_git_version.sh
+PRE_TARGETDEPS += git_version.h
+QMAKE_EXTRA_TARGETS += versionTarget
+
 mac{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
@@ -100,7 +106,8 @@ HEADERS += \
     mdtitle.h \
     settingsdlg.h \
     audio.h \
-    statuswidget.h
+    statuswidget.h \
+    git_version.h
 
 FORMS += \
     caboutdialog.ui \
@@ -113,6 +120,8 @@ FORMS += \
 
 TRANSLATIONS += \
     QCD2NetMD_de_AT.ts
+
+OTHER_FILES += git_version.tmpl
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

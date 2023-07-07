@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <QtDebug>
 #include <QtGlobal>
+#include "git_version.h"
 
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
@@ -132,7 +133,7 @@ private:
     List_t mType = List_t::UNKNOWN;
 };
 
-static constexpr const char* PROGRAM_VERSION = "2.1.2";
+static constexpr const char* PROGRAM_VERSION = GIT_VERSION;
 static constexpr const char* PROGRAM_NAME    = "NetMD Wizard";
 
 enum LogLevel
