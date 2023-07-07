@@ -9,3 +9,7 @@ deps=$(ldd "install/NetMD Wizard.exe" | gawk '/mingw64/ {print $3}'); for d in $
 cp -rv toolchain install/
 cp -v openssl/* install/
 cp -v ffmpeg/windows/ffmpeg.exe install/toolchain/
+
+VER="$(sed -n 's/.*GIT_VERSION[^0-9]\+\([^\"]\+\).*/\1/p' git_version.h)"
+cd install && zip -r netmd_wizard_${VER}_win_x86_64.zip *
+
