@@ -85,7 +85,7 @@ int CFFMpeg::start(const QStringList& params, const QString& nativeArgs)
        run(encTool, params, ReadWrite, nativeArgs);
    }
 #elif defined Q_OS_LINUX
-    QString ffmpeg = QFile::exists(QString("/usr/bin/%1").arg(FFMPEG_CLI))) ? FFMPEG_CLI : "ffmpeg";
+    QString ffmpeg = QFile::exists(QString("/usr/bin/%1").arg(FFMPEG_CLI)) ? FFMPEG_CLI : "ffmpeg";
     qInfo() << ffmpeg << params << nativeArgs;
     run(ffmpeg, params, ReadWrite, nativeArgs);
 #else

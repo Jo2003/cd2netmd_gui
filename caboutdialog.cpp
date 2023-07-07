@@ -18,13 +18,14 @@
 #include "caboutdialog.h"
 #include "defines.h"
 #include "ui_caboutdialog.h"
+#include "git_version.h"
 
 CAboutDialog::CAboutDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CAboutDialog)
 {
     ui->setupUi(this);
-    ui->labelName->setText(QString("%1 %2 (c) Jo2003, %3").arg(c2n::PROGRAM_NAME).arg(c2n::PROGRAM_VERSION).arg(__DATE__));
+    ui->labelName->setText(QString("%1 %2 (c) Jo2003, %3").arg(c2n::PROGRAM_NAME).arg(GIT_VERSION).arg(__DATE__));
     QString text =
 R"(<img src=':main/wizard' alt='wizard' width='128' height='128' boarder='0' /><br><b>NetMD Wizard - a tool like Sonys NetMD Simple Burner</b><br>
 Project site: <a style="color: #3499b3; font-weight: bold;" href="https://github.com/Jo2003/cd2netmd_gui">github.com</a>

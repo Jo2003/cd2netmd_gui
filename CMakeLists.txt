@@ -41,7 +41,7 @@ SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "-s")
 
 add_definitions(-DQT_DEPRECATED_WARNINGS -DQT_MESSAGELOGCONTEXT -DNO_PROGRAM)
 
-add_custom_target(git_version_h COMMAND ${CMAKE_SOURCE_DIR}/upd_git_version.sh)
+add_custom_target(git_version_h COMMAND cd ${CMAKE_SOURCE_DIR} && ./upd_git_version.sh)
 
 # include directories
 set(IDIRS
@@ -124,7 +124,7 @@ add_executable(netmd_wizard
     qdarkstyle/light/lightstyle.qrc
 )
 
-target_add_dependencies(netmd_wizard git_version_h)
+add_dependencies(netmd_wizard git_version_h)
 
 set(MYCFLAGS
     -W -Wall
