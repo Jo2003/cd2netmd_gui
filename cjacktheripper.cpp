@@ -541,7 +541,7 @@ int CJackTheRipper::cddbReqString()
             trackInfo.mCDTrackNo = 0;
             trackInfo.mStartLba  = 0;
             trackInfo.mTType     = c2n::TrackType::DISC;
-            trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, CDIO_CDROM_LEADOUT_TRACK) - cdio_get_track_lba(mpCDIO, firstTrack);
+            trackInfo.mLbCount   = cdio_cddap_track_lastsector(mpCDAudio, lastTrack) - cdio_cddap_track_firstsector(mpCDAudio, firstTrack);
             parseCDText(pCdText, 0, trackInfo.mTitle);
             mAudioTracks.append(trackInfo);
 
@@ -549,8 +549,8 @@ int CJackTheRipper::cddbReqString()
             {
                 trackInfo.mCDTrackNo = t;
                 trackInfo.mTType = (cdio_get_track_format(mpCDIO, t) == TRACK_FORMAT_AUDIO) ? c2n::TrackType::AUDIO : c2n::TrackType::DATA;
-                trackInfo.mStartLba  = cdio_get_track_lba(mpCDIO, t);
-                trackInfo.mLbCount   = cdio_get_track_lba(mpCDIO, (t == lastTrack) ? CDIO_CDROM_LEADOUT_TRACK : t + 1) - trackInfo.mStartLba;
+                trackInfo.mStartLba  = cdio_cddap_track_firstsector(mpCDAudio, t);
+                trackInfo.mLbCount   = cdio_cddap_track_lastsector(mpCDAudio, t) - trackInfo.mStartLba;
                 parseCDText(pCdText, t, trackInfo.mTitle);
                 mAudioTracks.append(trackInfo);
             }
