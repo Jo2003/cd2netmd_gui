@@ -77,7 +77,7 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transferred
 
 ## Thanks to... 
 * [**asivery**](https://www.reddit.com/user/asivery/) for his great support with the Sony firmware patching.
-* **donlaszlo** - my first tester which even paid me one (or more) beer.
+* **donlazlo** - my first tester which even paid me one (or more) beer.
 * [**Sir68k**](https://www.reddit.com/u/Sir68k/) for discovering the Sony firmware exploit.
 * **Ozzey** for his code reviews.
 

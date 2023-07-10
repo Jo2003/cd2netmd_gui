@@ -47,7 +47,7 @@ If you like this program, please support me through <a style="color: #3499b3; fo
 <ul>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/asivery">asivery</a> for his great support to add the Sony firmware patching.</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/Sir68k">Sir68k</a> for discovering the Sony firmware exploit.</li>
-    <li><b style="color: #3499b3;">donlaszlo</b> for his tests and the first ever beer I earned through this project</li>
+    <li><b style="color: #3499b3;">donlazlo</b> for his tests and the first ever beer I earned through this project</li>
     <li><b style="color: #3499b3;">Ozzey</b> for his code reviews</li>
     <li><a style="color: #3499b3; font-weight: bold;" href="https://www.reddit.com/user/DaveFlash">DaveFlash</a> for the nice program icon and some nice ideas.</li>
 </ul>
