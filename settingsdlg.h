@@ -75,6 +75,23 @@ public:
     //! @param[in]  ena    The enaable value
     //--------------------------------------------------------------------------
     void enaDisaOtf(bool check, bool ena);
+
+    //--------------------------------------------------------------------------
+    //! @brief      set / enable / diable device reset checkbox
+    //!
+    //! @param[in]  check  The checked value
+    //! @param[in]  ena    The enaable value
+    //--------------------------------------------------------------------------
+    void enaDisaDevReset(bool check, bool ena);
+
+    //--------------------------------------------------------------------------
+    //! @brief      reset device after TOC edit
+    //!
+    //! @param[in]  statusOnly get checked status only (optional)
+    //!
+    //! @return     true if enabled
+    //--------------------------------------------------------------------------
+    bool devReset(bool statusOnly = false) const;
     
     //--------------------------------------------------------------------------
     //! @brief      gets wait animation (theme dependent)

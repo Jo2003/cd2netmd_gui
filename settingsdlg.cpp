@@ -47,6 +47,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("lp_group", ui->checkLPGroup->isChecked());
     set.setValue("cddb", ui->checkCDDB->isChecked());
     set.setValue("at3tool", ui->lineAtTool->text());
+    set.setValue("dev_reset", ui->checkDevReset->isChecked());
     set.setValue("pcmSpeedup", ui->checkPCMSpeedup->isChecked());
     delete ui;
 }
@@ -79,6 +80,37 @@ void SettingsDlg::enaDisaOtf(bool check, bool ena)
 {
     ui->checkOTFEnc->setChecked(check);
     ui->checkOTFEnc->setEnabled(ena);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      set / enable / diable device reset checkbox
+//!
+//! @param[in]  check  The checked value
+//! @param[in]  ena    The enaable value
+//--------------------------------------------------------------------------
+void SettingsDlg::enaDisaDevReset(bool check, bool ena)
+{
+    ui->checkDevReset->setChecked(check);
+    ui->checkDevReset->setEnabled(ena);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      reset device after TOC edit
+//!
+//! @param[in]  statusOnly get checked status only (optional)
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::devReset(bool statusOnly) const
+{
+    if (statusOnly)
+    {
+        return ui->checkDevReset->isChecked();
+    }
+    else
+    {
+        return ui->checkDevReset->isChecked() && ui->checkDevReset->isEnabled();
+    }
 }
 
 QMovie *SettingsDlg::waitAni()
@@ -218,6 +250,11 @@ void SettingsDlg::loadSettings()
     if (set.contains("otf"))
     {
         ui->checkOTFEnc->setChecked(set.value("otf").toBool());
+    }
+
+    if (set.contains("dev_reset"))
+    {
+        ui->checkDevReset->setChecked(set.value("dev_reset").toBool());
     }
 
     if (set.contains("loglevel"))

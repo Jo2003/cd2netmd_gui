@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>381</width>
-    <height>334</height>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -259,11 +259,25 @@
    <item row="5" column="0">
     <widget class="QLabel" name="label_10">
      <property name="text">
-      <string>PCM Upload:</string>
+      <string>Device Reset:</string>
      </property>
     </widget>
    </item>
    <item row="5" column="1">
+    <widget class="QCheckBox" name="checkDevReset">
+     <property name="text">
+      <string>Reset device after TOC edit</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>PCM Upload:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
     <widget class="QCheckBox" name="checkPCMSpeedup">
      <property name="text">
       <string>Enable PCM Speedup Patch</string>

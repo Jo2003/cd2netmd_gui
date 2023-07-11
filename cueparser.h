@@ -151,6 +151,16 @@ public:
     //--------------------------------------------------------------------------
     bool isValid() const;
 
+    //--------------------------------------------------------------------------
+    //! @brief         find the audio file, try some simple searches
+    //!
+    //! @param[in]     path where to look for the audio file
+    //! @param[in,out] file name as searched / found
+    //!
+    //! @return        true file found, false not found
+    //--------------------------------------------------------------------------
+    bool findAudioFile(const QString& path, QString& fileName) const;
+
 private:
     /// stores disc information
     Disc  mDiscData{"", "", 0, {}};

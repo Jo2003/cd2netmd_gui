@@ -18,6 +18,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QRegExp>
+#include <QDir>
+#include <QMimeDatabase>
+#include <QMimeType>
 
 ///
 /// \brief The CueThrow struct
@@ -46,6 +49,46 @@ CueParser::CueParser(const QString &cueFileName)
 }
 
 //--------------------------------------------------------------------------
+//! @brief         find the audio file, try some simple searches
+//!
+//! @param[in]     path where to look for the audio file
+//! @param[in,out] file name as searched / found
+//!
+//! @return        true file found, false not found
+//--------------------------------------------------------------------------
+bool CueParser::findAudioFile(const QString& path, QString& fileName) const
+{
+    if (QFile::exists(path + "/" + fileName))
+    {
+        qInfo() << "Audio file" << fileName << "found!";
+        return true;
+    }
+    else
+    {
+        QMimeDatabase mimeDb;
+        QFileInfo fi(fileName);
+        QDir audioDir(path);
+        audioDir.setNameFilters({fi.completeBaseName() + ".*"});
+
+        for (const auto& f : audioDir.entryInfoList())
+        {
+            QMimeType mt = mimeDb.mimeTypeForFile(f);
+            if (mt.isValid())
+            {
+                QString mtName = mt.name();
+                if (mtName.toLower().contains("audio"))
+                {
+                    fileName = f.fileName();
+                    qInfo() << "Found alternate audio file" << fileName << mtName;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+//--------------------------------------------------------------------------
 //! @brief      parse the cue file
 //!
 //! @param[in]  cueFileName  The cue file name
@@ -71,7 +114,7 @@ int CueParser::parse(const QString &cueFileName)
     QRegExp rxpIndex("^INDEX\\s+01\\s+([0-9:]+)$");
 
     // get audio file
-    QRegExp rxpFile("^FILE\\s+(.*)\\s+([A-Za-z]+)$");
+    QRegExp rxpFile("^FILE\\s+(.*)\\s+(.+)$");
 
     // pre-filter
     QRegExp rxpUse("^(TITLE|PERFORMER|TRACK|INDEX\\s+01|FILE).*$");
@@ -82,10 +125,11 @@ int CueParser::parse(const QString &cueFileName)
     bool inTrack = false;
     Track track;
     QString file, lastFile;
-    TrackType ftype = TrackType::DATA, ttype = TrackType::DATA;
+    TrackType ttype = TrackType::DATA;
     int audLengthMs = 0;
     uint32_t audConv = 0;
     mDiscData = {"", "", 0, {}};
+    audio::STag tag;
 
     try
     {
@@ -112,16 +156,19 @@ int CueParser::parse(const QString &cueFileName)
                     QFileInfo afi(file);
                     file = afi.fileName();
 
+                    if (!findAudioFile(cfi.canonicalPath(), file))
+                    {
+                        mCueThrow(-5, "Can't find audio file " << file);
+                    }
+
                     if (lastFile != file)
                     {
                         // get additional information from audio file
-                        if (audio::checkAudioFile(cfi.canonicalPath() + "/" + file, audConv, audLengthMs) != 0)
+                        if (audio::checkAudioFile(cfi.canonicalPath() + "/" + file, audConv, audLengthMs, &tag) != 0)
                         {
                             mCueThrow(-4, "Can't recognize audio file " << file);
                         }
                     }
-
-                    ftype = (rxpFile.cap(2).toUpper() == "WAVE") ? TrackType::AUDIO : TrackType::DATA;
                 }
                 else if (rxpTitle.indexIn(line) > -1) // title (disc or track)
                 {
@@ -149,12 +196,6 @@ int CueParser::parse(const QString &cueFileName)
                 {
                     if (inTrack)
                     {
-                        // complete current track info
-                        if (track.mPerformer.isEmpty())
-                        {
-                            track.mPerformer = mDiscData.mPerformer;
-                        }
-
                         // store track
                         mDiscData.mTracks.append(track);
 
@@ -172,7 +213,18 @@ int CueParser::parse(const QString &cueFileName)
                     track.mAudioFile  = file;
                     track.mConversion = audConv;
                     track.mEndMs      = static_cast<uint32_t>(audLengthMs);
-                    track.mType = ((ttype == ftype) && (ftype == TrackType::AUDIO)) ? TrackType::AUDIO : TrackType::DATA;
+                    track.mType       = ttype;
+
+                    // add missing information
+                    if (track.mTitle.isEmpty())
+                    {
+                        track.mTitle = !tag.mTitle.isEmpty() ? tag.mTitle : titleFromFileName(file);
+                    }
+
+                    if (track.mPerformer.isEmpty())
+                    {
+                        track.mPerformer = !tag.mArtist.isEmpty() ? tag.mArtist : mDiscData.mPerformer;
+                    }
 
                     QString idx = rxpIndex.cap(1);
                     auto idxs = idx.split(QChar(':'));

@@ -108,12 +108,25 @@ int main()
 For the UTOC structure please have a look at this great site on [minidisc.org](https://www.minidisc.org/md_toc.html)
 
 ## Addressing in UTOC
- "The disc start and end addresses each consist of a cluster, sector, and sound group, all packed into 3 bytes.
- The sound group is the MiniDisc's smallest addressable unit, representing 11.6ms of mono audio (212 bytes).
- A sector contains 11 sound groups (2332 bytes). A cluster is an aggregate of 32 sectors (352 sound groups)
- representing 2.03 seconds of stereo audio; it is the smallest unit of data that can be written to a MiniDisc.
- In the 3 byte packing, there are 14 bits allocated to the cluster number, 6 bits to the sector,
- and 4 bits to the soundgroup; this arrangement allows addressing of up to 9.2 hours of stereo audio."
+The disc start and end addresses each consist of a cluster, sector, and sound group, all packed into 3 bytes.
+The smallest unit is a sound frame, representing 11.6ms of mono audio (212 bytes), while the smallest
+<b>addressable</b> unit is the sound group, containing 2 sound frames. A sector contains 11
+sound frames / 5.5 sound groups. Addressing must be done through sound group. Sound groups are numbered
+0 ... 10. Sound groups 0 ... 5 are part of the even sector, while sound groups 5 ... 10 are part of the odd sector.
+Group 5 overlaps both even and odd sectors and can therefore be addressed on both sectors.
+<pre>
++-------------------------------------------+
+|                sector pair                |
++---------------------+---------------------+
+|   even sector (2n)  |  odd sector (2n+1)  |
++---+---+---+---+---+-+-+---+---+---+---+---+
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| <- sound groups
++---+---+---+---+---+---+---+---+---+---+---+
+</pre>
+A cluster is an aggregate of 32 audio sectors (176 sound groups) representing 2.04 seconds of stereo audio; 
+it is the smallest unit of data that can be written to a MiniDisc. In the 3 byte packing, there are 14 bits 
+allocated to the cluster number, 6 bits to the sector, and 4 bits to the soundgroup; this arrangement allows 
+addressing of up to 9.2 hours of stereo audio.
 
 ## Modifying the UTOC
  1. download the UTOC sectors 0 ... 2 from NetMD Device:

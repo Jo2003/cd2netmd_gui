@@ -267,7 +267,7 @@
     </message>
     <message>
         <location filename="mainwindow.ui" line="355"/>
-        <source>&amp;DAO Tranfer</source>
+        <source>&amp;DAO Transfer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -351,7 +351,7 @@
     </message>
     <message>
         <location filename="mainwindow.cpp" line="568"/>
-        <source>MD-Tranfer: </source>
+        <source>MD-Transfer: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
