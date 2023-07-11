@@ -57,10 +57,10 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transferred
 
 ### DAO / Gapless Mode (Disc-at-Once) ###
 
- * In **LP2 DAO** modus the audio content will be extracted and compressed at once.  After that, the audio will be split into tracks and transferred to your NetMD device. You have to expect quality loss  due to LP2 mode and the usage of an external encoder. Playback is only supported on MDLP capable devices.
+* In **LP2 DAO** modus the audio content will be extracted and compressed at once.  After that, the audio will be split into tracks and transferred to your NetMD device. You have to expect quality loss  due to LP2 mode and the usage of an external encoder. Playback is only supported on MDLP capable devices.
 
- * In **SP DAO** modus the audio content will be extracted and transferred to the NetMD device at once. After that the audio data will be split directly on the NetMD device through TOC edit. This gives you the best possible quality. Playback is supported on all MD devices. Unfortunately, this is only supported on Sony / Aiwa portable type R, and type S devices.
-<span style='color:red; background-color: #fff6d1'>For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs. Furthermore, take care that there is no pending TOC edit on your NetMD device before starting the DAO upload. <b>Simply press 'stop' on your device  before going on!</b></span>
+* In **SP DAO** modus the audio content will be extracted and transferred to the NetMD device at once. After that the audio data will be split directly on the NetMD device through TOC edit. This gives you the best possible quality. Playback is supported on all MD devices. Unfortunately, this is only supported on Sony / Aiwa portable type R, and type S devices.
+<div style='color:red; background-color: #fff6d1; border: red solid 2px; padding: 5px; margin: 5px;'>For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs. Furthermore, take care that there is no pending TOC edit on your NetMD device before starting the DAO upload. <b>Simply press 'stop' on your device  before going on!</b></div>
 
 > Note: In DAO mode when reading from CD all sorting and deleting from tracks done in the source window will be **reverted** before the transfer starts.
 
@@ -80,6 +80,9 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transferred
 * **donlazlo** - my first tester which even paid me one (or more) beer.
 * [**Sir68k**](https://www.reddit.com/u/Sir68k/) for discovering the Sony firmware exploit.
 * **Ozzey** for his code reviews.
+* [**DaveFlash**](https://www.reddit.com/user/DaveFlash) for the nice program icon and some good ideas.
+
+  
 
 
 ## Support me ##
