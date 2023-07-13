@@ -28,6 +28,9 @@ class CMDTreeView : public QTreeView
 {
     Q_OBJECT
 public:
+    /// data type for disc content
+    using DiscContent = QVector<QStringList>;
+
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
@@ -54,6 +57,15 @@ protected:
     //! @brief      Creates actions belonging to context menu
     //--------------------------------------------------------------------------
     void createActions();
+
+    //--------------------------------------------------------------------------
+    //! @brief      grab disc conent
+    //!
+    //! @param[in,out]  content stores title content
+    //! @param[in]       pModel pointer to QAbstractItemModel
+    //! @param[in]       parent parent index (optional)
+    //--------------------------------------------------------------------------
+    void treeWalk(DiscContent& content, QAbstractItemModel *pModel, QModelIndex parent = QModelIndex());
 
 signals:
     //--------------------------------------------------------------------------
@@ -105,6 +117,11 @@ private slots:
     //--------------------------------------------------------------------------
     void slotAddGroup();
 
+    //--------------------------------------------------------------------------
+    //! @brief      export title list action activated
+    //--------------------------------------------------------------------------
+    void slotExportTitles();
+
 private:
     /// add group action
     QAction* mpaAddGroup;
@@ -117,4 +134,7 @@ private:
 
     /// erase disc action
     QAction* mpaEraseDisc;
+
+    /// export title list
+    QAction* mpaExportTilteList;
 };

@@ -18,6 +18,8 @@
 #include "cmdtreemodel.h"
 #include <QMenu>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QStandardPaths>
 #include "cnamingdialog.h"
 #include "defines.h"
 
@@ -44,6 +46,8 @@ void CMDTreeView::contextMenuEvent(QContextMenuEvent *event)
         menu.addAction(mpaDelGroup);
         menu.addAction(mpaDelTrack);
         menu.addAction(mpaEraseDisc);
+        menu.addSeparator();
+        menu.addAction(mpaExportTilteList);
         menu.exec(event->globalPos());
     }
 }
@@ -69,6 +73,11 @@ void CMDTreeView::createActions()
     mpaEraseDisc->setShortcut({"Alt+Ctrl+I"});
     mpaEraseDisc->setStatusTip(tr("Erase the Disc. This can't be undone."));
     connect(mpaEraseDisc, &QAction::triggered, this, &CMDTreeView::slotEraseDisc);
+
+    mpaExportTilteList = new QAction(tr("&Export Title List"), this);
+    mpaEraseDisc->setShortcut({"Alt+Ctrl+E"});
+    mpaEraseDisc->setStatusTip(tr("Export Title List"));
+    connect(mpaExportTilteList, &QAction::triggered, this, &CMDTreeView::slotExportTitles);
 }
 
 void CMDTreeView::slotDelTrack()
@@ -213,5 +222,97 @@ void CMDTreeView::slotAddGroup()
     catch (const QString& err)
     {
         QMessageBox::information(this, tr("Note!"), err);
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      grab disc conent
+//!
+//! @param[in,out]  content stores title content
+//! @param[in]       pModel pointer to QAbstractItemModel
+//! @param[in]       parent parent index (optional)
+//--------------------------------------------------------------------------
+void CMDTreeView::treeWalk(DiscContent& content, QAbstractItemModel *pModel, QModelIndex parent)
+{
+    for(int r = 0; r < pModel->rowCount(parent); ++r)
+    {
+        QStringList row;
+        for (int c = 0; c < pModel->columnCount(parent); c++)
+        {
+            QModelIndex index = pModel->index(r, c, parent);
+            QString text = pModel->data(index).toString();
+
+            if (!text.isEmpty())
+            {
+                row << text;
+            }
+        }
+        content.append(row);
+
+        if(pModel->hasChildren(pModel->index(r, 0, parent)))
+        {
+            treeWalk(content, pModel, pModel->index(r, 0, parent));
+        }
+    }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      export title list action activated
+//--------------------------------------------------------------------------
+void CMDTreeView::slotExportTitles()
+{
+    DiscContent titles;
+    treeWalk(titles, model());
+    int len = 0;
+
+    // format
+    for (const auto& l : titles)
+    {
+        if (l.count() > 1)
+        {
+            if (l.at(0).size() > len)
+            {
+                len = l.at(0).size();
+            }
+        }
+    }
+
+    QString s;
+    QTextStream ts(&s);
+
+    for (const auto& l : titles)
+    {
+        if (l.count() == 1)
+        {
+            ts << l.at(0) << Qt::endl;
+        }
+        else if (l.count() > 1)
+        {
+            for (int i = 0; i < l.count(); i++)
+            {
+                if (i == 0)
+                {
+                    ts << QString("%1").arg(l.at(i), -len, QChar(' '));
+                }
+                else
+                {
+                    ts << QString(" %1").arg(l.at(i));
+                }
+            }
+            ts << Qt::endl;
+        }
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Title File"),
+        QStandardPaths::locate(QStandardPaths::DocumentsLocation, ".", QStandardPaths::LocateDirectory),
+        tr("Plain Text (*.txt)"));
+
+    if (!fileName.isEmpty())
+    {
+        QFile f(fileName);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+        {
+            f.write(s.toUtf8());
+        }
     }
 }
