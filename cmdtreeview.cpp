@@ -285,6 +285,7 @@ void CMDTreeView::slotExportTitles()
         if (l.count() == 1)
         {
             ts << l.at(0) << Qt::endl;
+            ts << QString("%1").arg("~", -l.at(0).size(), QChar('~')) << Qt::endl;
         }
         else if (l.count() > 1)
         {

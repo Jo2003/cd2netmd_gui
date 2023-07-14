@@ -164,6 +164,16 @@ QString SettingsDlg::at3tool() const
     return "";
 }
 
+//--------------------------------------------------------------------------
+//! @brief      do size check
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::sizeCheck() const
+{
+    return !ui->disSzCheck->isChecked();
+}
+
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
 {
     QFile styleFile;

@@ -377,7 +377,7 @@ void MainWindow::on_pushTransfer_clicked()
         selectionTime /= 4.0;
     }
 
-    if (selectionTime > mpMDmodel->discConf()->mFreeTime)
+    if (mpSettings->sizeCheck() && (selectionTime > mpMDmodel->discConf()->mFreeTime))
     {
         // not enough space left on device
         time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
@@ -1014,7 +1014,7 @@ void MainWindow::on_pushDAO_clicked()
         selectionTime /= 2;
     }
 
-    if (selectionTime > mpMDmodel->discConf()->mFreeTime)
+    if (mpSettings->sizeCheck() && (selectionTime > mpMDmodel->discConf()->mFreeTime))
     {
         // not enough space left on device
         time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;

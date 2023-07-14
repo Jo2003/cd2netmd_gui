@@ -69,29 +69,46 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transferred
 
 ## Settings ##
 
-![Settings](settings.png)
+ ![Settings](settings.png)
 
 - __CD Read Config:__ You can enable CDDA paranoia mode here. In some cases this might give you better audio quality when reading from CD. This drastically slows down the CD read speed.
 - __Transfer Config:__ In case your NetMD device support on-the-fly LP encoding this will be enabled by default. This gives better audio quality in LP mode then using the external encoder. Currently there are only 3 NetMD devices known which support on-the-fly encoding: Sony MDS-JB980, Sony MDS-JE780, Sharp IM-DR420H.
 - __CDDB:__ Enable / disable the CDDB request for CD Audio information.
 - __MD Track Grouping:__ If enabled, a title group for a complete MD transfer is created (after LP transfer).
 - __MD Title:__ If enabled, the MD will be named after the disc from last SP audio transfer.
+- **Size Check:** Enabling this will *disable* the audio length check. So, you will not be warned if the audio you want to copy doesn't fit on your MD. This setting might be useful if the available disc space is only a bit to small. Try it at your own risk. Your transfer might fail. This setting isn't stored. 
 - **Device Reset:** If enabled, your NetMD device will be reset after completing the TOC edit (SP DAO transfer). If you don't enable this, you have to re-insert the MD to your device after the TOC edit is done. 
 - __Theme:__ Use the theme you like most.
 - __Log Level:__ Changes the detail grade of logging. 
 - __Del. temp. files:__ Delete temporary files created be the program. Normally these files will be deleted before the program closes. In case of a program crash (sorry!) these files might persist in your temp folder. Pressing this button will delete these files.
 - __Log File:__ Opens the log file. Useful for debugging or when I ask you for some more information. 
 
+## MD Context Menu
+
+ ![Context Menu](context_menu.png)
+
+From the MDs context menu you can:
+
+* add audio tracks to a group
+* delete a group
+* delete a track
+* erase the MD
+* export the title list as text file
+
+
+
 ## Related Projects ##
+
 - [atracdenc](https://github.com/dcherednik/atracdenc) - the external ATRAC encoder
 - [JSON for Modern C++](https://github.com/nlohmann/json)
 - [Qt](https://qt.io) - One framework to rule them all.
-- [webminidisc](https://github.com/cybercase/webminidisc) for inspiration
-- [PLATINUM-MD](https://github.com/gavinbenda/platinum-md) for a good start with linux-minidisc
-- [MSYS2](https://www.msys2.org/) for the Windows build environment of choice
-- [libcdio](https://www.gnu.org/software/libcdio/) for reading CDs on multi platform.
-- [taglib](https://taglib.org/) for make reading tags much easier.
-- [ffmpeg](https://www.ffmpeg.org/) to encode _xxx_ to compatible wav files. 
+- [webminidisc](https://github.com/cybercase/webminidisc) - the inspiration
+- [PLATINUM-MD](https://github.com/gavinbenda/platinum-md) - a good start with linux-minidisc
+- [MSYS2](https://www.msys2.org/) - the Windows build environment of choice
+- [libcdio](https://www.gnu.org/software/libcdio/) - reading CDs on multi platform.
+- [taglib](https://taglib.org/) - makes reading tags much easier.
+- [ffmpeg](https://www.ffmpeg.org/) - encodes _xxx_ to compatible wav files. 
+- [NetMdTool](https://github.com/cadavrezzz/NetMDTool) - the source of some nice ideas
 
 ## Thanks to... 
 

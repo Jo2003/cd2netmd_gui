@@ -119,6 +119,7 @@ add_executable(netmd_wizard
     statuswidget.cpp
     ctocmanip.cpp
     cueparser.cpp
+    ctranslit.cpp
     resources.qrc
     qdarkstyle/dark/darkstyle.qrc
     qdarkstyle/light/lightstyle.qrc

@@ -31,10 +31,7 @@ mac{
     QT_CONFIG -= no-pkg-config
     CONFIG += link_pkgconfig
     PKGCONFIG += libcdio libcdio_cdda libcdio_paranoia libiso9660 libudf taglib libnetmd++
-    INCLUDEPATH += /usr/local/Cellar/libusb/1.0.24/include \
-                   /usr/local/Cellar/libgcrypt/1.9.4_1/include \
-                   /usr/local/Cellar/libgpg-error/1.43/include \
-                   /usr/local/include
+    INCLUDEPATH += /usr/local/include
     LIBS += -L/usr/local/lib
 
     # since libcdio doesn't support CD-Text on Mac, use drutil
@@ -80,7 +77,8 @@ SOURCES += \
     mdtitle.cpp \
     settingsdlg.cpp \
     audio.cpp \
-    statuswidget.cpp
+    statuswidget.cpp \
+    ctranslit.cpp
 
 HEADERS += \
     cdaoconfdlg.h \
@@ -107,6 +105,7 @@ HEADERS += \
     settingsdlg.h \
     audio.h \
     statuswidget.h \
+    ctranslit.h \
     git_version.h
 
 FORMS += \

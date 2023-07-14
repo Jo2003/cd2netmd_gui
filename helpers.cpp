@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include "defines.h"
 #include "mdtitle.h"
+#include "ctranslit.h"
 
 static QStringList s_TempNames;
 static uint32_t s_Seed = 0;
@@ -139,6 +140,10 @@ QByteArray utf8ToMd(const QString& from)
 {
     QString tmpStr = from;
     QByteArray baEncoded;
+
+    // cyrillic to latin1
+    CTranslit translit;
+    tmpStr = translit.CyrToLat(tmpStr, false);
 
     // encode all accents / umlaut to safe tokens
     deUmlaut(tmpStr);
