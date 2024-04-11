@@ -36,9 +36,11 @@ public:
     //--------------------------------------------------------------------------
     enum DAO_Mode
     {
-        DAO_SP,     ///< SP mode
-        DAO_LP2,    ///< LP2 mode
-        DAO_WTF     ///< wtf ...
+        DAO_SP,        ///< SP mode
+        DAO_LP2,       ///< LP2 mode
+        DAO_SP_MONO,   ///< stereo upload, conversion to mono on device (needs PCM to mono patch)
+        DAO_SP_PREENC, ///< preencoded ATRAC1 SP (needs SP upload patch)
+        DAO_WTF        ///< wtf ...
     };
 
     //--------------------------------------------------------------------------
@@ -65,10 +67,18 @@ public:
     //!
     //! @param      tm  support flag
     //--------------------------------------------------------------------------
-    void tocManip(bool spu);
+    void tocManip(bool tm);
+
+    //--------------------------------------------------------------------------
+    //! @brief      tell if SP upload is supported
+    //!
+    //! @param      spu  support flag
+    //--------------------------------------------------------------------------
+    void spUpload(bool spu);
 
 private:
     Ui::CDaoConfDlg *ui;
     bool mTocManip;
+    bool mSpUpld;
 };
 

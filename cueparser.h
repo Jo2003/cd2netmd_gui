@@ -73,6 +73,7 @@ public:
         QString mTitle;             ///< disc title
         QString mPerformer;         ///< disc performer 7 artist
         uint32_t mLenInMs;          ///< disc length in ms
+        int mYear;                  ///< year
         QVector<Track> mTracks;     ///< audio tracks
 
         //----------------------------------------------------------------------
@@ -82,7 +83,13 @@ public:
         {
             QString s;
             QTextStream ts(&s);
-            ts << (!mPerformer.isEmpty() ? (mPerformer + " - ") : "") << mTitle << " (" << mLenInMs << " ms)" << Qt::endl;
+            ts << (!mPerformer.isEmpty() ? (mPerformer + " - ") : "") << mTitle;
+            if (mYear > 0)
+            {
+                ts << ", Year: " << mYear;
+            }
+
+            ts << " (" << mLenInMs << " ms)" << Qt::endl;
             for (const auto& t : mTracks)
             {
                 ts << static_cast<QString>(t) << Qt::endl;
@@ -136,6 +143,13 @@ public:
     uint32_t discLength() const;
 
     //--------------------------------------------------------------------------
+    //! @brief      get disc year
+    //!
+    //! @return     year
+    //--------------------------------------------------------------------------
+    int discYear() const;
+
+    //--------------------------------------------------------------------------
     //! @brief      get complete track information
     //!
     //! @param[in]  no    track number, starts with 1
@@ -163,7 +177,7 @@ public:
 
 private:
     /// stores disc information
-    Disc  mDiscData{"", "", 0, {}};
+    Disc  mDiscData{"", "", 0, -1, {}};
 
     /// stores an empty track
     Track mEmptyTrack{-1, TrackType::DATA, "", "", "", 0, 0, 0, 0, 0};

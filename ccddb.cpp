@@ -102,6 +102,8 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
     reply.replace(QChar('\r'), "");
     QRegExp rxEntries("^([^ ]+) ([^ ]+) (.*)$");
     QRegExp rxMatch("^[DT]{1,1}TITLE[^=]*=[ ]*(.*)$");
+    QRegExp rxYear("^DYEAR[^=]*=[ ]*(.*)$");
+    int year = -1;
     QStringList results;
 
     // split in lines
@@ -143,6 +145,11 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
                 tok.replace('/', '-');
                 results.append(tok);
             }
+            else if (rxYear.indexIn(tok) > -1)
+            {
+                // capture year
+                year = rxMatch.cap(1).toInt();
+            }
         }
         lineNo ++;
     }
@@ -172,11 +179,23 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
     }
     else if (type == REQ_WHAT::REQ_MATCH)
     {
+        QDateTime tstamp;
+
+        if (year > 0)
+        {
+            tstamp.setDate(QDate(year, 11, 11));
+            tstamp.setTime(QTime(11, 11, 11));
+        }
+
         for(int s = 0; s < mAudioTracks.size(); s++)
         {
             if (s < results.size())
             {
                 mAudioTracks[s].mTitle = results[s];
+                if (tstamp.isValid())
+                {
+                    mAudioTracks[s].mTStamp = tstamp;
+                }
             }
         }
 

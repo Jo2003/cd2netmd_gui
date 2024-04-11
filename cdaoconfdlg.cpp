@@ -24,12 +24,12 @@
 //------------------------------------------------------------------------------
 CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CDaoConfDlg), mTocManip(false)
+    ui(new Ui::CDaoConfDlg), mTocManip(false), mSpUpld(false)
 {
     ui->setupUi(this);
     QString s = R"(
 <b style="font-size: x-large;">(D)isc (A)t (O)nce or Gapless Mode</b> - Please read careful!
-<p>DAO / gapless is supported in 2 modes. Both have there pros and cons.</p>
+<p>DAO / gapless is supported in 4 modes. All have there pros and cons.</p>
 <b style="font-size: large;">DAO LP2 Mode</b>
 <p>The audio content will be extracted and compressed at once. After that, the audio will be split into tracks
 and transferred to your NetMD device. You have to expect quality loss due to LP2 mode and the usage of an
@@ -38,8 +38,17 @@ external encoder. Playback is only supported on MDLP capable devices.</p>
 <p>The audio content will be extracted and transferred to the NetMD device at once.
 After that the audio data will be split directly on the NetMD device through TOC edit. This gives you the best possible quality.
 Playback is supported on all MD devices. Unfortunately, this is only supported on Sony / Aiwa portable type R, and type S devices.</p>
+<b style="font-size: large;">DAO SP Pre-Enc Mode</b>
+<p>The whole audio content will be extracted and converted into Atrac 1, and transferred to the NetMD device at once.
+After that the audio data will be split directly on the NetMD device through TOC edit. Playback is supported on all MD devices.
+Unfortunately, this is only supported on Sony portable type S devices. This mode is much faster than the other SP modi, but quality
+depends on atracdenc and might be slightly worse.</p>
+<b style="font-size: large;">DAO SP Mono Mode</b>
+<p>The whole audio content will be extracted and transferred to the NetMD device at once. The NetMd device converts the audio data
+into SP mono (needing half the data size). After that the audio data will be split directly on the NetMD device through TOC edit.
+Playback is supported on all MD devices. Unfortunately, this is only supported on Sony portable type R - and S devices.</p>
 <table style="margin: 4px"><tr><td style="color:red; background-color: #fff6d1; padding: 3px; border: 3px solid red;">
-For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs.
+For all DAO SP modi I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs.
 Furthermore, take care that there is no pending TOC edit on your NetMD device before starting the DAO upload. Simply press 'stop' on your device
 <b>&rarr; right now &larr;</b> before going on!
 </td></tr></table>
@@ -72,17 +81,21 @@ CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
 {
     DAO_Mode mode = DAO_Mode::DAO_WTF;
 
-    if (!mTocManip)
-    {
-        mode = DAO_Mode::DAO_LP2;
-    }
-    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoLP2")
+    if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoLP2")
     {
         mode = DAO_Mode::DAO_LP2;
     }
     else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoSP")
     {
         mode = DAO_Mode::DAO_SP;
+    }
+    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoSpPreenc")
+    {
+        mode = DAO_Mode::DAO_SP_PREENC;
+    }
+    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoSpMono")
+    {
+        mode = DAO_Mode::DAO_SP_MONO;
     }
 
     return mode;
@@ -99,10 +112,30 @@ void CDaoConfDlg::tocManip(bool tm)
     if (!mTocManip)
     {
         ui->radioDaoSP->setEnabled(false);
+        ui->radioDaoSpMono->setEnabled(false);
     }
     else
     {
+        ui->radioDaoSP->setEnabled(true);
         ui->radioDaoSP->setChecked(true);
+        ui->radioDaoSpMono->setEnabled(true);
     }
 }
 
+//--------------------------------------------------------------------------
+//! @brief      tell if SP upload is supported
+//!
+//! @param      spu  support flag
+//--------------------------------------------------------------------------
+void CDaoConfDlg::spUpload(bool spu)
+{
+    mSpUpld = spu;
+    if (!mSpUpld)
+    {
+        ui->radioDaoSpPreenc->setEnabled(false);
+    }
+    else
+    {
+        ui->radioDaoSpPreenc->setEnabled(true);
+    }
+}

@@ -38,6 +38,7 @@ public:
     "otf_enc": 0,
     "sp_upload": 0,
     "toc_manip": 0,
+    "pcm2mono": 0,
     "t_free": 0,
     "t_total": 0,
     "t_used": 0,

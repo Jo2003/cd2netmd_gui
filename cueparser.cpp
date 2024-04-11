@@ -101,6 +101,9 @@ int CueParser::parse(const QString &cueFileName)
 
     // You thought this would be nice? You're wrong!
 
+    // disc year
+    QRegExp rxpYear("^REM\\s+DATE\\s+(.*)$");
+
     // get title string
     QRegExp rxpTitle("^TITLE\\s+(.*)$");
 
@@ -117,7 +120,7 @@ int CueParser::parse(const QString &cueFileName)
     QRegExp rxpFile("^FILE\\s+(.*)\\s+(.+)$");
 
     // pre-filter
-    QRegExp rxpUse("^(TITLE|PERFORMER|TRACK|INDEX\\s+01|FILE).*$");
+    QRegExp rxpUse("^(REM\\s+DATE|TITLE|PERFORMER|TRACK|INDEX\\s+01|FILE).*$");
 
     QFile cueFile(cueFileName);
     QFileInfo cfi(cueFileName);
@@ -128,7 +131,7 @@ int CueParser::parse(const QString &cueFileName)
     TrackType ttype = TrackType::DATA;
     int audLengthMs = 0;
     uint32_t audConv = 0;
-    mDiscData = {"", "", 0, {}};
+    mDiscData = {"", "", 0, -1, {}};
     audio::STag tag;
 
     try
@@ -169,6 +172,10 @@ int CueParser::parse(const QString &cueFileName)
                             mCueThrow(-4, "Can't recognize audio file " << file);
                         }
                     }
+                }
+                else if (rxpYear.indexIn(line) > -1) // year
+                {
+                    mDiscData.mYear = rxpYear.cap(1).toInt();
                 }
                 else if (rxpTitle.indexIn(line) > -1) // title (disc or track)
                 {
@@ -351,6 +358,16 @@ int CueParser::trackCount() const
 const QString &CueParser::discTitle() const
 {
     return mDiscData.mTitle;
+}
+
+//--------------------------------------------------------------------------
+//! @brief      get disc year
+//!
+//! @return     year
+//--------------------------------------------------------------------------
+int CueParser::discYear() const
+{
+    return mDiscData.mYear;
 }
 
 //--------------------------------------------------------------------------

@@ -17,6 +17,7 @@
 #pragma once
 #include <netmd++.h>
 #include <QVector>
+#include <ctime>
 
 //------------------------------------------------------------------------------
 //! @brief      This class helps with TOC manipulation.
@@ -32,6 +33,7 @@ public:
     {
         QString mName;          //!< track / disc name
         uint32_t mLengthInMs;   //!< track- or disc length in milli seconds
+        std::time_t mDate;      //!< track date
     };
 
     //--------------------------------------------------------------------------

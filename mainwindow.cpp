@@ -359,13 +359,15 @@ void MainWindow::on_pushTransfer_clicked()
         int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
         double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
+        std::time_t tStamp = r.sibling(r.row(), 1).data(CCDItemModel::TSTAMP_ROLE).toDateTime().toTime_t();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo,
                            trackTitle,
                            QDir::tempPath() + tempFileName("/cd2netmd.XXXXXX.tmp"),
                            trackTime,
                            WorkStep::NONE,
-                           isCD});
+                           isCD,
+                           tStamp});
     }
 
     if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
@@ -585,13 +587,13 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
                 // add disc name / -length to TOC data
                 tocData.append({static_cast<const char*>(utf8ToMd(ui->lineCDTitle->text())),
-                                blocksToMs(ui->tableViewCD->myModel()->audioLength())});
+                                blocksToMs(ui->tableViewCD->myModel()->audioLength()), 0});
 
                 for (auto& t : mWorkQueue)
                 {
                     // add track name / -length to TOC data
                     tocData.append({static_cast<const char*>(utf8ToMd(t.mTitle)),
-                                    static_cast<uint32_t>(std::round(t.mLength * 1000.0))});
+                                    static_cast<uint32_t>(std::round(t.mLength * 1000.0)), t.mTStamp});
                 }
 
                 labText = tr("TOC edit");
@@ -999,13 +1001,15 @@ void MainWindow::on_pushDAO_clicked()
         int16_t trackNo    = isCD ? trks.at(r.row() + 1).mCDTrackNo : (r.row() + 1);
         QString trackTitle = r.data().toString();
         double  trackTime  = r.sibling(r.row(), 1).data(Qt::UserRole).toDouble();
+        std::time_t tStamp = r.sibling(r.row(), 1).data(CCDItemModel::TSTAMP_ROLE).toDateTime().toTime_t();
         selectionTime += trackTime;
         mWorkQueue.append({trackNo,
                            trackTitle,
                            QDir::tempPath() + tempFileName("/cd2netmd.XXXXXX.tmp"),
                            trackTime,
                            WorkStep::NONE,
-                           isCD});
+                           isCD,
+                           tStamp});
     }
 
     if (mDAOMode == CDaoConfDlg::DAO_LP2)
@@ -1082,8 +1086,10 @@ void MainWindow::catchDropped(QStringList sl)
     {
         if (audio::checkAudioFile(url, trackInfo.mConversion, length, &tag) == 0)
         {
+            QDateTime tStamp;
             trackInfo.mFileName = url;
             trackInfo.mStartLba = 0;
+            trackInfo.mTStamp   = QDateTime::currentDateTime();
             trackInfo.mLbCount  = qRound((static_cast<double>(length) / 1000.0) * static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
             wholeLength        += trackInfo.mLbCount;
 
@@ -1099,6 +1105,13 @@ void MainWindow::catchDropped(QStringList sl)
             else
             {
                 trackInfo.mTitle = titleFromFileName(url);
+            }
+
+            if (tag.mYear > 0)
+            {
+                tStamp.setDate(QDate(tag.mYear, 11, 11));
+                tStamp.setTime(QTime(11, 11, 11));
+                trackInfo.mTStamp = tStamp;
             }
 
             tracks.append(trackInfo);
@@ -1155,7 +1168,9 @@ int MainWindow::parseCueFile(QString fileName)
     c2n::STrackInfo cueInfo;
     c2n::AudioTracks tracks;
     QFileInfo fi(fileName);
+    QDateTime tStamp;
     tracks.setListType(c2n::AudioTracks::CUE_SHEET);
+
 
     CueParser* pParser = new CueParser(fileName);
     if (pParser)
@@ -1186,6 +1201,12 @@ int MainWindow::parseCueFile(QString fileName)
             cueInfo.mLbCount = qRound((static_cast<double>(pParser->discLength()) / 1000.0) * 75.0);
             tracks.append(cueInfo);
 
+            if (pParser->discYear() > 0)
+            {
+                tStamp.setDate(QDate(pParser->discYear(), 11, 11));
+                tStamp.setTime(QTime(11, 11, 11));
+            }
+
             // tracks ...
             for (int i = 1; i <= pParser->trackCount(); i++)
             {
@@ -1198,6 +1219,11 @@ int MainWindow::parseCueFile(QString fileName)
                 cueInfo.mConversion = t.mConversion;
                 cueInfo.mTType      = t.mType;
                 cueInfo.mTitle      = "";
+                if (tStamp.isValid())
+                {
+                    cueInfo.mTStamp = tStamp;
+                }
+
                 if (!t.mPerformer.isEmpty() && (t.mPerformer != discArtist))
                 {
                     cueInfo.mTitle  = t.mPerformer + " - ";

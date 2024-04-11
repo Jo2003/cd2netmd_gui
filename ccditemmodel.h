@@ -34,6 +34,9 @@ public:
     using CDTitles   = QStringList;
     using TrackTimes = QVector<time_t>;
 
+
+    static constexpr int TSTAMP_ROLE = Qt::UserRole + 1;
+
     //--------------------------------------------------------------------------
     //! @brief      delete default constructor
     //--------------------------------------------------------------------------

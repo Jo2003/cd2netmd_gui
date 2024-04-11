@@ -234,7 +234,7 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
                 pTag->mArtist = "";
                 pTag->mTitle  = fi.baseName();
                 pTag->mNumber = 1;
-                pTag->mYear   = 1992;
+                pTag->mYear   = -1;
             }
         }
     }
@@ -283,7 +283,7 @@ int checkAudioFile(const QString& fileName, uint32_t& conversion, int& length, S
                 pTag->mArtist = "";
                 pTag->mTitle  = fi.baseName();
                 pTag->mNumber = 1;
-                pTag->mYear   = 1992;
+                pTag->mYear   = -1;
             }
 
             // the bitrate for atrac 1 is 292kbit/s, mind the header

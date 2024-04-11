@@ -155,6 +155,8 @@ int CNetMD::getDiscInfo()
     tree.insert("toc_manip", mpApi->tocManipSupported() ? 1 : 0);
     tree.insert("device", mpApi->getDeviceName().c_str());
     tree.insert("sp_upload", mpApi->spUploadSupported() ? 1 : 0);
+    tree.insert("pcm2mono", mpApi->pcm2MonoSupported() ? 1 : 0);
+
     if ((i = mpApi->trackCount()) > -1)
     {
         tree.insert("trk_count", i);

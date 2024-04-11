@@ -100,7 +100,7 @@ int CTocManip::manipulateTOC(const TitleVector &trackData, bool resetDev)
 
             for (int j = 1; j < trackData.size(); j++)
             {
-                tocHlp.addTrack(j, trackData.at(j).mLengthInMs, trackData.at(j).mName.toStdString());
+                tocHlp.addTrack(j, trackData.at(j).mLengthInMs, trackData.at(j).mName.toStdString(), trackData.at(j).mDate);
             }
             tocHlp.setDiscTitle(trackData.at(0).mName.toStdString());
 

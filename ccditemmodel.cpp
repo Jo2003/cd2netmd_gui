@@ -91,6 +91,10 @@ QVariant CCDItemModel::data(const QModelIndex &index, int role) const
         // return track time in seconds
         return static_cast<double>(mTracks.at(row).mLbCount) / static_cast<double>(CDIO_CD_FRAMES_PER_SEC);
     }
+    else if ((role == TSTAMP_ROLE) && (col == 1))
+    {
+        return mTracks.at(row).mTStamp;
+    }
 
     return QVariant();
 }

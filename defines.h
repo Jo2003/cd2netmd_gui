@@ -20,6 +20,8 @@
 #include <cstdint>
 #include <QtDebug>
 #include <QtGlobal>
+#include <QDateTime>
+#include <ctime>
 
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
@@ -51,6 +53,7 @@ struct SRipTrack
     double          mLength;
     WorkStep        mStep;
     bool            mIsCD;
+    std::time_t     mTStamp;
 };
 
 using TransferQueue = QVector<SRipTrack>;
@@ -69,12 +72,14 @@ struct STrackInfo
                const QString& wName = "",
                int cdt = -1, long lba = 0,
                long lenb = -1, uint32_t conv = 0,
-               TrackType tt = TrackType::AUDIO)
+               TrackType tt = TrackType::AUDIO,
+               const QDateTime& tstamp = QDateTime::currentDateTime())
         : mTitle(title), mFileName(fName),
           mWaveFileName(wName), mCDTrackNo(cdt),
           mStartLba(lba), mLbCount(lenb),
           mConversion(conv),
-          mTType(tt)
+          mTType(tt),
+          mTStamp(tstamp)
     {}
 
     QString   mTitle;
@@ -85,6 +90,7 @@ struct STrackInfo
     long      mLbCount;
     uint32_t  mConversion;
     TrackType mTType;
+    QDateTime mTStamp;
 };
 
 ///
