@@ -41,6 +41,7 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength, co
     mLength        = trackLength;
     mbAltEnc       = (!at3tool.isEmpty() && (mCurrCmd != XEncCmd::DAO_SP_ENCODE));
     mAtracFileName = tmpFileName + (mbAltEnc ? ".at3" : ".aea");
+    mSrcFileName   = tmpFileName;
 
     switch (cmd)
     {
@@ -391,7 +392,36 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
             break;
 
         case XEncCmd::DAO_SP_ENCODE:
-            splitAtrac1();
+            // splitAtrac1();
+            qInfo() << "SP Encode finished!" << Qt::endl;
+            qInfo() << "Copy content from" << mAtracFileName << "to" << mSrcFileName << Qt::endl;
+
+            {
+                // open atrac file for size check
+                QFile fAtrac(mAtracFileName, this);
+
+                if (fAtrac.open(QIODevice::ReadOnly))
+                {
+                    qInfo() << "Atrac 1 file" << mAtracFileName << "opened for reading!" << Qt::endl;
+
+                    // overwrite original wave file
+                    QFile aeaFile(mSrcFileName);
+
+                    if (aeaFile.open(QIODevice::Truncate | QIODevice::WriteOnly))
+                    {
+                        qInfo() << mSrcFileName << "opened for writing!" << Qt::endl;
+
+                        // copy atrac data
+                        aeaFile.write(fAtrac.readAll());
+                        aeaFile.close();
+                        qInfo() << "Copied " << mAtracFileName << " to " << mSrcFileName;
+                    }
+
+                    fAtrac.close();
+                    qInfo() << "Delete temp. file" << mAtracFileName;
+                    fAtrac.remove();
+                }
+            }
             break;
 
         default:

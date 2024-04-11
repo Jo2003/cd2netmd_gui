@@ -168,6 +168,9 @@ protected:
     /// file name for atrac3 output
     QString mAtracFileName;
 
+    /// source file name
+    QString mSrcFileName;
+
     /// files to be handled
     c2n::TransferQueue mQueue;
     

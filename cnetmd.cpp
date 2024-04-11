@@ -272,28 +272,48 @@ int CNetMD::getDiscInfo()
 int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString& title)
 {
     qInfo() << "send track:" << title << "file:" << fName << "to" << mDevName;
-    int ret = netmd::NETMDERR_OTHER;
+    int ret = netmd::NETMDERR_NO_ERROR;
     netmd::DiskFormat onTheFlyConvert;
+
+    bool spMono = false;
+
     switch(cmd)
     {
     case NetMDCmd::WRITE_TRACK_LP2:
         onTheFlyConvert = netmd::NETMD_DISKFORMAT_LP2;
+        ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_LP4:
         onTheFlyConvert = netmd::NETMD_DISKFORMAT_LP4;
+        ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_SP:
+    case NetMDCmd::WRITE_TRACK_SP_PREENC: // patch will be automatically applied
         onTheFlyConvert = netmd::NO_ONTHEFLY_CONVERSION;
+        ret = netmd::NETMDERR_NO_ERROR;
+        break;
+    case NetMDCmd::WRITE_TRACK_SP_MONO:
+        spMono = true;
+        onTheFlyConvert = netmd::NO_ONTHEFLY_CONVERSION;
+        ret = mpApi->enablePcm2Mono();
         break;
     default:
         qCritical() << "Wrong command given:" << static_cast<int>(cmd);
-        return ret;
+        ret = netmd::NETMDERR_OTHER;
         break;
     }
 
-    ret = mpApi->sendAudioFile(fName.toStdString(),
-                               static_cast<const char*>(utf8ToMd(title)),
-                               onTheFlyConvert);
+    if (ret == netmd::NETMDERR_NO_ERROR)
+    {
+        ret = mpApi->sendAudioFile(fName.toStdString(),
+                                   static_cast<const char*>(utf8ToMd(title)),
+                                   onTheFlyConvert);
+
+        if (spMono)
+        {
+            mpApi->disablePcm2Mono();
+        }
+    }
 
     return ret;
 }
@@ -415,6 +435,8 @@ void CNetMD::run()
         break;
 
     case NetMDCmd::WRITE_TRACK_SP:
+    case NetMDCmd::WRITE_TRACK_SP_MONO:
+    case NetMDCmd::WRITE_TRACK_SP_PREENC:
     case NetMDCmd::WRITE_TRACK_LP2:
     case NetMDCmd::WRITE_TRACK_LP4:
         ret = writeTrack(mCurrJob.mCmd, mCurrJob.msTrack, mCurrJob.msTitle);

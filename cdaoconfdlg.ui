@@ -59,6 +59,9 @@ p, li { white-space: pre-wrap; }
        <property name="text">
         <string>DAO SP PRENC</string>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonDAOMode</string>
+       </attribute>
       </widget>
      </item>
      <item>
@@ -66,6 +69,9 @@ p, li { white-space: pre-wrap; }
        <property name="text">
         <string>DAO SP MONO</string>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">buttonDAOMode</string>
+       </attribute>
       </widget>
      </item>
      <item>

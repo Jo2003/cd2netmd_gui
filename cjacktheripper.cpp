@@ -273,7 +273,7 @@ int CJackTheRipper::ripThread(int track, const QString &fName, bool paranoia)
         {
             audio::writeWaveHeader(f, trkSz);
 
-            cdio_cddap_speed_set(mpCDAudio, 8);
+            cdio_cddap_speed_set(mpCDAudio, 12);
 
             int curPercent = 0, oldPercent = 0;
 

@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mDAOMode(CDaoConfDlg::DAO_WTF), mpSettings(nullptr), mSpUpload(false),
-      mTocManip(false), /* mpSpUpload(nullptr),*/ mpOtfEncode(nullptr),
+      mTocManip(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
       mpTocManip(nullptr)
 {
     ui->setupUi(this);
@@ -77,12 +77,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     mpMDDevice  = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
     mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
-    // mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
+    mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
     mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
     mpTocManip  = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
 
     ui->statusbar->addPermanentWidget(mpTocManip);
-    // ui->statusbar->addPermanentWidget(mpSpUpload);
+    ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
@@ -135,10 +135,15 @@ void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xenc
         xencCmd   = CXEnc::XEncCmd::DAO_LP2_ENCODE;
         trackMode = "LP2";
     }
-    // else if (mDAOMode == CDaoConfDlg::DAO_SP)
-    // {
-    //     xencCmd   = CXEnc::XEncCmd::DAO_SP_ENCODE;
-    // }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP_PREENC)
+    {
+        netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_SP_PREENC;
+        xencCmd   = CXEnc::XEncCmd::DAO_SP_ENCODE;
+    }
+    else if (mDAOMode == CDaoConfDlg::DAO_SP_MONO)
+    {
+        netMdCmd  = CNetMD::NetMDCmd::WRITE_TRACK_SP_MONO;
+    }
     else if (ui->radioGroup->checkedButton()->objectName() == "radioLP2")
     {
         if (mpSettings->onthefly())
@@ -276,8 +281,8 @@ void MainWindow::catchJson(QString j)
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
 
     // support label ...
-    // mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
-    // mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
+    mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
+    mpSpUpload->setIcon(mSpUpload ? ":label/green" : ":label/red");
 
     mpOtfEncode->setStatusTip(otf ? tr("on-the-fly encoding supported by device") : tr("on-the-fly encoding not supported by device"));
     mpOtfEncode->setIcon(otf ? ":label/green" : ":label/red");
@@ -403,12 +408,20 @@ void MainWindow::ripFinished()
 
     bool noEnc = xencCmd == CXEnc::XEncCmd::NONE;
 
-    if ((mDAOMode == CDaoConfDlg::DAO_LP2)
-        || (mDAOMode == CDaoConfDlg::DAO_SP))
+    qInfo() << "DAO Mode:" << mDAOMode << "noEnc:" << noEnc;
+
+    if (mDAOMode != CDaoConfDlg::DAO_WTF) // DAO active
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
-            mWorkQueue[0].mStep = (mDAOMode == CDaoConfDlg::DAO_LP2) ? WorkStep::RIPPED : WorkStep::ENCODED;
+            if ((mDAOMode == CDaoConfDlg::DAO_LP2) || (mDAOMode == CDaoConfDlg::DAO_SP_PREENC))
+            {
+                mWorkQueue[0].mStep = WorkStep::RIPPED;
+            }
+            else
+            {
+                mWorkQueue[0].mStep = WorkStep::ENCODED;
+            }
         }
 
         if (mWorkQueue.at(0).mStep == WorkStep::NONE)
@@ -561,7 +574,9 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             return;
         }
 
-        if (mDAOMode == CDaoConfDlg::DAO_SP)
+        if ((mDAOMode == CDaoConfDlg::DAO_SP)
+            || (mDAOMode == CDaoConfDlg::DAO_SP_MONO)
+            || (mDAOMode == CDaoConfDlg::DAO_SP_PREENC))
         {
             if (mWorkQueue.at(0).mStep == WorkStep::DONE)
             {
@@ -900,12 +915,15 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
     }
     int all =  mWorkQueue.size();
 
-    if (((mDAOMode == CDaoConfDlg::DAO_LP2) || (mDAOMode == CDaoConfDlg::DAO_SP))
-            && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
+    if (((mDAOMode == CDaoConfDlg::DAO_LP2) || (mDAOMode == CDaoConfDlg::DAO_SP)
+           || (mDAOMode == CDaoConfDlg::DAO_SP_MONO) || ((mDAOMode == CDaoConfDlg::DAO_SP_PREENC)))
+        && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
     {
         all = 1;
     }
-    else if ((mDAOMode == CDaoConfDlg::DAO_SP) && (step == MainWindow::WorkStep::ENCODED))
+    else if (((mDAOMode == CDaoConfDlg::DAO_SP) || (mDAOMode == CDaoConfDlg::DAO_SP_MONO)
+            || (mDAOMode == CDaoConfDlg::DAO_SP_PREENC))
+        && (step == MainWindow::WorkStep::ENCODED))
     {
         all = 1;
     }
@@ -950,6 +968,8 @@ void MainWindow::on_pushDAO_clicked()
     if (pDaoConf)
     {
         pDaoConf->tocManip(mTocManip);
+        pDaoConf->spUpload(mSpUpload);
+
         if (pDaoConf->exec() == QDialog::Accepted)
         {
             mDAOMode = pDaoConf->daoMode();
@@ -984,7 +1004,9 @@ void MainWindow::on_pushDAO_clicked()
     {
         ui->radioLP2->setChecked(true);
     }
-    else if (mDAOMode == CDaoConfDlg::DAO_SP)
+    else if ((mDAOMode == CDaoConfDlg::DAO_SP)
+             || (mDAOMode == CDaoConfDlg::DAO_SP_MONO)
+             || (mDAOMode == CDaoConfDlg::DAO_SP_PREENC))
     {
         ui->radioSP->setChecked(true);
     }
@@ -1012,9 +1034,9 @@ void MainWindow::on_pushDAO_clicked()
                            tStamp});
     }
 
-    if (mDAOMode == CDaoConfDlg::DAO_LP2)
+    if ((mDAOMode == CDaoConfDlg::DAO_LP2)         // LP2 needs half time only
+        || (mDAOMode == CDaoConfDlg::DAO_SP_MONO)) // SP Mono as well
     {
-        // LP2 needs half time only
         selectionTime /= 2;
     }
 

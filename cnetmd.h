@@ -55,19 +55,21 @@ public:
     /// actions to be done on NetMD
     enum class NetMDCmd : uint8_t
     {
-        DISCINFO,           ///< get disc info
-        WRITE_TRACK_SP,     ///< transfer a track as it is (PCM -> SP, LP2 -> LP2, LP4 -> LP4)
-        WRITE_TRACK_LP2,    ///< on the fly transfer / encode PCM -> LP2
-        WRITE_TRACK_LP4,    ///< on the fly transfer / encode PCM -> LP4
-        ADD_GROUP,          ///< add new group
-        RENAME_DISC,        ///< rename MD
-        RENAME_TRACK,       ///< rename track 
-        RENAME_GROUP,       ///< rename group
-        DEL_GROUP,          ///< delete group
-        ERASE_DISC,         ///< erase disc
-        DEL_TRACK,          ///< delete track
-        TOC_MANIP,          ///< TOC manipulation
-        UNKNWON             ///< something different
+        DISCINFO,              ///< get disc info
+        WRITE_TRACK_SP,        ///< transfer a track as it is (PCM -> SP, LP2 -> LP2, LP4 -> LP4)
+        WRITE_TRACK_LP2,       ///< on the fly transfer / encode PCM -> LP2
+        WRITE_TRACK_LP4,       ///< on the fly transfer / encode PCM -> LP4
+        WRITE_TRACK_SP_MONO,   ///< PCM transfer, Mono conversion on device through PCM to Mono Patch
+        WRITE_TRACK_SP_PREENC, ///< preencoded SP transfer, needs SP upload patch
+        ADD_GROUP,             ///< add new group
+        RENAME_DISC,           ///< rename MD
+        RENAME_TRACK,          ///< rename track
+        RENAME_GROUP,          ///< rename group
+        DEL_GROUP,             ///< delete group
+        ERASE_DISC,            ///< erase disc
+        DEL_TRACK,             ///< delete track
+        TOC_MANIP,             ///< TOC manipulation
+        UNKNWON                ///< something different
     };
 
     //--------------------------------------------------------------------------
