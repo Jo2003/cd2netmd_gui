@@ -128,8 +128,9 @@ public:
     //!
     //! @param[in]  tocData  TOC data for manipulation
     //! @param[in]  resetDev reset device after TOC edit
+    //! @param[in]  mono     mono flag for TOC edit
     //--------------------------------------------------------------------------
-    void start(const TocData& tocData, bool resetDev);
+    void start(const TocData& tocData, bool resetDev, bool mono = false);
 
     //--------------------------------------------------------------------------
     //! @brief      thread function
@@ -318,4 +319,7 @@ protected:
 
     /// NetMD API
     netmd::netmd_pp* mpApi;
+
+    /// mono flag
+    bool mMono;
 };

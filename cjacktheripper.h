@@ -33,6 +33,7 @@
 #include "cffmpeg.h"
 #include "ccddb.h"
 #include "audio.h"
+#include "settingsdlg.h"
 
 class CCopyShopThread;
 
@@ -43,6 +44,8 @@ class CJackTheRipper : public QObject
 {
     Q_OBJECT
 public:
+    using SParanoia = SettingsDlg::SParanoia;
+
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
@@ -76,11 +79,11 @@ public:
     //!
     //! @param[in]  trackNo   The track no; -1 for all
     //! @param[in]  fName     The file name to store the content
-    //! @param[in]  paranoia  use CDDA paranoia if true
+    //! @param[in]  paranoia  paranoia settings
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int extractTrack(int trackNo, const QString& fName, bool paranoia);
+    int extractTrack(int trackNo, const QString& fName, const SParanoia* paranoia);
 
     //--------------------------------------------------------------------------
     //! @brief      get CDDB pointer
@@ -112,11 +115,11 @@ public:
     //!
     //! @param[in]  track     The track number
     //! @param[in]  fName     The file name
-    //! @param[in]  paranoia  The paranoia flag
+    //! @param[in]  paranoia  The paranoia settings
     //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int ripThread(int track, const QString& fName, bool paranoia);
+    int ripThread(int track, const QString& fName, const SParanoia* paranoia);
 
     //--------------------------------------------------------------------------
     //! @brief      get device info

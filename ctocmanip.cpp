@@ -51,10 +51,11 @@ void CTocManip::addArrayData(NetMDByteVector& vec, const char* data, size_t data
 //!
 //! @param[in]  trackData list of track titles and lengths
 //! @param[in]  resetDev reset device after TOC edit
+//! @param[in]  mono mono marker for TOC edit
 //!
 //! @return     NetMdErr
 //--------------------------------------------------------------------------
-int CTocManip::manipulateTOC(const TitleVector &trackData, bool resetDev)
+int CTocManip::manipulateTOC(const TitleVector &trackData, bool resetDev, bool mono)
 {
     if (!mpApi)
     {
@@ -100,7 +101,8 @@ int CTocManip::manipulateTOC(const TitleVector &trackData, bool resetDev)
 
             for (int j = 1; j < trackData.size(); j++)
             {
-                tocHlp.addTrack(j, trackData.at(j).mLengthInMs, trackData.at(j).mName.toStdString(), trackData.at(j).mDate);
+                tocHlp.addTrack(j, trackData.at(j).mLengthInMs, trackData.at(j).mName.toStdString(),
+                                trackData.at(j).mDate, mono);
             }
             tocHlp.setDiscTitle(trackData.at(0).mName.toStdString());
 

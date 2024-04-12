@@ -5,7 +5,7 @@ includedir=${prefix}/include
 
 Name: netmd++
 Description: NetMD C++ library
-Version: 1.0.3
+Version: 1.0.4
 
 Requires:
 Libs: -L${libdir} -lnetmd++ -lusb-1.0 -lgcrypt -lgpg-error

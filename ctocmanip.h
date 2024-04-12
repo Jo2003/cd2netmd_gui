@@ -53,10 +53,11 @@ public:
     //!
     //! @param[in]  trackData list of track titles and lengths
     //! @param[in]  resetDev reset device after TOC edit
+    //! @param[in]  mono mono marker for TOC edit
     //!
     //! @return     NetMdErr
     //--------------------------------------------------------------------------
-    int manipulateTOC(const TitleVector& trackData, bool resetDev);
+    int manipulateTOC(const TitleVector& trackData, bool resetDev, bool mono);
 
     //--------------------------------------------------------------------------
     //! @brief      add data to byte vector

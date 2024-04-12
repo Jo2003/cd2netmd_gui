@@ -614,7 +614,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 labText = tr("TOC edit");
 
                 // start TOC manipulation
-                mpNetMD->start(tocData, mpSettings->devReset());
+                mpNetMD->start(tocData, mpSettings->devReset(), mDAOMode == CDaoConfDlg::DAO_SP_MONO);
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
             {
@@ -1131,6 +1131,7 @@ void MainWindow::catchDropped(QStringList sl)
 
             if (tag.mYear > 0)
             {
+                qInfo() << "Found year" << tag.mYear << "files ID tags!";
                 tStamp.setDate(QDate(tag.mYear, 11, 11));
                 tStamp.setTime(QTime(11, 11, 11));
                 trackInfo.mTStamp = tStamp;

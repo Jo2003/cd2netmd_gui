@@ -793,10 +793,11 @@ public:
     //! @param[in]  lengthMs  The length in milliseconds
     //! @param[in]  title     The track title
     //! @param[in]  tstamp    The time stamp
+    //! @param[in]  mono      The mono marker
     //!
     //! @return     0 -> ok; -1 -> error
     //--------------------------------------------------------------------------
-    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, const std::time_t& tstamp);
+    int addTrack(uint8_t no, uint32_t lengthMs, const std::string& title, const std::time_t& tstamp, bool mono = false);
 
     //--------------------------------------------------------------------------
     //! @brief      Sets the disc title.

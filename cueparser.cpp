@@ -176,6 +176,7 @@ int CueParser::parse(const QString &cueFileName)
                 else if (rxpYear.indexIn(line) > -1) // year
                 {
                     mDiscData.mYear = rxpYear.cap(1).toInt();
+                    qInfo() << "Found year" << mDiscData.mYear << "in cue sheet file!";
                 }
                 else if (rxpTitle.indexIn(line) > -1) // title (disc or track)
                 {

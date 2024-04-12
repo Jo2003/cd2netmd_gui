@@ -26,7 +26,8 @@
 #include "helpers.h"
 
 CNetMD::CNetMD(QObject *parent)
-    : QThread(parent), mCurrJob(NetMDCmd::UNKNWON), mpApi(nullptr)
+    : QThread(parent), mCurrJob(NetMDCmd::UNKNWON),
+      mpApi(nullptr), mMono(false)
 {
     mpApi = new netmd::netmd_pp;
     mNameFLog  = QString("%1/cd2netmd_transfer_log.tmp").arg(QDir::tempPath());
@@ -82,13 +83,15 @@ void CNetMD::start(NetMDStartup startup)
 //!
 //! @param[in]  tocData  TOC data for manipulation
 //! @param[in]  resetDev reset device after TOC edit
+//! @param[in]  mono     mono flag for TOC edit
 //--------------------------------------------------------------------------
-void CNetMD::start(const TocData& tocData, bool resetDev)
+void CNetMD::start(const TocData& tocData, bool resetDev, bool mono)
 {
     mLog.clear();
     mTocData = tocData;
     mCurrJob.mCmd = NetMDCmd::TOC_MANIP;
     mCurrJob.miFirst = resetDev ? 1 : 0;
+    mMono = mono;
     mTReadLog.start();
     QThread::start();
 }
@@ -293,8 +296,9 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
         ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_SP_MONO:
+        qInfo() << "Enable PCM to Mono patch." << Qt::endl;
         spMono = true;
-        onTheFlyConvert = netmd::NO_ONTHEFLY_CONVERSION;
+        onTheFlyConvert = netmd::NETMD_DISKFORMAT_SP_MONO;
         ret = mpApi->enablePcm2Mono();
         break;
     default:
@@ -311,6 +315,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
 
         if (spMono)
         {
+            qInfo() << "Disable PCM to Mono patch." << Qt::endl;
             mpApi->disablePcm2Mono();
         }
     }
@@ -421,7 +426,7 @@ int CNetMD::delTrack(int trackNo)
 int CNetMD::doTocManip(bool devReset)
 {
     CTocManip manip(mpApi);
-    return manip.manipulateTOC(mTocData, devReset);
+    return manip.manipulateTOC(mTocData, devReset, mMono);
 }
 
 void CNetMD::run()

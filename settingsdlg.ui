@@ -26,14 +26,72 @@
     </widget>
    </item>
    <item row="0" column="1">
-    <widget class="QCheckBox" name="checkParanoia">
-     <property name="statusTip">
-      <string>CDDA paranoia support. Reads exactly, but slow.</string>
-     </property>
-     <property name="text">
-      <string>CDDA Paranoia</string>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QCheckBox" name="checkParanoia">
+       <property name="statusTip">
+        <string>CDDA paranoia support. Reads exactly, but slow.</string>
+       </property>
+       <property name="text">
+        <string>CDDA Paranoia</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_12">
+       <property name="text">
+        <string>Read Speed: </string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboReadSpeed">
+       <item>
+        <property name="text">
+         <string>1x</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2x</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4x</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>8x</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>12x</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>16x</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="label_3">
@@ -93,6 +151,67 @@
       <string>Set MD disc title after SP transfer</string>
      </property>
     </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>Size Check:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QCheckBox" name="disSzCheck">
+     <property name="text">
+      <string>Disable audio length check (risky)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>Device Reset:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QCheckBox" name="checkDevReset">
+     <property name="text">
+      <string>Reset device after TOC edit</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Alt. ATRAC3 encoder:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,1">
+     <property name="spacing">
+      <number>2</number>
+     </property>
+     <item>
+      <widget class="QLineEdit" name="lineAtTool"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushAtTool">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Search for at3tool</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item row="8" column="0">
     <widget class="QLabel" name="label">
@@ -222,67 +341,6 @@
       </widget>
      </item>
     </layout>
-   </item>
-   <item row="7" column="0">
-    <widget class="QLabel" name="label_6">
-     <property name="text">
-      <string>Alt. ATRAC3 encoder:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,1">
-     <property name="spacing">
-      <number>2</number>
-     </property>
-     <item>
-      <widget class="QLineEdit" name="lineAtTool"/>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushAtTool">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Ignored" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>Search for at3tool</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_10">
-     <property name="text">
-      <string>Device Reset:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="1">
-    <widget class="QCheckBox" name="checkDevReset">
-     <property name="text">
-      <string>Reset device after TOC edit</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_11">
-     <property name="text">
-      <string>Size Check:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QCheckBox" name="disSzCheck">
-     <property name="text">
-      <string>Disable audio length check (risky)</string>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

@@ -149,6 +149,7 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
             {
                 // capture year
                 year = rxMatch.cap(1).toInt();
+                qInfo() << "Found year" << year << "in CDDB response!";
             }
         }
         lineNo ++;

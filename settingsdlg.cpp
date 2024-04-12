@@ -27,6 +27,8 @@
 #include <QFileDialog>
 #include "defines.h"
 
+const int SettingsDlg::READ_SPEEDS[] = {1, 2, 4, 8, 12, 16};
+
 SettingsDlg::SettingsDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDlg), mpWaitAni(nullptr)
@@ -48,12 +50,17 @@ SettingsDlg::~SettingsDlg()
     set.setValue("cddb", ui->checkCDDB->isChecked());
     set.setValue("at3tool", ui->lineAtTool->text());
     set.setValue("dev_reset", ui->checkDevReset->isChecked());
+    set.setValue("read_speed", ui->comboReadSpeed->currentIndex());
     delete ui;
 }
 
-bool SettingsDlg::paranoia() const
+const SettingsDlg::SParanoia* SettingsDlg::paranoia()
 {
-    return ui->checkParanoia->isChecked();
+    mParanoia = {
+        READ_SPEEDS[ui->comboReadSpeed->currentIndex()],
+        ui->checkParanoia->isChecked()
+    };
+    return &mParanoia;
 }
 
 //--------------------------------------------------------------------------
@@ -275,6 +282,16 @@ void SettingsDlg::loadSettings()
     if (set.contains("at3tool"))
     {
         ui->lineAtTool->setText(set.value("at3tool").toString());
+    }
+
+    if (set.contains("read_speed"))
+    {
+        ui->comboReadSpeed->setCurrentIndex(set.value("read_speed").toUInt());
+    }
+    else
+    {
+        // 8x
+        ui->comboReadSpeed->setCurrentIndex(3);
     }
 
     emit loadingComplete();

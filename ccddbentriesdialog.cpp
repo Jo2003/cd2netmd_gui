@@ -18,6 +18,7 @@
 #include "ui_ccddbentriesdialog.h"
 #include <QStringListModel>
 #include <QAbstractButton>
+#include <QPushButton>
 #include "defines.h"
 
 CCDDBEntriesDialog::CCDDBEntriesDialog(const QStringList &entries, QWidget *parent) :
@@ -25,6 +26,13 @@ CCDDBEntriesDialog::CCDDBEntriesDialog(const QStringList &entries, QWidget *pare
     ui(new Ui::CCDDBEntriesDialog)
 {
     ui->setupUi(this);
+    QPushButton* btn = ui->buttonBox->button(QDialogButtonBox::Discard);
+    btn->setAutoDefault(false);
+    btn->setDefault(false);
+
+    btn = ui->buttonBox->button(QDialogButtonBox::Apply);
+    btn->setAutoDefault(true);
+    btn->setDefault(true);
 }
 
 CCDDBEntriesDialog::~CCDDBEntriesDialog()

@@ -40,6 +40,16 @@ public:
         STANDARD
     };
 
+    /// supported read speeds
+    static const int READ_SPEEDS[];
+
+    /// config structure for cdparanoia
+    struct SParanoia
+    {
+        int mReadSpeed;     ///< read speed
+        bool mEnaParanoia;  ///< enable paranoia mode
+    };
+
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
@@ -55,9 +65,9 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      is CD paranoia mode enabled
     //!
-    //! @return     true if enabled
+    //! @return     pointer to paranoia config
     //--------------------------------------------------------------------------
-    bool paranoia() const;
+    const SParanoia* paranoia();
     
     //--------------------------------------------------------------------------
     //! @brief      is on-the-fly-transfer enabled
@@ -142,6 +152,11 @@ public:
     //--------------------------------------------------------------------------
     bool sizeCheck() const;
 
+    //--------------------------------------------------------------------------
+    //! @brief      get path to at3tool
+    //--------------------------------------------------------------------------
+    void on_pushAtTool_clicked();
+
 private slots:
     
     //--------------------------------------------------------------------------
@@ -173,8 +188,6 @@ private slots:
     //--------------------------------------------------------------------------
     void on_pushOK_clicked();
 
-    void on_pushAtTool_clicked();
-
 signals:
     //--------------------------------------------------------------------------
     //! @brief      will be sent when settings loaded
@@ -187,4 +200,7 @@ private:
 
     /// busy animation
     QMovie          *mpWaitAni;
+
+    /// cdparanoia settings
+    SParanoia mParanoia{8, false};
 };
