@@ -53,7 +53,7 @@ struct SRipTrack
     double          mLength;
     WorkStep        mStep;
     bool            mIsCD;
-    std::time_t     mTStamp;
+    std::time_t     mUxTStamp;
 };
 
 using TransferQueue = QVector<SRipTrack>;

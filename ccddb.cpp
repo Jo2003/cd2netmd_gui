@@ -148,7 +148,7 @@ int CCDDB::parseReply(CCDDB::REQ_WHAT type, QString reply)
             else if (rxYear.indexIn(tok) > -1)
             {
                 // capture year
-                year = rxMatch.cap(1).toInt();
+                year = rxYear.cap(1).toInt();
                 qInfo() << "Found year" << year << "in CDDB response!";
             }
         }

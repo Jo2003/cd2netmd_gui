@@ -189,10 +189,18 @@ int CXEnc::atrac1Header(QFile& aeaFile, XEncCmd cmd, size_t dataSz, int length)
     return ret;
 }
 
-int CXEnc::splitAtrac3()
+//--------------------------------------------------------------------------
+//! @brief      Splits an atrac 3.
+//!
+//! @param[in]  lp4 (bool) true for lp4 split (optional)
+//!
+//! @return     0 on success
+//--------------------------------------------------------------------------
+int CXEnc::splitAtrac3(bool lp4)
 {
     // open atrac file for size check
     QFile fAtrac(mAtracFileName, this);
+    uint32_t BLOCK_ALIGN = lp4 ? ATRAC3_LP4_BLOCK_ALIGN : ATRAC3_LP2_BLOCK_ALIGN;
 
     if (fAtrac.open(QIODevice::ReadOnly))
     {
@@ -211,7 +219,7 @@ int CXEnc::splitAtrac3()
         }
 
         // average blocks per second
-        double blocksPerSec = (static_cast<double>(sz) / static_cast<double>(ATRAC3_LP2_BLOCK_ALIGN)) / mLength;
+        double blocksPerSec = (static_cast<double>(sz) / static_cast<double>(BLOCK_ALIGN)) / mLength;
 
         int trkCount = 0;
         size_t copied = 0;
@@ -231,7 +239,7 @@ int CXEnc::splitAtrac3()
                 if (trkCount < mQueue.size())
                 {
                     copyBlocks = static_cast<uint32_t>(ceil(t.mLength * blocksPerSec));
-                    cpSz = copyBlocks * ATRAC3_LP2_BLOCK_ALIGN;
+                    cpSz = copyBlocks * BLOCK_ALIGN;
                     copied += cpSz;
                 }
                 else

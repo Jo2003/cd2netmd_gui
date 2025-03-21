@@ -127,9 +127,11 @@ protected:
     //--------------------------------------------------------------------------
     //! @brief      Splits an atrac 3.
     //!
+    //! @param[in]  lp4 (bool) true for lp4 split (optional)
+    //!
     //! @return     0 on success
     //--------------------------------------------------------------------------
-    int splitAtrac3();
+    int splitAtrac3(bool lp4 = false);
 
     //--------------------------------------------------------------------------
     //! @brief      Splits an atrac 1 (SP).
