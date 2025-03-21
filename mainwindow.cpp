@@ -602,13 +602,13 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
                 // add disc name / -length to TOC data
                 tocData.append({static_cast<const char*>(utf8ToMd(ui->lineCDTitle->text())),
-                                blocksToMs(ui->tableViewCD->myModel()->audioLength()), 0});
+                                blocksToMs(ui->tableViewCD->myModel()->audioLength()), mWorkQueue[0].mUxTStamp});
 
                 for (auto& t : mWorkQueue)
                 {
                     // add track name / -length to TOC data
                     tocData.append({static_cast<const char*>(utf8ToMd(t.mTitle)),
-                                    static_cast<uint32_t>(std::round(t.mLength * 1000.0)), t.mTStamp});
+                                    static_cast<uint32_t>(std::round(t.mLength * 1000.0)), t.mUxTStamp});
                 }
 
                 labText = tr("TOC edit");
