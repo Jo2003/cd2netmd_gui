@@ -178,6 +178,9 @@
      <property name="text">
       <string>Reset device after TOC edit</string>
      </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item row="7" column="0">

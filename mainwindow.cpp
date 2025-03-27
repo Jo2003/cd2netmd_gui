@@ -303,6 +303,58 @@ void MainWindow::catchJson(QString j)
                                                                 "Remove the write lock and reload the MD!"));
     }
 
+    ui->cbxTranferMode->clear();
+
+
+    for (int m = ETransferMode::TM_TAO_START; m < ETransferMode::TM_DAO_END; m++)
+    {
+        bool addItem;
+        switch(m)
+        {
+        case ETransferMode::TM_DAO_SP_PREENC:
+            if (mSpUpload && mTocManip)
+            {
+                addItem = true;
+            }
+            break;
+
+        case ETransferMode::TM_DAO_SP:
+        case ETransferMode::TM_DAO_SP_MONO:
+            if (mTocManip)
+            {
+                addItem = true;
+            }
+            break;
+        case ETransferMode::TM_TAO_SP:
+        case ETransferMode::TM_TAO_SP_MONO:
+        case ETransferMode::TM_TAO_LP2:
+        case ETransferMode::TM_TAO_LP4:
+        case ETransferMode::TM_DAO_LP2:
+        case ETransferMode::TM_DAO_LP4:
+            addItem = true;
+            break;
+        default:
+            addItem = false;
+            break;
+        }
+
+        if (addItem)
+        {
+            QIcon ico;
+            if ((m > ETransferMode::TM_TAO_START) && (m < ETransferMode::TM_TAO_END))
+            {
+                ico = QIcon(":/view/audio");
+            }
+            else if ((m > ETransferMode::TM_DAO_START) && (m < ETransferMode::TM_DAO_END))
+            {
+                ico = QIcon(":/buttons/cd");
+
+            }
+            ui->cbxTranferMode->addItem(ico, TMDescs[m], m);
+        }
+    }
+    ui->cbxTranferMode->setCurrentIndex(0);
+
     enableDialogItems(true);
 }
 
@@ -839,6 +891,7 @@ void MainWindow::enableDialogItems(bool ena)
     ui->radioLP2->setEnabled(ena);
     ui->radioLP4->setEnabled(ena);
     ui->pushSettings->setEnabled(ena);
+
     if (ena)
     {
         if ((mpMDmodel != nullptr) && mpMDmodel->discConf()->mOTFEnc)
@@ -853,7 +906,7 @@ void MainWindow::enableDialogItems(bool ena)
     ui->pushLoadMD->setEnabled(ena);
     ui->pushInitCD->setEnabled(ena);
     ui->pushLoadImg->setEnabled(ena);
-
+    ui->cbxTranferMode->setEnabled(ena);
     if (ena)
     {
         if ((ui->tableViewCD->model() != nullptr)
@@ -1322,5 +1375,39 @@ void MainWindow::delayedPopUp(ePopUp tp, const QString& caption, const QString& 
         QTimer::singleShot(wait, [=]()->void{QMessageBox::warning(this, caption, msg);});
         break;
     }
+}
+
+//--------------------------------------------------------------------------
+//! @brief      transfer mode changed
+//!
+//! @param[in]  index new activated index
+//--------------------------------------------------------------------------
+void MainWindow::on_cbxTranferMode_currentIndexChanged(int index)
+{
+    int multi = 1;
+    switch(ui->cbxTranferMode->itemData(index).toInt())
+    {
+    case ETransferMode::TM_DAO_LP2:
+    case ETransferMode::TM_DAO_SP_MONO:
+    case ETransferMode::TM_TAO_SP_MONO:
+    case ETransferMode::TM_TAO_LP2:
+        multi = 2;
+        break;
+    case ETransferMode::TM_DAO_LP4:
+    case ETransferMode::TM_TAO_LP4:
+        multi = 4;
+        break;
+    default:
+        break;
+    }
+
+    int secs = mpMDmodel->discConf()->mFreeTime * multi;
+
+    ui->labFreeTime->clear();
+    ui->labFreeTime->setText(tr("Free: %1:%2:%3")
+        .arg(secs / 3600, 1, 10, QChar('0'))
+        .arg((secs % 3600) / 60, 2, 10, QChar('0'))
+        .arg(secs %  60, 2, 10, QChar('0')));
+    ui->labFreeTime->show();
 }
 

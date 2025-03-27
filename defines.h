@@ -149,6 +149,49 @@ enum LogLevel
     FATAL
 };
 
+//--------------------------------------------------------------------------
+//! @brief      transfer modes
+//! TAO -> track at once
+//! DAO -> disc at once
+//--------------------------------------------------------------------------
+enum ETransferMode
+{
+    TM_TAO_START,
+    TM_TAO_SP,
+    TM_TAO_SP_MONO,
+    TM_TAO_LP2,
+    TM_TAO_LP4,
+    TM_TAO_END,
+    TM_DAO_START,
+    TM_DAO_SP,
+    TM_DAO_SP_MONO,
+    TM_DAO_SP_PREENC,
+    TM_DAO_LP2,
+    TM_DAO_LP4,
+    TM_DAO_END,
+    TM_UNKNOWN
+};
+
+//--------------------------------------------------------------------------
+//! name the transfer modes
+//--------------------------------------------------------------------------
+constexpr const char* TMDescs[] = {
+    "TAO start",
+    "SP",
+    "SP Mono",
+    "LP2",
+    "LP4",
+    "TAO end",
+    "DAO start",
+    "SP",
+    "SP Mono",
+    "SP preenc.",
+    "LP2",
+    "LP4",
+    "DAO end",
+    "unknown"
+};
+
 }
 
 extern const QString g_logFileName;

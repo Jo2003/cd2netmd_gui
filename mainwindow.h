@@ -308,6 +308,13 @@ private slots:
 
     void on_pushLog_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      transfer mode changed
+    //!
+    //! @param[in]  index new activated index
+    //--------------------------------------------------------------------------
+    void on_cbxTranferMode_currentIndexChanged(int index);
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
