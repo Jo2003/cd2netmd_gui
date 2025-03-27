@@ -65,6 +65,7 @@ public:
         LP2_ENCODE,     ///< do LP2 encoding
         LP4_ENCODE,     ///< do LP4 encoding
         DAO_LP2_ENCODE, ///< do DAO LP2 encoding
+        DAO_LP4_ENCODE, ///< do DAO LP4 encoding
         DAO_SP_ENCODE,  ///< do DAO SP encoding
     };
 

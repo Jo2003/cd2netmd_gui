@@ -16,6 +16,7 @@
  */
 #include "cdaoconfdlg.h"
 #include "ui_cdaoconfdlg.h"
+#include <QSettings>
 
 //------------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
@@ -24,15 +25,15 @@
 //------------------------------------------------------------------------------
 CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CDaoConfDlg), mTocManip(false), mSpUpld(false)
+    ui(new Ui::CDaoConfDlg)
 {
     ui->setupUi(this);
     QString s = R"(
 <b style="font-size: x-large;">(D)isc (A)t (O)nce or Gapless Mode</b> - Please read careful!
 <p>DAO / gapless is supported in 4 modes. All have there pros and cons.</p>
-<b style="font-size: large;">DAO LP2 Mode</b>
+<b style="font-size: large;">DAO LP2 / LP4 Mode</b>
 <p>The audio content will be extracted and compressed at once. After that, the audio will be split into tracks
-and transferred to your NetMD device. You have to expect quality loss due to LP2 mode and the usage of an
+and transferred to your NetMD device. You have to expect quality loss due to LP2/LP4 mode and the usage of an
 external encoder. Playback is only supported on MDLP capable devices.</p>
 <b style="font-size: large;">DAO SP Mode</b>
 <p>The audio content will be extracted and transferred to the NetMD device at once.
@@ -72,70 +73,13 @@ CDaoConfDlg::~CDaoConfDlg()
     delete ui;
 }
 
-//------------------------------------------------------------------------------
-//! @brief      give DAO mode
+//--------------------------------------------------------------------------
+//! @brief      don't show again toggled
 //!
-//! @return     DAO mode
-//------------------------------------------------------------------------------
-CDaoConfDlg::DAO_Mode CDaoConfDlg::daoMode() const
+//! @param      checked  true or false
+//--------------------------------------------------------------------------
+void CDaoConfDlg::on_checkDontShow_toggled(bool checked)
 {
-    DAO_Mode mode = DAO_Mode::DAO_WTF;
-
-    if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoLP2")
-    {
-        mode = DAO_Mode::DAO_LP2;
-    }
-    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoSP")
-    {
-        mode = DAO_Mode::DAO_SP;
-    }
-    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoSpPreenc")
-    {
-        mode = DAO_Mode::DAO_SP_PREENC;
-    }
-    else if (ui->buttonDAOMode->checkedButton()->objectName() == "radioDaoSpMono")
-    {
-        mode = DAO_Mode::DAO_SP_MONO;
-    }
-
-    return mode;
-}
-
-//--------------------------------------------------------------------------
-//! @brief      tell if TOC manipulation is supported
-//!
-//! @param      tm  support flag
-//--------------------------------------------------------------------------
-void CDaoConfDlg::tocManip(bool tm)
-{
-    mTocManip = tm;
-    if (!mTocManip)
-    {
-        ui->radioDaoSP->setEnabled(false);
-        ui->radioDaoSpMono->setEnabled(false);
-    }
-    else
-    {
-        ui->radioDaoSP->setEnabled(true);
-        ui->radioDaoSP->setChecked(true);
-        ui->radioDaoSpMono->setEnabled(true);
-    }
-}
-
-//--------------------------------------------------------------------------
-//! @brief      tell if SP upload is supported
-//!
-//! @param      spu  support flag
-//--------------------------------------------------------------------------
-void CDaoConfDlg::spUpload(bool spu)
-{
-    mSpUpld = spu;
-    if (!mSpUpld)
-    {
-        ui->radioDaoSpPreenc->setEnabled(false);
-    }
-    else
-    {
-        ui->radioDaoSpPreenc->setEnabled(true);
-    }
+    QSettings set;
+    set.setValue("dont_show_dao_info", checked);
 }

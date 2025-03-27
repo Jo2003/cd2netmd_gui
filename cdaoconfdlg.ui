@@ -32,46 +32,10 @@ p, li { white-space: pre-wrap; }
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QRadioButton" name="radioDaoLP2">
+      <widget class="QCheckBox" name="checkDontShow">
        <property name="text">
-        <string>DAO LP2</string>
+        <string>Don't show this information again.</string>
        </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-       <attribute name="buttonGroup">
-        <string notr="true">buttonDAOMode</string>
-       </attribute>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="radioDaoSP">
-       <property name="text">
-        <string>DAO SP</string>
-       </property>
-       <attribute name="buttonGroup">
-        <string notr="true">buttonDAOMode</string>
-       </attribute>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="radioDaoSpPreenc">
-       <property name="text">
-        <string>DAO SP PRENC</string>
-       </property>
-       <attribute name="buttonGroup">
-        <string notr="true">buttonDAOMode</string>
-       </attribute>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="radioDaoSpMono">
-       <property name="text">
-        <string>DAO SP MONO</string>
-       </property>
-       <attribute name="buttonGroup">
-        <string notr="true">buttonDAOMode</string>
-       </attribute>
       </widget>
      </item>
      <item>

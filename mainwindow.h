@@ -105,9 +105,8 @@ protected:
     //!
     //! @param[out] netMdCmd   The net md command
     //! @param[out] xencCmd    The xenc command
-    //! @param[out] trackMode  The track mode
     //--------------------------------------------------------------------------
-    void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd, QString& trackMode);
+    void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd);
     
     //--------------------------------------------------------------------------
     //! @brief      Adds a md track.
@@ -264,11 +263,6 @@ private slots:
     void eraseDisc();
 
     //--------------------------------------------------------------------------
-    //! @brief      Called when push dao clicked.
-    //--------------------------------------------------------------------------
-    void on_pushDAO_clicked();
-
-    //--------------------------------------------------------------------------
     //! @brief      Called when push about clicked.
     //--------------------------------------------------------------------------
     void on_pushAbout_clicked();
@@ -340,9 +334,6 @@ private:
     /// CD device info
     StatusWidget   *mpCDDevice;
     
-    /// which DAO handling active?
-    CDaoConfDlg::DAO_Mode mDAOMode;
-
     /// settings dialog class
     SettingsDlg    *mpSettings;
 
@@ -363,4 +354,7 @@ private:
 
     /// show TOC manipulation support
     StatusWidget   *mpTocManip;
+
+    /// chosen transfer mode
+    c2n::ETransferMode mTransferMode;
 };

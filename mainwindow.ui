@@ -239,66 +239,56 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_4">
       <item>
-       <widget class="QComboBox" name="cbxTranferMode">
-        <property name="sizeAdjustPolicy">
-         <enum>QComboBox::AdjustToContents</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioSP">
-        <property name="statusTip">
-         <string>Transfer in SP mode</string>
-        </property>
-        <property name="text">
-         <string>SP</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">radioGroup</string>
-        </attribute>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioLP2">
-        <property name="statusTip">
-         <string>Transfer in LP2 mode</string>
-        </property>
-        <property name="text">
-         <string>LP2</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">radioGroup</string>
-        </attribute>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioLP4">
-        <property name="statusTip">
-         <string>Transfer in LP4 mode</string>
-        </property>
-        <property name="text">
-         <string>LP4</string>
-        </property>
-        <attribute name="buttonGroup">
-         <string notr="true">radioGroup</string>
-        </attribute>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_3">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
+       <widget class="QPushButton" name="pushSettings">
+        <property name="minimumSize">
          <size>
-          <width>40</width>
-          <height>20</height>
+          <width>100</width>
+          <height>28</height>
          </size>
         </property>
-       </spacer>
+        <property name="statusTip">
+         <string>Program Settings</string>
+        </property>
+        <property name="text">
+         <string>&amp;Settings</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/buttons/settings</normaloff>:/buttons/settings</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushLog">
+        <property name="statusTip">
+         <string>Open Log-File</string>
+        </property>
+        <property name="text">
+         <string>L&amp;og File</string>
+        </property>
+        <property name="icon">
+         <iconset resource="resources.qrc">
+          <normaloff>:/buttons/log</normaloff>:/buttons/log</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>32</width>
+          <height>32</height>
+         </size>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushHelp">
@@ -359,54 +349,29 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushLog">
-        <property name="statusTip">
-         <string>Open Log-File</string>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="text">
-         <string>L&amp;og File</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/buttons/log</normaloff>:/buttons/log</iconset>
-        </property>
-        <property name="iconSize">
+        <property name="sizeHint" stdset="0">
          <size>
-          <width>32</width>
-          <height>32</height>
+          <width>40</width>
+          <height>20</height>
          </size>
         </property>
-        <property name="flat">
-         <bool>true</bool>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Transfer Config: </string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushSettings">
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>28</height>
-         </size>
-        </property>
-        <property name="statusTip">
-         <string>Program Settings</string>
-        </property>
-        <property name="text">
-         <string>&amp;Settings</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/buttons/settings</normaloff>:/buttons/settings</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>32</width>
-          <height>32</height>
-         </size>
-        </property>
-        <property name="flat">
-         <bool>true</bool>
+       <widget class="QComboBox" name="cbxTranferMode">
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContents</enum>
         </property>
        </widget>
       </item>
@@ -426,38 +391,6 @@
         </property>
         <property name="text">
          <string>&amp;Transfer</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/buttons/transfer</normaloff>:/buttons/transfer</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>32</width>
-          <height>32</height>
-         </size>
-        </property>
-        <property name="flat">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushDAO">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>28</height>
-         </size>
-        </property>
-        <property name="statusTip">
-         <string>Disc-at-once transfer (all tracks). Gapless mode.</string>
-        </property>
-        <property name="text">
-         <string>&amp;DAO Transfer</string>
         </property>
         <property name="icon">
          <iconset resource="resources.qrc">
@@ -597,7 +530,4 @@
   <include location="resources.qrc"/>
  </resources>
  <connections/>
- <buttongroups>
-  <buttongroup name="radioGroup"/>
- </buttongroups>
 </ui>
