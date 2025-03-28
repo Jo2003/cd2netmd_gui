@@ -227,6 +227,10 @@ int CNetMD::getDiscInfo()
         // bitrate
         clrOs();
         os << aenc;
+        if (channel == 1)
+        {
+            os << " Mono";
+        }
         track.insert("bitrate", os.str().c_str());
 
         // time

@@ -25,8 +25,16 @@ NetMD Wizard is a program to write audio data to your NetMD device.
 Hopefully usage doesn't need much instruction. In a nutshell:
 
 1. Import Audio Data
+
 2. Load the Minidisc
-3. Choose the audio quality
+
+3. Choose the transfer mode
+
+   1. The audio track symbol stands for Track at once (normal mode)
+   2. The disc symbol stands for Disc at once (DAO / gapless mode)
+
+    ![Transfer Modes](transfer_modi.png)
+
 4. Press the button "Transfer".
 
 ### Import Audio Data ###
@@ -58,12 +66,27 @@ In Cue Sheet mode and when using a CD Audio, selected tracks will be transferred
 
 > Note: If you have inserted audio files through drag and drop all files will be transferred to MD - I assume that you only drop wanted audio files to the program. 
 
-### DAO / Gapless Mode (Disc-at-Once) ###
+### (D)isc (A)t (O)nce or Gapless Mode
 
-* In **LP2 DAO** modus the audio content will be extracted and compressed at once.  After that, the audio will be split into tracks and transferred to your NetMD device. You have to expect quality loss  due to LP2 mode and the usage of an external encoder. Playback is only supported on MDLP capable devices.
+DAO / gapless is supported in 4 modes. All have there pros and cons.
 
-* In **SP DAO** modus the audio content will be extracted and transferred to the NetMD device at once. After that the audio data will be split directly on the NetMD device through TOC edit. This gives you the best possible quality. Playback is supported on all MD devices. Unfortunately, this is only supported on Sony / Aiwa portable type R, and type S devices.
-<div style='color:red; background-color: #fff6d1; border: red solid 2px; padding: 5px; margin: 5px;'>For DAO SP I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs. Furthermore, take care that there is no pending TOC edit on your NetMD device before starting the DAO upload. <b>Simply press 'stop' on your device  before going on!</b></div>
+#### DAO LP2 / LP4 Mode 
+
+The audio content will be extracted and compressed at once. After that, the audio will be split into tracks and transferred to your NetMD device. You have to expect quality loss due to LP2/LP4 mode and the usage of an external encoder. Playback is only supported on MDLP capable devices.
+
+#### DAO SP Mode 
+
+The audio content will be extracted and transferred to the NetMD device at once. After that the audio data will be split directly on the NetMD device through TOC edit. This gives you the best possible quality. Playback is supported on all MD devices. Unfortunately, this is only supported on Sony / Aiwa portable type R, and type S devices.
+
+#### DAO SP Pre-Enc Mode 
+
+The whole audio content will be extracted and converted into Atrac 1, and transferred to the NetMD device at once. After that the audio data will be split directly on the NetMD device through TOC edit. Playback is supported on all MD devices. Unfortunately, this is only supported on Sony portable type S devices. This mode is much faster than the other SP modes, but quality depends on atracdenc and might be slightly worse.
+
+#### DAO SP Mono Mode 
+
+The whole audio content will be extracted and transferred to the NetMD device at once. The NetMd device converts the audio data into SP mono (needing half the data size). After that the audio data will be split directly on the NetMD device through TOC edit. Playback is supported on all MD devices. Unfortunately, this is only supported on Sony portable type R - and S devices.
+
+<div style='color:red; background-color: #fff6d1; border: red solid 2px; padding: 5px; margin: 5px;'>For all DAO SP modi I'd recommend the usage of a blank MD. While we take care for existing content, you might end up with issues on very fragmented discs. Furthermore, take care that there is no pending TOC edit on your NetMD device before starting the DAO upload. Simply press 'stop' on your device <b>before going on!</b></div>
 
 > Note: In DAO mode when reading from CD all sorting and deleting from tracks done in the source window will be **reverted** before the transfer starts.
 

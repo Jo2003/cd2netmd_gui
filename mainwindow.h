@@ -32,6 +32,7 @@
 #include "settingsdlg.h"
 #include "cdaoconfdlg.h"
 #include "statuswidget.h"
+#include "transfermode.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -101,23 +102,13 @@ protected:
     void changeEvent(QEvent* e) override;
 
     //--------------------------------------------------------------------------
-    //! @brief      get the transfer configuration
-    //!
-    //! @param[out] netMdCmd   The net md command
-    //! @param[out] xencCmd    The xenc command
-    //! @param[out] trackMode  The track mode
-    //--------------------------------------------------------------------------
-    void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd, QString& trackMode);
-    
-    //--------------------------------------------------------------------------
     //! @brief      Adds a md track.
     //!
     //! @param[in]  number  The number
     //! @param[in]  title   The title
-    //! @param[in]  mode    The mode
     //! @param[in]  length  The length
     //--------------------------------------------------------------------------
-    void addMDTrack(int number, const QString &title, const QString &mode, time_t length);
+    void addMDTrack(int number, const QString &title, time_t length);
     
     //--------------------------------------------------------------------------
     //! @brief      Sets the md title.
@@ -264,11 +255,6 @@ private slots:
     void eraseDisc();
 
     //--------------------------------------------------------------------------
-    //! @brief      Called when push dao clicked.
-    //--------------------------------------------------------------------------
-    void on_pushDAO_clicked();
-
-    //--------------------------------------------------------------------------
     //! @brief      Called when push about clicked.
     //--------------------------------------------------------------------------
     void on_pushAbout_clicked();
@@ -308,6 +294,13 @@ private slots:
 
     void on_pushLog_clicked();
 
+    //--------------------------------------------------------------------------
+    //! @brief      transfer mode changed
+    //!
+    //! @param[in]  index new activated index
+    //--------------------------------------------------------------------------
+    void on_cbxTranferMode_currentIndexChanged(int index);
+
 private:
     /// GUI pointer
     Ui::MainWindow *ui;
@@ -333,9 +326,6 @@ private:
     /// CD device info
     StatusWidget   *mpCDDevice;
     
-    /// which DAO handling active?
-    CDaoConfDlg::DAO_Mode mDAOMode;
-
     /// settings dialog class
     SettingsDlg    *mpSettings;
 
@@ -348,6 +338,9 @@ private:
     /// does the device support forced TOC edit
     bool mTocManip;
 
+    /// does the device support pcm2Mono
+    bool mPcm2Mono;
+
     /// show SP download support
     StatusWidget   *mpSpUpload;
 
@@ -356,4 +349,10 @@ private:
 
     /// show TOC manipulation support
     StatusWidget   *mpTocManip;
+
+    /// show SP Mono support
+    StatusWidget   *mpPcm2Mono;
+
+    /// chosen transfer mode
+    TransferMode mTransferMode;
 };

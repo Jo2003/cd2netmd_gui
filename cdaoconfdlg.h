@@ -32,18 +32,6 @@ class CDaoConfDlg : public QDialog
 
 public:
     //--------------------------------------------------------------------------
-    //! @brief      DAO modes
-    //--------------------------------------------------------------------------
-    enum DAO_Mode
-    {
-        DAO_SP,        ///< SP mode
-        DAO_LP2,       ///< LP2 mode
-        DAO_SP_MONO,   ///< stereo upload, conversion to mono on device (needs PCM to mono patch)
-        DAO_SP_PREENC, ///< preencoded ATRAC1 SP (needs SP upload patch)
-        DAO_WTF        ///< wtf ...
-    };
-
-    //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.
     //!
     //! @param      parent  The parent widget
@@ -55,30 +43,10 @@ public:
     //--------------------------------------------------------------------------
     ~CDaoConfDlg();
 
-    //--------------------------------------------------------------------------
-    //! @brief      give dao mode
-    //!
-    //! @return     The dao mode.
-    //--------------------------------------------------------------------------
-    DAO_Mode daoMode() const;
-
-    //--------------------------------------------------------------------------
-    //! @brief      tell if TOC manipulation is supported
-    //!
-    //! @param      tm  support flag
-    //--------------------------------------------------------------------------
-    void tocManip(bool tm);
-
-    //--------------------------------------------------------------------------
-    //! @brief      tell if SP upload is supported
-    //!
-    //! @param      spu  support flag
-    //--------------------------------------------------------------------------
-    void spUpload(bool spu);
+private slots:
+    void on_checkDontShow_toggled(bool checked);
 
 private:
     Ui::CDaoConfDlg *ui;
-    bool mTocManip;
-    bool mSpUpld;
 };
 

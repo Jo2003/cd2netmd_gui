@@ -56,6 +56,7 @@ int CXEnc::start(XEncCmd cmd, const QString& tmpFileName, double trackLength, co
             params << "-e" << "atrac3" << "--bitrate=128" << "-i" << tmpFileName << "-o" << mAtracFileName;
         }
         break;
+    case XEncCmd::DAO_LP4_ENCODE:
     case XEncCmd::LP4_ENCODE:
         if (mbAltEnc)
         {
@@ -115,7 +116,7 @@ int CXEnc::atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int len
     int ret = -1;
 
     if ((waveFile.isOpen())
-        && ((cmd == XEncCmd::LP2_ENCODE) || (cmd == XEncCmd::LP4_ENCODE) || (cmd == XEncCmd::DAO_LP2_ENCODE))
+        && ((cmd == XEncCmd::LP2_ENCODE) || (cmd == XEncCmd::LP4_ENCODE) || (cmd == XEncCmd::DAO_LP2_ENCODE) || (cmd == XEncCmd::DAO_LP4_ENCODE))
         && (dataSz > 192)) // 1x lp4 frame size
     {
         // heavily inspired by atrac3tool and completed through
@@ -134,7 +135,7 @@ int CXEnc::atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int len
         {
             putNum(ATRAC3_LP2_BLOCK_ALIGN, waveFile, 4);                   ///< block align
         }
-        else if (cmd == XEncCmd::LP4_ENCODE)
+        else if ((cmd == XEncCmd::LP4_ENCODE) || (cmd == XEncCmd::DAO_LP4_ENCODE))
         {
             putNum(ATRAC3_LP4_BLOCK_ALIGN, waveFile, 4);                   ///< block align
         }
@@ -144,7 +145,7 @@ int CXEnc::atrac3WaveHeader(QFile& waveFile, XEncCmd cmd, size_t dataSz, int len
         {
             waveFile.write("\x01\x00\x44\xAC\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00", 0xE);
         }
-        else if (cmd == XEncCmd::LP4_ENCODE)
+        else if ((cmd == XEncCmd::LP4_ENCODE) || (cmd == XEncCmd::DAO_LP4_ENCODE))
         {
             waveFile.write("\x01\x00\x44\xAC\x00\x00\x01\x00\x01\x00\x01\x00\x00\x00", 0xE);
         }
@@ -396,7 +397,8 @@ void CXEnc::finishCopy(int exitCode, ExitStatus exitStatus)
             break;
 
         case XEncCmd::DAO_LP2_ENCODE:
-            splitAtrac3();
+        case XEncCmd::DAO_LP4_ENCODE:
+            splitAtrac3(mCurrCmd == XEncCmd::DAO_LP4_ENCODE);
             break;
 
         case XEncCmd::DAO_SP_ENCODE:

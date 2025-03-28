@@ -106,7 +106,8 @@ HEADERS += \
     audio.h \
     statuswidget.h \
     ctranslit.h \
-    git_version.h
+    git_version.h \
+    transfermode.h
 
 FORMS += \
     caboutdialog.ui \

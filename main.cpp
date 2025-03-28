@@ -99,6 +99,10 @@ void logger(QtMsgType type, const QMessageLogContext &context, const QString &ms
 int main(int argc, char *argv[])
 {
     int exitCode = 0;
+
+    // dark mode support
+    // qputenv("QT_QPA_PLATFORM", "windows:darkmode=2");
+
     qRegisterMetaType<c2n::AudioTracks>("c2n::AudioTracks");
 #ifdef Q_OS_MAC
     qRegisterMetaType<CDRUtil::CDTextData>("CDRUtil::CDTextData");
