@@ -32,9 +32,10 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mpSettings(nullptr), mSpUpload(false),
-      mTocManip(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
-      mpTocManip(nullptr), mTransferMode(TransferMode::TM_UNKNOWN)
+      mpSettings(nullptr), mSpUpload(false), mTocManip(false),
+      mPcm2Mono(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
+      mpTocManip(nullptr), mpPcm2Mono(nullptr),
+      mTransferMode(TransferMode::TM_UNKNOWN)
 {
     ui->setupUi(this);
 
@@ -80,7 +81,9 @@ MainWindow::MainWindow(QWidget *parent)
     mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
     mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
     mpTocManip  = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
+    mpPcm2Mono  = new StatusWidget(this, ":label/red", tr("Mono"), tr("Marker for PCM 2 Mono support"));
 
+    ui->statusbar->addPermanentWidget(mpPcm2Mono);
     ui->statusbar->addPermanentWidget(mpTocManip);
     ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
@@ -232,6 +235,7 @@ void MainWindow::catchJson(QString j)
     mpSettings->enaDisaDevReset(mpSettings->devReset(true), mTocManip);
 
     mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
+    mPcm2Mono = !!mpMDmodel->discConf()->mPcm2Mono;
 
     // support label ...
     mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
@@ -242,6 +246,9 @@ void MainWindow::catchJson(QString j)
 
     mpTocManip->setStatusTip(mTocManip ? tr("TOC manipulation supported by device") : tr("TOC manipulation not supported by device"));
     mpTocManip->setIcon(mTocManip ? ":label/green" : ":label/red");
+
+    mpPcm2Mono->setStatusTip(mPcm2Mono ? tr("SP Mono supported by device") : tr("SP Mono not supported by device"));
+    mpPcm2Mono->setIcon(mPcm2Mono ? ":label/green" : ":label/red");
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
@@ -265,7 +272,7 @@ void MainWindow::catchJson(QString j)
     {
         TransferMode tMode(m);
 
-        if (tMode && tMode.supports(mTocManip, mSpUpload))
+        if (tMode && tMode.supports(mTocManip, mSpUpload, mPcm2Mono))
         {
             ui->cbxTranferMode->addItem(QIcon(tMode.iconSrc()), tMode.name(), m);
         }

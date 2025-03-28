@@ -264,12 +264,15 @@ public:
     //!
     //! @param[in]  tocMnp  The toc manipulation flag
     //! @param[in]  spUpd   The sp update flag
+    //! @param[in]  mono    The sp mono support flag
     //!
     //! @return     true if supported, false otherwise
     //--------------------------------------------------------------------------
-    bool supports(bool tocMnp, bool spUpd) const
+    bool supports(bool tocMnp, bool spUpd, bool mono) const
     {
-        return ((!tocManip() || (tocManip() && tocMnp)) && (!spUpld() || (spUpld() && spUpd)));
+        return ((!tocManip() || (tocManip() && tocMnp))
+                && (!spUpld() || (spUpld() && spUpd))
+                && (!isMono() || (isMono() && mono)));
     }
 
     //--------------------------------------------------------------------------

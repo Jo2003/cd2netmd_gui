@@ -338,6 +338,9 @@ private:
     /// does the device support forced TOC edit
     bool mTocManip;
 
+    /// does the device support pcm2Mono
+    bool mPcm2Mono;
+
     /// show SP download support
     StatusWidget   *mpSpUpload;
 
@@ -346,6 +349,9 @@ private:
 
     /// show TOC manipulation support
     StatusWidget   *mpTocManip;
+
+    /// show SP Mono support
+    StatusWidget   *mpPcm2Mono;
 
     /// chosen transfer mode
     TransferMode mTransferMode;
