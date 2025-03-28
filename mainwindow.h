@@ -32,6 +32,7 @@
 #include "settingsdlg.h"
 #include "cdaoconfdlg.h"
 #include "statuswidget.h"
+#include "transfermode.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -101,22 +102,13 @@ protected:
     void changeEvent(QEvent* e) override;
 
     //--------------------------------------------------------------------------
-    //! @brief      get the transfer configuration
-    //!
-    //! @param[out] netMdCmd   The net md command
-    //! @param[out] xencCmd    The xenc command
-    //--------------------------------------------------------------------------
-    void transferConfig(CNetMD::NetMDCmd& netMdCmd, CXEnc::XEncCmd& xencCmd);
-    
-    //--------------------------------------------------------------------------
     //! @brief      Adds a md track.
     //!
     //! @param[in]  number  The number
     //! @param[in]  title   The title
-    //! @param[in]  mode    The mode
     //! @param[in]  length  The length
     //--------------------------------------------------------------------------
-    void addMDTrack(int number, const QString &title, const QString &mode, time_t length);
+    void addMDTrack(int number, const QString &title, time_t length);
     
     //--------------------------------------------------------------------------
     //! @brief      Sets the md title.
@@ -356,5 +348,5 @@ private:
     StatusWidget   *mpTocManip;
 
     /// chosen transfer mode
-    c2n::ETransferMode mTransferMode;
+    TransferMode mTransferMode;
 };

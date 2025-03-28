@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mpSettings(nullptr), mSpUpload(false),
       mTocManip(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
-      mpTocManip(nullptr), mTransferMode(ETransferMode::TM_UNKNOWN)
+      mpTocManip(nullptr), mTransferMode(TransferMode::TM_UNKNOWN)
 {
     ui->setupUi(this);
 
@@ -121,70 +121,6 @@ void MainWindow::changeEvent(QEvent *e)
         ui->tableViewCD->setStyleSheet(style);
     }
     QMainWindow::changeEvent(e);
-}
-
-void MainWindow::transferConfig(CNetMD::NetMDCmd &netMdCmd, CXEnc::XEncCmd &xencCmd)
-{
-    switch (mTransferMode)
-    {
-    case ETransferMode::TM_TAO_SP_MONO:
-        netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP_MONO;
-        xencCmd  = CXEnc::XEncCmd::NONE;
-        break;
-
-    case ETransferMode::TM_TAO_LP2:
-        if (mpSettings->onthefly())
-        {
-            netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_LP2;
-            xencCmd  = CXEnc::XEncCmd::NONE;
-        }
-        else
-        {
-            netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP;
-            xencCmd  = CXEnc::XEncCmd::LP2_ENCODE;
-        }
-        break;
-
-    case ETransferMode::TM_TAO_LP4:
-        if (mpSettings->onthefly())
-        {
-            netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_LP4;
-            xencCmd  = CXEnc::XEncCmd::NONE;
-        }
-        else
-        {
-            netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP;
-            xencCmd  = CXEnc::XEncCmd::LP4_ENCODE;
-        }
-        break;
-
-    case ETransferMode::TM_DAO_SP_MONO:
-        netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP_MONO;
-        xencCmd  = CXEnc::XEncCmd::NONE;
-        break;
-
-    case ETransferMode::TM_DAO_SP_PREENC:
-        netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP_PREENC;
-        xencCmd  = CXEnc::XEncCmd::DAO_SP_ENCODE;
-        break;
-
-    case ETransferMode::TM_DAO_LP2:
-        netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP;
-        xencCmd  = CXEnc::XEncCmd::DAO_LP2_ENCODE;
-        break;
-
-    case ETransferMode::TM_DAO_LP4:
-        netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP;
-        xencCmd  = CXEnc::XEncCmd::DAO_LP4_ENCODE;
-        break;
-
-    case ETransferMode::TM_DAO_SP:
-    case ETransferMode::TM_TAO_SP:
-    default:
-        netMdCmd = CNetMD::NetMDCmd::WRITE_TRACK_SP;
-        xencCmd  = CXEnc::XEncCmd::NONE;
-        break;
-    }
 }
 
 void MainWindow::catchCDDBEntries(QStringList l)
@@ -322,55 +258,19 @@ void MainWindow::catchJson(QString j)
 
     int idx = ui->cbxTranferMode->currentIndex();
     idx = (idx < 0) ? 0 : idx;
+
     ui->cbxTranferMode->clear();
 
-
-    for (int m = ETransferMode::TM_TAO_START; m < ETransferMode::TM_DAO_END; m++)
+    for (int m = TransferMode::TM_TAO_START; m < TransferMode::TM_DAO_END; m++)
     {
-        bool addItem;
-        switch(m)
-        {
-        case ETransferMode::TM_DAO_SP_PREENC:
-            if (mSpUpload && mTocManip)
-            {
-                addItem = true;
-            }
-            break;
+        TransferMode tMode(m);
 
-        case ETransferMode::TM_DAO_SP:
-        case ETransferMode::TM_DAO_SP_MONO:
-            if (mTocManip)
-            {
-                addItem = true;
-            }
-            break;
-        case ETransferMode::TM_TAO_SP:
-        case ETransferMode::TM_TAO_SP_MONO:
-        case ETransferMode::TM_TAO_LP2:
-        case ETransferMode::TM_TAO_LP4:
-        case ETransferMode::TM_DAO_LP2:
-        case ETransferMode::TM_DAO_LP4:
-            addItem = true;
-            break;
-        default:
-            addItem = false;
-            break;
-        }
-
-        if (addItem)
+        if (tMode && tMode.supports(mTocManip, mSpUpload))
         {
-            QIcon ico;
-            if ((m > ETransferMode::TM_TAO_START) && (m < ETransferMode::TM_TAO_END))
-            {
-                ico = QIcon(":/view/audio");
-            }
-            else if ((m > ETransferMode::TM_DAO_START) && (m < ETransferMode::TM_DAO_END))
-            {
-                ico = QIcon(":/buttons/cd");
-            }
-            ui->cbxTranferMode->addItem(ico, TMDescs[m], m);
+            ui->cbxTranferMode->addItem(QIcon(tMode.iconSrc()), tMode.name(), m);
         }
     }
+
     ui->cbxTranferMode->setCurrentIndex(idx);
 
     enableDialogItems(true);
@@ -409,24 +309,19 @@ void MainWindow::mdTitling(CMDTreeModel::ItemRole role, QString title, int no)
 
 void MainWindow::ripFinished()
 {
-    CNetMD::NetMDCmd netMdCmd;
-    CXEnc::XEncCmd   xencCmd;
+    using XEncCmd = CXEnc::XEncCmd;
+    XEncCmd xencCmd = mTransferMode.xencCmd(mpSettings->onthefly());
+    bool    noEnc   = xencCmd == XEncCmd::NONE;
 
-    transferConfig(netMdCmd, xencCmd);
+    qInfo() << "Transfer Mode:" << static_cast<const char*>(mTransferMode) << "noEnc:" << noEnc;
 
-    bool noEnc = xencCmd == CXEnc::XEncCmd::NONE;
-
-    qInfo() << "Transfer Mode:" << mTransferMode << "noEnc:" << noEnc;
-
-    if ((mTransferMode > ETransferMode::TM_DAO_START)
-        && (mTransferMode < ETransferMode::TM_DAO_END)) // DAO active
+    if (mTransferMode.isDao()) // DAO active
     {
         if (mWorkQueue.at(0).mStep == WorkStep::RIP)
         {
-            if ((mTransferMode == ETransferMode::TM_DAO_LP2)
-                || (mTransferMode == ETransferMode::TM_DAO_LP4)
-                || (mTransferMode == ETransferMode::TM_DAO_SP_PREENC))
+            if (xencCmd != XEncCmd::NONE)
             {
+                // encoding needed
                 mWorkQueue[0].mStep = WorkStep::RIPPED;
             }
             else
@@ -484,14 +379,10 @@ void MainWindow::encodeFinished(bool checkBusy)
 {
     if (!checkBusy || !mpXEnc->busy())
     {
-        CNetMD::NetMDCmd netMdCmd;
-        CXEnc::XEncCmd   xencCmd;
+        using XEncCmd = CXEnc::XEncCmd;
+        XEncCmd xencCmd = mTransferMode.xencCmd(mpSettings->onthefly());
 
-        transferConfig(netMdCmd, xencCmd);
-
-        if ((mTransferMode == ETransferMode::TM_DAO_LP2)
-            || (mTransferMode == ETransferMode::TM_DAO_LP4)
-            || (mTransferMode == ETransferMode::TM_DAO_SP_PREENC))
+        if (mTransferMode.isDao())
         {
             if (mWorkQueue.at(0).mStep == WorkStep::ENCODE)
             {
@@ -562,31 +453,8 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
     {
         QString labText = tr("MD-Transfer");
         int dc = 0;
-        CNetMD::NetMDCmd netMdCmd;
-        CXEnc::XEncCmd   xencCmd;
-
-        transferConfig(netMdCmd, xencCmd);
-
-        QString trackMode;
-
-        switch (mTransferMode)
-        {
-        case ETransferMode::TM_TAO_SP_MONO:
-        case ETransferMode::TM_DAO_SP_MONO:
-            trackMode = "SP Mono";
-            break;
-        case ETransferMode::TM_DAO_LP2:
-        case ETransferMode::TM_TAO_LP2:
-            trackMode = "LP2";
-            break;
-        case ETransferMode::TM_TAO_LP4:
-        case ETransferMode::TM_DAO_LP4:
-            trackMode = "LP4";
-            break;
-        default:
-            trackMode = "SP";
-            break;
-        }
+        using NetMDCmd = CNetMD::NetMDCmd;
+        NetMDCmd netMdCmd  = mTransferMode.netMDCmd(mpSettings->onthefly());
 
         if (ret < 0)
         {
@@ -607,11 +475,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             return;
         }
 
-        bool tocManip = ((mTransferMode == ETransferMode::TM_DAO_SP)
-            || (mTransferMode == ETransferMode::TM_DAO_SP_MONO)
-            || (mTransferMode == ETransferMode::TM_DAO_SP_PREENC));
-
-        if (tocManip)
+        if (mTransferMode.tocManip())
         {
             if (mWorkQueue.at(0).mStep == WorkStep::DONE)
             {
@@ -626,7 +490,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 // add to MD list
                 if (ret != CNetMD::TOCMANIP_DEV_RESET) // TOC Manipulation done, device reset done
                 {
-                    addMDTrack(1, tr("Re-insert MD for content!"), trackMode, 60.00);
+                    addMDTrack(1, tr("Re-insert MD for content!"), 60.00);
                 }
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
@@ -649,7 +513,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 labText = tr("TOC edit");
 
                 // start TOC manipulation
-                mpNetMD->start(tocData, mpSettings->devReset(), mTransferMode == ETransferMode::TM_DAO_SP_MONO);
+                mpNetMD->start(tocData, mpSettings->devReset(), mTransferMode.isMono());
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
             {
@@ -667,7 +531,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 if (j.mStep == WorkStep::TRANSFER)
                 {
                     j.mStep = WorkStep::DONE;
-                    addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, trackMode, j.mLength);
+                    addMDTrack(mpMDmodel->discConf()->mTrkCount, j.mTitle, j.mLength);
                     break;
                 }
             }
@@ -696,7 +560,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
         if (dc == mWorkQueue.size())
         {
-            if ((trackMode != "SP") && (trackMode != "SP Mono"))
+            if (mTransferMode.isLP())
             {
                 if (mpSettings->lpTrackGroup())
                 {
@@ -710,7 +574,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 if (mpSettings->spMdTitle())
                 {
                     // title is already set on DAO SP mode through TOC edit
-                    if (!tocManip)
+                    if (!mTransferMode.tocManip())
                     {
                         // set disc title
                         mpNetMD->start({CNetMD::NetMDCmd::RENAME_DISC, "", ui->lineCDTitle->text()});
@@ -735,7 +599,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             mpRipper->removeTemp();
             enableDialogItems(true);
             QString info = tr("All (selected) tracks were transferred to MiniDisc!");
-            if (tocManip && (ret != CNetMD::TOCMANIP_DEV_RESET))
+            if (mTransferMode.tocManip() && (ret != CNetMD::TOCMANIP_DEV_RESET))
             {
                 info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please re-insert the minidisc in your device as soon as possible!");
             }
@@ -744,7 +608,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
     }
 }
 
-void MainWindow::addMDTrack(int number, const QString &title, const QString &mode, time_t length)
+void MainWindow::addMDTrack(int number, const QString &title, time_t length)
 {
     QString t = title;
     deUmlaut(t);
@@ -754,23 +618,14 @@ void MainWindow::addMDTrack(int number, const QString &title, const QString &mod
             .arg(length % 60, 2, 10, QChar('0'))
             .arg("00"); // fake frames
 
-    time_t tUsed = length;
-
-    if ((mode == "LP2") || (mode == "SP Mono"))
-    {
-        tUsed /= 2;
-    }
-    else if (mode == "LP4")
-    {
-        tUsed /= 4;
-    }
+    time_t tUsed = length / mTransferMode.multi();
 
     nlohmann::json mdJson = mpMDmodel->exportJson();
 
     nlohmann::json trk;
     trk["no"]      = number;
     trk["name"]    = t.toStdString();
-    trk["bitrate"] = mode.toStdString();
+    trk["bitrate"] = mTransferMode.trackMode();
     trk["time"]    = timeString.toStdString();
     mdJson["tracks"].push_back(trk);
 
@@ -944,17 +799,14 @@ void MainWindow::countLabel(QLabel *pLabel, MainWindow::WorkStep step, const QSt
             count ++;
         }
     }
-    int all =  mWorkQueue.size();
+    int all = mWorkQueue.size();
 
 
-    if (((mTransferMode > ETransferMode::TM_DAO_START) && (mTransferMode < ETransferMode::TM_DAO_END))
-        && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
+    if (mTransferMode.isDao() && ((step == MainWindow::WorkStep::NONE) || (step == MainWindow::WorkStep::RIPPED)))
     {
         all = 1;
     }
-    else if (((mTransferMode == ETransferMode::TM_DAO_SP) || (mTransferMode == ETransferMode::TM_DAO_SP_MONO)
-            || (mTransferMode == ETransferMode::TM_DAO_SP_PREENC))
-        && (step == MainWindow::WorkStep::ENCODED))
+    else if (mTransferMode.tocManip() && (step == MainWindow::WorkStep::ENCODED))
     {
         all = 1;
     }
@@ -994,9 +846,7 @@ void MainWindow::on_pushTransfer_clicked()
 {
     QSettings set;
 
-    bool isDao = ((mTransferMode > ETransferMode::TM_DAO_START) && (mTransferMode < ETransferMode::TM_DAO_END));
-
-    if (isDao && !set.value("dont_show_dao_info", false).toBool())
+    if (mTransferMode.isDao() && !set.value("dont_show_dao_info", false).toBool())
     {
         CDaoConfDlg* pDaoConf = new CDaoConfDlg(this);
 
@@ -1012,7 +862,7 @@ void MainWindow::on_pushTransfer_clicked()
         }
     }
 
-    if (isDao && (mTracksBackup.listType() == c2n::AudioTracks::CD))
+    if (mTransferMode.isDao() && (mTracksBackup.listType() == c2n::AudioTracks::CD))
     {
         // DAO can only be done from original CD
         // revert any change in track order or count
@@ -1028,7 +878,7 @@ void MainWindow::on_pushTransfer_clicked()
     QModelIndexList selected = ui->tableViewCD->selectionModel()->selectedRows();
 
     // no selection or drag'n'drop mode means all!
-    if (selected.isEmpty() || (trks.listType() == c2n::AudioTracks::FILES) || isDao)
+    if (selected.isEmpty() || (trks.listType() == c2n::AudioTracks::FILES) || mTransferMode.isDao())
     {
         ui->tableViewCD->selectAll();
         selected = ui->tableViewCD->selectionModel()->selectedRows();
@@ -1055,24 +905,7 @@ void MainWindow::on_pushTransfer_clicked()
     }
 
     // check selection with available time
-    int multi = 1;
-    switch(mTransferMode)
-    {
-    case ETransferMode::TM_DAO_LP2:
-    case ETransferMode::TM_DAO_SP_MONO:
-    case ETransferMode::TM_TAO_LP2:
-    case ETransferMode::TM_TAO_SP_MONO:
-        multi = 2;
-        break;
-    case ETransferMode::TM_TAO_LP4:
-    case ETransferMode::TM_DAO_LP4:
-        multi = 4;
-        break;
-    default:
-        break;
-    }
-
-    selectionTime /= multi;
+    selectionTime /= mTransferMode.multi();
 
     if (mpSettings->sizeCheck() && (selectionTime > mpMDmodel->discConf()->mFreeTime))
     {
@@ -1365,26 +1198,9 @@ void MainWindow::delayedPopUp(ePopUp tp, const QString& caption, const QString& 
 //--------------------------------------------------------------------------
 void MainWindow::on_cbxTranferMode_currentIndexChanged(int index)
 {
-    int multi = 1;
-    mTransferMode = static_cast<c2n::ETransferMode>(ui->cbxTranferMode->itemData(index).toInt());
+    mTransferMode = ui->cbxTranferMode->itemData(index).toInt();
 
-    switch(mTransferMode)
-    {
-    case ETransferMode::TM_DAO_LP2:
-    case ETransferMode::TM_DAO_SP_MONO:
-    case ETransferMode::TM_TAO_SP_MONO:
-    case ETransferMode::TM_TAO_LP2:
-        multi = 2;
-        break;
-    case ETransferMode::TM_DAO_LP4:
-    case ETransferMode::TM_TAO_LP4:
-        multi = 4;
-        break;
-    default:
-        break;
-    }
-
-    int secs = mpMDmodel->discConf()->mFreeTime * multi;
+    int secs = mpMDmodel->discConf()->mFreeTime * mTransferMode.multi();
 
     ui->labFreeTime->clear();
     ui->labFreeTime->setText(tr("Free: %1:%2:%3")

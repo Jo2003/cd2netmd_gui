@@ -19,9 +19,9 @@
 #include "cnetmd.h"
 #include "cxenc.h"
 
-/**
- * @brief The TransferMode class
- */
+//------------------------------------------------------------------------------
+//! @brief      This class describes a transfer mode.
+//------------------------------------------------------------------------------
 class TransferMode
 {
 public:
@@ -59,85 +59,123 @@ public:
         NetMDCmd      mNetMDCmdOtf;
     };
 
-    /**
-     * @brief TransferMode
-     * @param m
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]  m     transfer mode value
+    //--------------------------------------------------------------------------
     TransferMode(ETransferMode m = ETransferMode::TM_UNKNOWN)
         : mTransferMode(m)
     {
     }
 
-    /**
-     * @brief operator ETransferMode
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Constructs a new instance.
+    //!
+    //! @param[in]  m     transfer mode value
+    //--------------------------------------------------------------------------
+    TransferMode(int m)
+        : mTransferMode(static_cast<ETransferMode>(m))
+    {
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      Etransfermode conversion operator.
+    //--------------------------------------------------------------------------
     operator ETransferMode() const
     {
         return mTransferMode;
     }
 
-    /**
-     * @brief operator =
-     * @param other
-     * @return *this
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Bool conversion operator.
+    //--------------------------------------------------------------------------
+    operator bool() const
+    {
+        return isValid();
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      Assignment operator.
+    //!
+    //! @param[in]  other  The other
+    //!
+    //! @return     The result of the assignment
+    //--------------------------------------------------------------------------
     TransferMode& operator=(ETransferMode other)
     {
         mTransferMode = other;
         return *this;
     }
 
-    /**
-     * @brief operator =
-     * @param other
-     * @return *this
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Assignment operator.
+    //!
+    //! @param[in]  other  The other
+    //!
+    //! @return     The result of the assignment
+    //--------------------------------------------------------------------------
     TransferMode& operator=(int other)
     {
         mTransferMode = static_cast<ETransferMode>(other);
         return *this;
     }
 
-    /**
-     * @brief isDao
-     * @return true if DAO
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Determines if dao.
+    //!
+    //! @return     True if dao, False otherwise.
+    //--------------------------------------------------------------------------
     bool isDao() const
     {
         return ((mTransferMode > TM_DAO_START) && (mTransferMode < TM_DAO_END));
     }
 
-    /**
-     * @brief isTao
-     * @return true if TAO
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Determines if tao.
+    //!
+    //! @return     True if tao, False otherwise.
+    //--------------------------------------------------------------------------
     bool isTao() const
     {
         return ((mTransferMode > TM_TAO_START) && (mTransferMode < TM_TAO_END));
     }
 
-    /**
-     * @brief isValid
-     * @return true if valid
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Determines if valid.
+    //!
+    //! @return     True if valid, False otherwise.
+    //--------------------------------------------------------------------------
     bool isValid() const
     {
         return (isDao() || isTao());
     }
 
-    /**
-     * @brief tokManip
-     * @return true if TOC edit is needed
-     */
-    bool tokManip() const
+    //--------------------------------------------------------------------------
+    //! @brief      does this mode require TOC manipulation
+    //!
+    //! @return     true if yes, False otherwise
+    //--------------------------------------------------------------------------
+    bool tocManip() const
     {
         return ((mTransferMode == TM_DAO_SP) || (mTransferMode == TM_DAO_SP_MONO) || (mTransferMode == TM_DAO_SP_PREENC));
     }
 
-    /**
-     * @brief name
-     * @return mode name or nullptr
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      does this mode require SP upload
+    //!
+    //! @return     true if yes, False otherwise
+    //--------------------------------------------------------------------------
+    bool spUpld() const
+    {
+        return mTransferMode == TM_DAO_SP_PREENC;
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      get short mode name
+    //!
+    //! @return     name or nullptr
+    //--------------------------------------------------------------------------
     const char* name() const
     {
         if (const auto* m = find(mTransferMode))
@@ -147,10 +185,11 @@ public:
         return nullptr;
     }
 
-    /**
-     * @brief trackMode
-     * @return track mode or nullptr
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      get track mode
+    //!
+    //! @return     mode or nullptr
+    //--------------------------------------------------------------------------
     const char* trackMode() const
     {
         if (const auto* m = find(mTransferMode))
@@ -160,10 +199,11 @@ public:
         return nullptr;
     }
 
-    /**
-     * @brief iconSrc
-     * @return icon source or nullptr
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      get icon source
+    //!
+    //! @return     icon source or nullptr
+    //--------------------------------------------------------------------------
     const char* iconSrc() const
     {
         if (const auto* m = find(mTransferMode))
@@ -173,10 +213,11 @@ public:
         return nullptr;
     }
 
-    /**
-     * @brief multi
-     * @return time multiplicator
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      get time multiplicator
+    //!
+    //! @return     multiplicator
+    //--------------------------------------------------------------------------
     int multi() const
     {
         if (const auto* m = find(mTransferMode))
@@ -186,11 +227,13 @@ public:
         return 1;
     }
 
-    /**
-     * @brief netMDCmd
-     * @param otf
-     * @return NetMd command
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      get NetMD command
+    //!
+    //! @param[in]  otf   on the fly marker
+    //!
+    //! @return     The net md command.
+    //--------------------------------------------------------------------------
     NetMDCmd netMDCmd(bool otf) const
     {
         if (const auto* m = find(mTransferMode))
@@ -200,11 +243,13 @@ public:
         return NetMDCmd::UNKNWON;
     }
 
-    /**
-     * @brief xencCmd
-     * @param otf
-     * @return command for the external encoder
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      get encoder command
+    //!
+    //! @param[in]  otf   on the fly marker
+    //!
+    //! @return     The encode command.
+    //--------------------------------------------------------------------------
     XEncCmd xencCmd(bool otf) const
     {
         if (const auto* m = find(mTransferMode))
@@ -214,13 +259,73 @@ public:
         return XEncCmd::NONE;
     }
 
+    //--------------------------------------------------------------------------
+    //! @brief      check if mode is supported (device feature dependent)
+    //!
+    //! @param[in]  tocMnp  The toc manipulation flag
+    //! @param[in]  spUpd   The sp update flag
+    //!
+    //! @return     true if supported, false otherwise
+    //--------------------------------------------------------------------------
+    bool supports(bool tocMnp, bool spUpd) const
+    {
+        return ((!tocManip() || (tocManip() && tocMnp)) && (!spUpld() || (spUpld() && spUpd)));
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      const char* conversion operator.
+    //--------------------------------------------------------------------------
+    operator const char*() const
+    {
+#define mkCase(x_) case x_: c = #x_; break
+        const char* c;
+        switch(mTransferMode)
+        {
+        mkCase(TM_TAO_SP);
+        mkCase(TM_TAO_SP_MONO);
+        mkCase(TM_TAO_LP2);
+        mkCase(TM_TAO_LP4);
+        mkCase(TM_DAO_SP);
+        mkCase(TM_DAO_SP_MONO);
+        mkCase(TM_DAO_SP_PREENC);
+        mkCase(TM_DAO_LP2);
+        mkCase(TM_DAO_LP4);
+        default: c = ""; break;
+        }
+        return c;
+#undef mkCase
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      Determines if mono.
+    //!
+    //! @return     True if mono, False otherwise.
+    //--------------------------------------------------------------------------
+    bool isMono() const
+    {
+        return ((mTransferMode == TM_TAO_SP_MONO) || (mTransferMode == TM_DAO_SP_MONO));
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      Determines if lp.
+    //!
+    //! @return     True if lp, False otherwise.
+    //--------------------------------------------------------------------------
+    bool isLP() const
+    {
+        return ((mTransferMode == TM_TAO_LP2) || (mTransferMode == TM_TAO_LP4)
+                || (mTransferMode == TM_DAO_LP2) || (mTransferMode == TM_DAO_LP4));
+    }
+
 protected:
 
-    /**
-     * @brief find
-     * @param m
-     * @return transfer mode info or nullptr
-     */
+    //--------------------------------------------------------------------------
+    //! @brief      Searches for the first match.
+    //!
+    //! @param[in]  m     ETransferMode to search for
+    //!
+    //! @return     pointer to description, nullptr if not found
+    //--------------------------------------------------------------------------
     const TFModeDescr* find(ETransferMode m) const
     {
         for (int i = 0; i < VALID_TF_COUNT; i++)
@@ -235,6 +340,7 @@ protected:
 
 private:
     ETransferMode mTransferMode;
+
     static constexpr int VALID_TF_COUNT = 9;
 
     const TFModeDescr mModeMap[VALID_TF_COUNT] = {
