@@ -170,16 +170,47 @@ int CXEnc::atrac1Header(QFile& aeaFile, XEncCmd cmd, size_t dataSz, int length)
 {
     Q_UNUSED(length)
     Q_UNUSED(cmd)
+
+    /*
+    struct __attribute__((packed)) SAeaHeader
+    {                                // offset
+        uint32_t u32HdSz;            // 0
+        char     sName[256];         // 4
+        uint32_t u32SoundGroups;     // 260
+        uint8_t  u8Channels;         // 264
+        uint8_t  u8Reserved_1;       // 265
+        uint32_t u32Flags_0;         // 266
+        uint32_t u32Flags_1;         // 270
+        uint32_t u32Flags_2;         // 274
+        uint32_t u32Flags_3;         // 278
+        uint32_t u32Flags_4;         // 282
+        uint32_t u32Flags_5;         // 286
+        uint32_t u32Flags_6;         // 290
+        uint32_t u32Flags_7;         // 294
+        uint32_t u32Reserved_1;      // 298
+        uint32_t u32Encrypted;       // 302
+        uint32_t u32GroupStart;      // 306
+        uint8_t  u8Reserved_2[1738]; // 310
+    };
+    */
+
     int ret = -1;
     uint8_t header[ATRAC_SP_HEADER_SIZE] = {0,};
-    header[1] = 8;
-    header[264] = 2;
+
+    // header size
+    uint32_t *pU32 = reinterpret_cast<uint32_t*>(header);
+    *pU32 = qToLittleEndian(ATRAC_SP_HEADER_SIZE);
+
+    // set name
     char* pTitle = reinterpret_cast<char*>(&header[4]);
     strncpy(pTitle, "Temp AEA Track by NetMD Wizard", 31);
 
-    uint32_t blockCount = dataSz / ATRAC_SP_BLOCK_ALIGN;
+    // block count
+    pU32 = reinterpret_cast<uint32_t*>(&header[260]);
+    *pU32 = qToLittleEndian<uint32_t>(dataSz / ATRAC_SP_BLOCK_ALIGN);
 
-    *reinterpret_cast<uint32_t*>(&header[260]) = qToLittleEndian(blockCount);
+    // set channels (stereo)
+    header[264] = 2;
 
     if (aeaFile.isOpen())
     {
