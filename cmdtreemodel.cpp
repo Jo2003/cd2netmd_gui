@@ -175,6 +175,15 @@ void CMDTreeModel::setupModelData()
         mDiscConf.mFreeTime = 0;
     }
 
+    if (mMDJson.find("t_used") != mMDJson.end())
+    {
+        mDiscConf.mUsedTime = mMDJson["t_used"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mUsedTime = 0;
+    }
+
     if (mMDJson.find("disc_flags") != mMDJson.end())
     {
         mDiscConf.mDiscFlags = std::stoi(mMDJson["disc_flags"].get<std::string>(), nullptr, 16);

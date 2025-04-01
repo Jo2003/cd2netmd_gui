@@ -47,6 +47,7 @@ public:
        int mTrkCount;   ///< track count
        int mTotTime;    ///< total disc time
        int mFreeTime;   ///< free disc time
+       int mUsedTime;   ///< used time
        int mDiscFlags;  ///< disc flags
        QString mDevice; ///< device name
     };

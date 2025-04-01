@@ -615,17 +615,20 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
     }
 }
 
-void MainWindow::addMDTrack(int number, const QString &title, time_t length)
+void MainWindow::addMDTrack(int number, const QString &title, double length)
 {
     QString t = title;
     deUmlaut(t);
 
+    int len = qRound(length);
+
     QString timeString = QString("%1:%2:%3")
-            .arg((length % 3600) / 60, 2, 10, QChar('0'))
-            .arg(length % 60, 2, 10, QChar('0'))
+            .arg(len / 60, 2, 10, QChar('0'))
+            .arg(len % 60, 2, 10, QChar('0'))
             .arg("00"); // fake frames
 
-    time_t tUsed = length / mTransferMode.multi();
+    // get the used time (space) on disc
+    time_t tUsed = qRound(length / static_cast<double>(mTransferMode.multi()));
 
     nlohmann::json mdJson = mpMDmodel->exportJson();
 
@@ -636,9 +639,9 @@ void MainWindow::addMDTrack(int number, const QString &title, time_t length)
     trk["time"]    = timeString.toStdString();
     mdJson["tracks"].push_back(trk);
 
-    mdJson["trk_count"] = mdJson["trk_count"].get<int>() + 1;
-    mdJson["t_used"]    = mdJson["t_used"].get<int>() + length;
-    mdJson["t_free"]    = mdJson["t_free"].get<int>() - tUsed;
+    mdJson["trk_count"] = mpMDmodel->discConf()->mTrkCount + 1;
+    mdJson["t_used"]    = mpMDmodel->discConf()->mUsedTime + tUsed;
+    mdJson["t_free"]    = mpMDmodel->discConf()->mFreeTime - tUsed;
 
     recreateTreeView(QString::fromStdString(mdJson.dump()));
 }
@@ -786,12 +789,7 @@ void MainWindow::recreateTreeView(const QString &json)
     ui->treeView->setColumnWidth(1, (ui->treeView->width() / 100) * 15);
     ui->treeView->setColumnWidth(2, (ui->treeView->width() / 100) * 10);
 
-    ui->labFreeTime->clear();
-    ui->labFreeTime->setText(tr("Free: %1:%2:%3")
-                            .arg(mpMDmodel->discConf()->mFreeTime / 3600, 1, 10, QChar('0'))
-                            .arg((mpMDmodel->discConf()->mFreeTime % 3600) / 60, 2, 10, QChar('0'))
-                            .arg(mpMDmodel->discConf()->mFreeTime %  60, 2, 10, QChar('0')));
-    ui->labFreeTime->show();
+    updateFreeTimeLabel();
 
     mpMDDevice->setText(mpMDmodel->discConf()->mDevice.isEmpty() ? tr("Please re-load MD") : mpMDmodel->discConf()->mDevice);
 }
@@ -1046,7 +1044,7 @@ void MainWindow::catchDropped(QStringList sl)
 //--------------------------------------------------------------------------
 void MainWindow::audioLength(long blocks)
 {
-    time_t length = blocks / CDIO_CD_FRAMES_PER_SEC;
+    time_t length = qRound(static_cast<double>(blocks) / static_cast<double>(CDIO_CD_FRAMES_PER_SEC));
 
     ui->labCDTime->clear();
     ui->labCDTime->setText(tr("Disc Time: %1:%2:%3").arg(length / 3600, 1, 10, QChar('0'))
@@ -1206,13 +1204,23 @@ void MainWindow::delayedPopUp(ePopUp tp, const QString& caption, const QString& 
 void MainWindow::on_cbxTranferMode_currentIndexChanged(int index)
 {
     mTransferMode = ui->cbxTranferMode->itemData(index).toInt();
+    updateFreeTimeLabel();
+}
 
+//--------------------------------------------------------------------------
+//! @brief      update free time label
+//--------------------------------------------------------------------------
+void MainWindow::updateFreeTimeLabel()
+{
     int secs = mpMDmodel->discConf()->mFreeTime * mTransferMode.multi();
 
-    ui->labFreeTime->clear();
-    ui->labFreeTime->setText(tr("Free: %1:%2:%3")
-        .arg(secs / 3600, 1, 10, QChar('0'))
-        .arg((secs % 3600) / 60, 2, 10, QChar('0'))
-        .arg(secs %  60, 2, 10, QChar('0')));
-    ui->labFreeTime->show();
+    if (secs > 0)
+    {
+        ui->labFreeTime->clear();
+        ui->labFreeTime->setText(tr("Free: %1:%2:%3")
+            .arg(secs / 3600, 1, 10, QChar('0'))
+            .arg((secs % 3600) / 60, 2, 10, QChar('0'))
+            .arg(secs %  60, 2, 10, QChar('0')));
+        ui->labFreeTime->show();
+    }
 }

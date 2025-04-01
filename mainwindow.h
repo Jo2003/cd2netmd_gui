@@ -108,7 +108,7 @@ protected:
     //! @param[in]  title   The title
     //! @param[in]  length  The length
     //--------------------------------------------------------------------------
-    void addMDTrack(int number, const QString &title, time_t length);
+    void addMDTrack(int number, const QString &title, double length);
     
     //--------------------------------------------------------------------------
     //! @brief      Sets the md title.
@@ -300,6 +300,11 @@ private slots:
     //! @param[in]  index new activated index
     //--------------------------------------------------------------------------
     void on_cbxTranferMode_currentIndexChanged(int index);
+
+    //--------------------------------------------------------------------------
+    //! @brief      update free time label
+    //--------------------------------------------------------------------------
+    void updateFreeTimeLabel();
 
 private:
     /// GUI pointer
