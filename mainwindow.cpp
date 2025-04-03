@@ -33,8 +33,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
       mpSettings(nullptr), mSpUpload(false), mTocManip(false),
-      mPcm2Mono(false), mpSpUpload(nullptr), mpOtfEncode(nullptr),
-      mpTocManip(nullptr), mpPcm2Mono(nullptr),
+      mPcm2Mono(false), mNativeMono(false), mpSpUpload(nullptr),
+      mpOtfEncode(nullptr), mpTocManip(nullptr), mpMonoSupport(nullptr),
       mTransferMode(TransferMode::TM_UNKNOWN)
 {
     ui->setupUi(this);
@@ -76,14 +76,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->tableViewCD, &CCDTableView::filesDropped, this, &MainWindow::catchDropped);
     connect(ui->tableViewCD, &CCDTableView::audioLength, this, &MainWindow::audioLength);
 
-    mpMDDevice  = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
-    mpCDDevice  = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
-    mpSpUpload  = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
-    mpOtfEncode = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
-    mpTocManip  = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
-    mpPcm2Mono  = new StatusWidget(this, ":label/red", tr("Mono"), tr("Marker for PCM 2 Mono support"));
+    mpMDDevice     = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
+    mpCDDevice     = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
+    mpSpUpload     = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
+    mpOtfEncode    = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
+    mpTocManip     = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
+    mpMonoSupport  = new StatusWidget(this, ":label/red", tr("Mono"), tr("Marker for Mono support"));
 
-    ui->statusbar->addPermanentWidget(mpPcm2Mono);
+    ui->statusbar->addPermanentWidget(mpMonoSupport);
     ui->statusbar->addPermanentWidget(mpTocManip);
     ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
@@ -234,8 +234,9 @@ void MainWindow::catchJson(QString j)
     mTocManip = !!mpMDmodel->discConf()->mTocManip;
     mpSettings->enaDisaDevReset(mpSettings->devReset(true), mTocManip);
 
-    mSpUpload = !!mpMDmodel->discConf()->mSPUpload;
-    mPcm2Mono = !!mpMDmodel->discConf()->mPcm2Mono;
+    mSpUpload =   !!mpMDmodel->discConf()->mSPUpload;
+    mPcm2Mono =   !!mpMDmodel->discConf()->mPcm2Mono;
+    mNativeMono = !!mpMDmodel->discConf()->mNativeMono;
 
     // support label ...
     mpSpUpload->setStatusTip(mSpUpload ? tr("SP download supported by device") : tr("SP download not supported by device"));
@@ -247,8 +248,8 @@ void MainWindow::catchJson(QString j)
     mpTocManip->setStatusTip(mTocManip ? tr("TOC manipulation supported by device") : tr("TOC manipulation not supported by device"));
     mpTocManip->setIcon(mTocManip ? ":label/green" : ":label/red");
 
-    mpPcm2Mono->setStatusTip(mPcm2Mono ? tr("SP Mono supported by device") : tr("SP Mono not supported by device"));
-    mpPcm2Mono->setIcon(mPcm2Mono ? ":label/green" : ":label/red");
+    mpMonoSupport->setStatusTip((mPcm2Mono || mNativeMono) ? tr("Mono supported by device") : tr("Mono not supported by device"));
+    mpMonoSupport->setIcon((mPcm2Mono || mNativeMono) ? ":label/green" : ":label/red");
 
     if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
     {
@@ -272,14 +273,14 @@ void MainWindow::catchJson(QString j)
     {
         TransferMode tMode(m);
 
-        if (tMode && tMode.supports(mTocManip, mSpUpload, mPcm2Mono))
+        if (tMode && tMode.supports(mTocManip, mSpUpload, mPcm2Mono, mNativeMono))
         {
             ui->cbxTranferMode->addItem(QIcon(tMode.iconSrc()), tMode.name(), m);
         }
     }
 
     ui->cbxTranferMode->setCurrentIndex(idx);
-
+    on_cbxTranferMode_currentIndexChanged(idx);
     enableDialogItems(true);
 }
 
@@ -477,6 +478,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             }
 
             mpRipper->removeTemp();
+            mpNetMD->start({NetMDCmd::END_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
             enableDialogItems(true);
             delayedPopUp(ePopUp::CRITICAL, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
             return;
@@ -528,6 +530,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 disc.mStep = WorkStep::TRANSFER;
 
                 ui->progressMDTransfer->setValue(0);
+                mpNetMD->start({NetMDCmd::START_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
                 mpNetMD->start({netMdCmd, disc.mFileName, "DAO All in One!"});
             }
         }
@@ -543,12 +546,17 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                 }
             }
 
-            for (auto& j : mWorkQueue)
+            for (int i = 0; i < mWorkQueue.size(); i++)
             {
+                auto& j = mWorkQueue[i];
                 if (j.mStep == WorkStep::ENCODED)
                 {
                     j.mStep = WorkStep::TRANSFER;
                     ui->progressMDTransfer->setValue(0);
+                    if (i == 0)
+                    {
+                        mpNetMD->start({NetMDCmd::START_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
+                    }
                     mpNetMD->start({netMdCmd, j.mFileName, j.mTitle});
                     break;
                 }
@@ -610,6 +618,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             {
                 info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please re-insert the minidisc in your device as soon as possible!");
             }
+            mpNetMD->start({NetMDCmd::END_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
             delayedPopUp(ePopUp::INFORMATION, tr("Success"), info);
         }
     }
@@ -628,7 +637,7 @@ void MainWindow::addMDTrack(int number, const QString &title, double length)
             .arg("00"); // fake frames
 
     // get the used time (space) on disc
-    time_t tUsed = qRound(length / static_cast<double>(mTransferMode.multi()));
+    time_t tUsed = ceil(length / static_cast<double>(mTransferMode.multi()));
 
     nlohmann::json mdJson = mpMDmodel->exportJson();
 

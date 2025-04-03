@@ -148,6 +148,15 @@ void CMDTreeModel::setupModelData()
         mDiscConf.mPcm2Mono = 0;
     }
 
+    if (mMDJson.find("native_mono_upld") != mMDJson.end())
+    {
+        mDiscConf.mNativeMono = mMDJson["native_mono_upld"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mNativeMono = 0;
+    }
+
     if (mMDJson.find("trk_count") != mMDJson.end())
     {
         mDiscConf.mTrkCount = mMDJson["trk_count"].get<int>();

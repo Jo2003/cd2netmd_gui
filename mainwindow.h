@@ -346,6 +346,9 @@ private:
     /// does the device support pcm2Mono
     bool mPcm2Mono;
 
+    /// does the device support native Mono
+    bool mNativeMono;
+
     /// show SP download support
     StatusWidget   *mpSpUpload;
 
@@ -356,7 +359,7 @@ private:
     StatusWidget   *mpTocManip;
 
     /// show SP Mono support
-    StatusWidget   *mpPcm2Mono;
+    StatusWidget   *mpMonoSupport;
 
     /// chosen transfer mode
     TransferMode mTransferMode;

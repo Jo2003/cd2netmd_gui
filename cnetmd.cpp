@@ -66,16 +66,32 @@ CNetMD::~CNetMD()
 
     if (mpApi != nullptr)
     {
+        // remove all homebrew features
+        mpApi->endHBSession(0);
         delete mpApi;
     }
 }
 
 void CNetMD::start(NetMDStartup startup)
 {
-    mLog.clear();
     mCurrJob = startup;
-    mTReadLog.start();
-    QThread::start();
+    switch(startup.mCmd)
+    {
+    // sync call
+    case NetMDCmd::START_HB_SESSION:
+        startHBSession();
+        break;
+    // sync call
+    case NetMDCmd::END_HB_SESSION:
+        endHBSession();
+        break;
+    // async call
+    default:
+        mLog.clear();
+        mTReadLog.start();
+        QThread::start();
+        break;
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -159,6 +175,7 @@ int CNetMD::getDiscInfo()
     tree.insert("device", mpApi->getDeviceName().c_str());
     tree.insert("sp_upload", mpApi->spUploadSupported() ? 1 : 0);
     tree.insert("pcm2mono", mpApi->pcm2MonoSupported() ? 1 : 0);
+    tree.insert("native_mono_upld", mpApi->nativeMonoUploadSupported() ? 1 : 0);
 
     if ((i = mpApi->trackCount()) > -1)
     {
@@ -282,8 +299,6 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
     int ret = netmd::NETMDERR_NO_ERROR;
     netmd::DiskFormat onTheFlyConvert;
 
-    bool spMono = false;
-
     switch(cmd)
     {
     case NetMDCmd::WRITE_TRACK_LP2:
@@ -300,10 +315,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
         ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_SP_MONO:
-        qInfo() << "Enable PCM to Mono patch." << Qt::endl;
-        spMono = true;
         onTheFlyConvert = netmd::NETMD_DISKFORMAT_SP_MONO;
-        ret = mpApi->enablePcm2Mono();
         break;
     default:
         qCritical() << "Wrong command given:" << static_cast<int>(cmd);
@@ -316,12 +328,6 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
         ret = mpApi->sendAudioFile(fName.toStdString(),
                                    static_cast<const char*>(utf8ToMd(title)),
                                    onTheFlyConvert);
-
-        if (spMono)
-        {
-            qInfo() << "Disable PCM to Mono patch." << Qt::endl;
-            mpApi->disablePcm2Mono();
-        }
     }
 
     return ret;
@@ -431,6 +437,26 @@ int CNetMD::doTocManip(bool devReset)
 {
     CTocManip manip(mpApi);
     return manip.manipulateTOC(mTocData, devReset, mMono);
+}
+
+//--------------------------------------------------------------------------
+//! @brief start Homebrew session
+//!
+//! @return 0 -> success; else -> error
+//--------------------------------------------------------------------------
+int CNetMD::startHBSession()
+{
+    qInfo() << "start homebrew session" << QString("0x%1").arg(mCurrJob.mHbFeatures, 2, 16, QChar('0')) << "on" << mDevName;
+    return mpApi->startHBSession(mCurrJob.mHbFeatures);
+}
+
+//--------------------------------------------------------------------------
+//! @brief end Homebrew session
+//--------------------------------------------------------------------------
+void CNetMD::endHBSession()
+{
+    qInfo() << "end homebrew session 0x" << QString("0x%1").arg(mCurrJob.mHbFeatures, 2, 16, QChar('0')) << "on" << mDevName;
+    mpApi->endHBSession(mCurrJob.mHbFeatures);
 }
 
 void CNetMD::run()

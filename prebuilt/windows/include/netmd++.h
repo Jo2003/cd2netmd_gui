@@ -346,6 +346,17 @@ struct Group
     std::string mName;  //!< group name
 };
 
+//-----------------------------------------------------------------------------
+//! @brief      NetMD homebrew features
+//-----------------------------------------------------------------------------
+enum HomebrewFeatures : uint32_t
+{
+    NOTHING     = 0x00, //!< no features
+    SP_UPLOAD   = 0x01, //!< SP upload
+    PCM_2_MONO  = 0x02, //!< PCM to mono
+    PCM_SPEEDUP = 0x04, //!< PCM speedup
+};
+
 /// netmd groups
 using Groups = std::vector<Group>;
 
@@ -629,16 +640,18 @@ public:
     bool pcm2MonoSupported();
 
     //--------------------------------------------------------------------------
-    //! @brief      enable PCM to mono patch
+    //! @brief      is native mono upload supported?
     //!
-    //! @return     @ref NetMdErr
+    //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
-    int enablePcm2Mono();
+    bool nativeMonoUploadSupported();
 
     //--------------------------------------------------------------------------
-    //! @brief      disable PCM to mono patch
+    //! @brief      is PCM speedup supportd
+    //!
+    //! @return     true if supported, false if not
     //--------------------------------------------------------------------------
-    void disablePcm2Mono();
+    bool pcmSpeedupSupported();
 
     //--------------------------------------------------------------------------
     //! @brief      Sends an audio track
@@ -724,6 +737,26 @@ public:
     //! @see        NetMdErr
     //--------------------------------------------------------------------------
     int finalizeTOC(bool reset = false, uint8_t resetWait = 15);
+
+    //--------------------------------------------------------------------------
+    //! @brief start homebrew 
+    //
+    //! @param features OR'd HomebrewFeatures
+    //
+    //! @return NetMdErr
+    //! @see NetMdErr
+    //--------------------------------------------------------------------------
+    int startHBSession(uint32_t features);
+
+    //--------------------------------------------------------------------------
+    //! @brief  stop homebrew session
+    //
+    //! @param features OR'd HomebrewFeatures
+    //
+    //! @return NetMdErr
+    //! @see NetMdErr
+    //--------------------------------------------------------------------------
+    void endHBSession(uint32_t features);
 
 private:
     /// disc header

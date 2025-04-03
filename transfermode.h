@@ -25,8 +25,9 @@
 class TransferMode
 {
 public:
-    using XEncCmd  = CXEnc::XEncCmd;
-    using NetMDCmd = CNetMD::NetMDCmd;
+    using XEncCmd    = CXEnc::XEncCmd;
+    using NetMDCmd   = CNetMD::NetMDCmd;
+    using HBFeatures = netmd::HomebrewFeatures;
 
     enum ETransferMode
     {
@@ -172,6 +173,16 @@ public:
     }
 
     //--------------------------------------------------------------------------
+    //! @brief      is this PCM upload?
+    //!
+    //! @return     true if yes, False otherwise
+    //--------------------------------------------------------------------------
+    bool pcmUpld() const
+    {
+        return ((mTransferMode == TM_TAO_SP) || (mTransferMode == TM_TAO_SP_MONO) || (mTransferMode == TM_DAO_SP) || (mTransferMode == TM_DAO_SP_MONO));
+    }
+
+    //--------------------------------------------------------------------------
     //! @brief      get short mode name
     //!
     //! @return     name or nullptr
@@ -262,17 +273,18 @@ public:
     //--------------------------------------------------------------------------
     //! @brief      check if mode is supported (device feature dependent)
     //!
-    //! @param[in]  tocMnp  The toc manipulation flag
-    //! @param[in]  spUpd   The sp update flag
-    //! @param[in]  mono    The sp mono support flag
+    //! @param[in]  tocMnp     The toc manipulation flag
+    //! @param[in]  spUpd      The sp update flag
+    //! @param[in]  pcm2mono   The PCM to mono support flag
+    //! @param[in]  nativeMono The native mono support flag
     //!
     //! @return     true if supported, false otherwise
     //--------------------------------------------------------------------------
-    bool supports(bool tocMnp, bool spUpd, bool mono) const
+    bool supports(bool tocMnp, bool spUpd, bool pcm2mono, bool nativeMono) const
     {
         return ((!tocManip() || (tocManip() && tocMnp))
                 && (!spUpld() || (spUpld() && spUpd))
-                && (!isMono() || (isMono() && mono)));
+                && (!isMono() || (isMono() && pcm2mono) || (isMono() && nativeMono && !tocManip())));
     }
 
     //--------------------------------------------------------------------------
@@ -297,6 +309,37 @@ public:
         }
         return c;
 #undef mkCase
+    }
+
+    //--------------------------------------------------------------------------
+    //! @brief      create a C vector of needed homebrew features
+    //!
+    //! @param[in]  tocMnp     The toc manipulation flag
+    //! @param[in]  spUpd      The sp update flag
+    //! @param[in]  pcm2mono   The PCM to mono support flag
+    //! @param[in]  nativeMono The native mono support flag
+    //!
+    //! @return     C vector with needed features marked
+    //--------------------------------------------------------------------------
+    uint32_t hbFeatures(bool pcmSpeedup = false) const
+    {
+        uint32_t features = HBFeatures::NOTHING;
+
+        if (spUpld())
+        {
+            features |= HBFeatures::SP_UPLOAD;
+        }
+
+        if (isMono())
+        {
+            features |= HBFeatures::PCM_2_MONO;
+        }
+
+        if (pcmSpeedup && pcmUpld())
+        {
+            features |= HBFeatures::PCM_SPEEDUP;
+        }
+        return features;
     }
 
     //--------------------------------------------------------------------------

@@ -39,6 +39,7 @@ public:
     "sp_upload": 0,
     "toc_manip": 0,
     "pcm2mono": 0,
+    "native_mono_upld": 0,
     "t_free": 0,
     "t_total": 0,
     "t_used": 0,
@@ -69,6 +70,8 @@ public:
         ERASE_DISC,            ///< erase disc
         DEL_TRACK,             ///< delete track
         TOC_MANIP,             ///< TOC manipulation
+        START_HB_SESSION,      ///< start homebrew session
+        END_HB_SESSION,        ///< end homebrew session
         UNKNWON                ///< something different
     };
 
@@ -90,18 +93,20 @@ public:
         //----------------------------------------------------------------------
         NetMDStartup(NetMDCmd cmd, const QString& trk = "",
                      const QString& title = "", const QString& grp = "",
-                     int16_t first = -1, int16_t last = -1, int16_t group = -1)
+                     int16_t first = -1, int16_t last = -1, int16_t group = -1,
+                     uint32_t hb = 0)
             : mCmd(cmd), msTrack(trk), msTitle(title), msGroup(grp),
-              miFirst(first), miLast(last), miGroup(group)
+              miFirst(first), miLast(last), miGroup(group), mHbFeatures(hb)
         {}
 
-        NetMDCmd mCmd;      ///< command
-        QString  msTrack;   ///< track title 
-        QString  msTitle;   ///< disc title
-        QString  msGroup;   ///< group title
-        int16_t  miFirst;   ///< first track
-        int16_t  miLast;    ///< last track
-        int16_t  miGroup;   ///< group id
+        NetMDCmd mCmd;        ///< command
+        QString  msTrack;     ///< track title
+        QString  msTitle;     ///< disc title
+        QString  msGroup;     ///< group title
+        int16_t  miFirst;     ///< first track
+        int16_t  miLast;      ///< last track
+        int16_t  miGroup;     ///< group id
+        uint32_t mHbFeatures; ///< home brew features
     };
 
     //--------------------------------------------------------------------------
@@ -280,6 +285,18 @@ protected:
     //! @return 0 -> success; else -> error
     //--------------------------------------------------------------------------
     int doTocManip(bool devReset);
+
+    //--------------------------------------------------------------------------
+    //! @brief start Homebrew session
+    //!
+    //! @return 0 -> success; else -> error
+    //--------------------------------------------------------------------------
+    int startHBSession();
+
+    //--------------------------------------------------------------------------
+    //! @brief end Homebrew session
+    //--------------------------------------------------------------------------
+    void endHBSession();
 
     //--------------------------------------------------------------------------
     //! @brief netmd_time to time_t
