@@ -51,6 +51,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("at3tool", ui->lineAtTool->text());
     set.setValue("dev_reset", ui->checkDevReset->isChecked());
     set.setValue("read_speed", ui->comboReadSpeed->currentIndex());
+    set.setValue("no_artist_title", ui->checkNoArtist->isChecked());
     delete ui;
 }
 
@@ -181,6 +182,16 @@ bool SettingsDlg::sizeCheck() const
     return !ui->disSzCheck->isChecked();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      don't add artist names to track titles
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::noArtistInTitle() const
+{
+    return ui->checkNoArtist->isChecked();
+}
+
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
 {
     QFile styleFile;
@@ -292,6 +303,15 @@ void SettingsDlg::loadSettings()
     {
         // 8x
         ui->comboReadSpeed->setCurrentIndex(3);
+    }
+
+    if (set.contains("no_artist_title"))
+    {
+        ui->checkNoArtist->setChecked(set.value("no_artist_title").toBool());
+    }
+    else
+    {
+        ui->checkNoArtist->setChecked(false);
     }
 
     emit loadingComplete();
