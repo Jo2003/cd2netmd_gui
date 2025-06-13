@@ -1029,12 +1029,14 @@ void MainWindow::catchDropped(QStringList sl)
 
             if (!tag.mTitle.isEmpty())
             {
-                if (!tag.mArtist.isEmpty())
+                if (!tag.mArtist.isEmpty() && !mpSettings->noArtistInTitle())
                 {
-                    trackInfo.mTitle = QString("%1 - ").arg(tag.mArtist);
+                    trackInfo.mTitle = QString("%1 - %2").arg(tag.mArtist).arg(tag.mTitle);
                 }
-
-                trackInfo.mTitle += tag.mTitle;
+                else
+                {
+                    trackInfo.mTitle = tag.mTitle;
+                }
             }
             else
             {

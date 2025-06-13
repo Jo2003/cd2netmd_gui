@@ -52,6 +52,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("dev_reset", ui->checkDevReset->isChecked());
     set.setValue("read_speed", ui->comboReadSpeed->currentIndex());
     set.setValue("dont_show_dao_info", ui->checkDAOInfo->isChecked());
+    set.setValue("no_artist_title", ui->checkNoArtist->isChecked());
     delete ui;
 }
 
@@ -204,6 +205,16 @@ bool SettingsDlg::pcmSpdUp() const
     return ui->checkPCMSpdup->isChecked();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      don't add artist names to track titles
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::noArtistInTitle() const
+{
+    return ui->checkNoArtist->isChecked();
+}
+
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
 {
     QFile styleFile;
@@ -348,6 +359,15 @@ void SettingsDlg::loadSettings()
     }
 
     ui->checkPCMSpdup->setChecked(false);
+
+    if (set.contains("no_artist_title"))
+    {
+        ui->checkNoArtist->setChecked(set.value("no_artist_title").toBool());
+    }
+    else
+    {
+        ui->checkNoArtist->setChecked(false);
+    }
 
     emit loadingComplete();
 }
