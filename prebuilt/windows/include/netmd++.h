@@ -107,11 +107,11 @@ netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 ~~~
 if (pNetMd != nullptr)
 {
-    pNetMd->initDevice();
+    pNetMd->initHotPlug();
 }
 ~~~
 
- - If you change or re-plug the device, simply run above code (initDevice()) again!
+ - If you change or re-plug the device, it should be recognized by the hotplug implementation!
 
 ## Examples
 ### Track transfer
@@ -124,15 +124,19 @@ int main()
 {
     netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
-    if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+    if (pNetMd != nullptr)
     {
-        if (pNetMd->otfEncodeSupported())
+        pNetMd->initHotPlug();
+        if (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR)
         {
-            pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
-        }
-        else
-        {
-            pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (SP)", netmd::NO_ONTHEFLY_CONVERSION);
+            if (pNetMd->otfEncodeSupported())
+            {
+                pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (LP2)", netmd::NETMD_DISKFORMAT_LP2);
+            }
+            else
+            {
+                pNetMd->sendAudioFile("/path/to/nice/audio.wav", "Very nice Audio file (SP)", netmd::NO_ONTHEFLY_CONVERSION);
+            }
         }
     }
     return 0;
@@ -147,11 +151,15 @@ int main()
 {
     netmd::netmd_pp* pNetMd = new netmd::netmd_pp();
 
-    if ((pNetMd != nullptr) && (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR))
+    if (pNetMd != nullptr)
     {
-        pNetMd->eraseDisc();
-        pNetMd->setDiscTitle("Amazing MD");
+        pNetMd->initHotPlug();
+        if (pNetMd->initDevice() == netmd::NETMDERR_NO_ERROR)
+        {
+            pNetMd->eraseDisc();
+            pNetMd->setDiscTitle("Amazing MD");
 
+        }
     }
     return 0;
 }
@@ -236,6 +244,8 @@ delete [] pData;
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <functional>
+#include <mutex>
 
 namespace netmd {
 
@@ -355,6 +365,7 @@ enum HomebrewFeatures : uint32_t
     SP_UPLOAD   = 0x01, //!< SP upload
     PCM_2_MONO  = 0x02, //!< PCM to mono
     PCM_SPEEDUP = 0x04, //!< PCM speedup
+    USB_EXEC    = 0x08, //!< USB execution
 };
 
 /// netmd groups
@@ -362,6 +373,13 @@ using Groups = std::vector<Group>;
 
 /// byte vector
 using NetMDByteVector = std::vector<uint8_t>;
+
+//--------------------------------------------------------------------------
+//! @brief hotplug callback function signature
+//
+//! @param[in]  true if device is added; false if removed
+//--------------------------------------------------------------------------
+using EvtCallback = std::function<void(bool)>;
 
 //--------------------------------------------------------------------------
 //! @brief      format helper for TrackTime
@@ -433,6 +451,13 @@ public:
     //! @brief      Destroys the object.
     //--------------------------------------------------------------------------
     ~CNetMdApi();
+
+    //--------------------------------------------------------------------------
+    //! @brief      init libusb hotplug (native or emulation)
+    //
+    //! @return     NetMdErr
+    //--------------------------------------------------------------------------
+    int initHotPlug();
 
     //--------------------------------------------------------------------------
     //! @brief      Initializes the device.
@@ -758,6 +783,14 @@ public:
     //--------------------------------------------------------------------------
     void endHBSession(uint32_t features);
 
+    //--------------------------------------------------------------------------
+    //! @brief      register hotplug callback function
+    //
+    //! @param[in]  cb  callback function to e called on device add / removal
+    //!                 if is nullptr, the callback will be removed
+    //--------------------------------------------------------------------------
+    void registerForHotplugEvents(EvtCallback cb);
+
 private:
     /// disc header
     CMDiscHeader* mpDiscHeader;
@@ -767,6 +800,12 @@ private:
 
     /// secure implementation
     CNetMdSecure* mpSecure;
+
+    /// hotplug callback function
+    EvtCallback mHotplugCallback; 
+
+    /// mutex for hotplug callback
+    std::mutex mMutexHotplug;
 };
 
 namespace toc

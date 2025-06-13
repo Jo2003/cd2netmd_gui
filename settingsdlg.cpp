@@ -51,6 +51,7 @@ SettingsDlg::~SettingsDlg()
     set.setValue("at3tool", ui->lineAtTool->text());
     set.setValue("dev_reset", ui->checkDevReset->isChecked());
     set.setValue("read_speed", ui->comboReadSpeed->currentIndex());
+    set.setValue("dont_show_dao_info", ui->checkDAOInfo->isChecked());
     delete ui;
 }
 
@@ -98,6 +99,18 @@ void SettingsDlg::enaDisaDevReset(bool check, bool ena)
 {
     ui->checkDevReset->setChecked(check);
     ui->checkDevReset->setEnabled(ena);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      set / enable / diable PCM speedup checkbox
+//!
+//! @param[in]  check  The checked value
+//! @param[in]  ena    The enaable value
+//--------------------------------------------------------------------------
+void SettingsDlg::enaDisaPCMSpdUp(bool check, bool ena)
+{
+    ui->checkPCMSpdup->setChecked(check);
+    ui->checkPCMSpdup->setEnabled(ena);
 }
 
 //--------------------------------------------------------------------------
@@ -181,6 +194,16 @@ bool SettingsDlg::sizeCheck() const
     return !ui->disSzCheck->isChecked();
 }
 
+//--------------------------------------------------------------------------
+//! @brief      use PCM speedup
+//!
+//! @return     true if enabled
+//--------------------------------------------------------------------------
+bool SettingsDlg::pcmSpdUp() const
+{
+    return ui->checkPCMSpdup->isChecked();
+}
+
 void SettingsDlg::on_comboBox_currentIndexChanged(int index)
 {
     QFile styleFile;
@@ -226,20 +249,36 @@ void SettingsDlg::loadSettings()
     {
         ui->comboBox->setCurrentIndex(set.value("theme").toUInt());
     }
+    else
+    {
+        ui->comboBox->setCurrentIndex(0);
+    }
 
     if (set.contains("paranoia"))
     {
         ui->checkParanoia->setChecked(set.value("paranoia").toBool());
+    }
+    else
+    {
+        ui->checkParanoia->setChecked(false);
     }
 
     if (set.contains("otf"))
     {
         ui->checkOTFEnc->setChecked(set.value("otf").toBool());
     }
+    else
+    {
+        ui->checkOTFEnc->setChecked(false);
+    }
 
     if (set.contains("dev_reset"))
     {
         ui->checkDevReset->setChecked(set.value("dev_reset").toBool());
+    }
+    else
+    {
+        ui->checkDevReset->setChecked(true);
     }
 
     if (set.contains("loglevel"))
@@ -250,6 +289,7 @@ void SettingsDlg::loadSettings()
     else
     {
         ui->cbxLogLevel->setCurrentIndex(static_cast<int>(c2n::LogLevel::INFO));
+        g_LogFilter = c2n::LogLevel::INFO;
     }
 
     if (set.contains("sp_title"))
@@ -283,6 +323,10 @@ void SettingsDlg::loadSettings()
     {
         ui->lineAtTool->setText(set.value("at3tool").toString());
     }
+    else
+    {
+        ui->lineAtTool->setText("");
+    }
 
     if (set.contains("read_speed"))
     {
@@ -294,12 +338,43 @@ void SettingsDlg::loadSettings()
         ui->comboReadSpeed->setCurrentIndex(3);
     }
 
+    if (set.contains("dont_show_dao_info"))
+    {
+        ui->checkDAOInfo->setChecked(set.value("dont_show_dao_info").toBool());
+    }
+    else
+    {
+        ui->checkDAOInfo->setChecked(true);
+    }
+
+    ui->checkPCMSpdup->setChecked(false);
+
     emit loadingComplete();
 }
 
 void SettingsDlg::on_cbxLogLevel_currentIndexChanged(int index)
 {
     g_LogFilter = static_cast<c2n::LogLevel>(index);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      set / unset DAO info flag
+//!
+//! @param[in]  check  The checked value
+//--------------------------------------------------------------------------
+void SettingsDlg::setDaoInfo(bool check)
+{
+    ui->checkDAOInfo->setChecked(check);
+}
+
+//--------------------------------------------------------------------------
+//! @brief      should we show the DAO info
+//!
+//! @return     true if yes; false otherwise
+//--------------------------------------------------------------------------
+bool SettingsDlg::daoInfo() const
+{
+    return ui->checkDAOInfo->isChecked();
 }
 
 void SettingsDlg::on_pushCleanup_clicked()
@@ -332,5 +407,12 @@ void SettingsDlg::on_pushAtTool_clicked()
     {
         ui->lineAtTool->setText(fileName);
     }
+}
+
+void SettingsDlg::on_pushReset_clicked()
+{
+    QSettings set;
+    set.clear();
+    loadSettings();
 }
 

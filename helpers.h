@@ -88,3 +88,19 @@ QString tempFileName(const QString& templ);
 //! @return     value in between a and b
 //--------------------------------------------------------------------------
 int randRange(int a, int b);
+
+//--------------------------------------------------------------------------
+//! @brief      is val in between min and max
+//!
+//! @tparam     T any number
+//! @param[in]  val value to check
+//! @param[in]  min lower end
+//! @param[in]  max upper end
+//!
+//! @return     true if between, false otherwise
+//--------------------------------------------------------------------------
+template <typename T>
+bool inBetween(const T& val, const T& min, const T& max)
+{
+    return (val >= min) && (val <= max);
+}

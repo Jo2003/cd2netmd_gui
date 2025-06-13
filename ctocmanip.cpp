@@ -63,88 +63,85 @@ int CTocManip::manipulateTOC(const TitleVector &trackData, bool resetDev, bool m
         return -1;
     }
 
-    int ret = mpApi->prepareTOCManip();
+    int ret = NETMDERR_NO_ERROR;
 
-    if (ret == NETMDERR_NO_ERROR)
+    NetMDByteVector toc;
+    QByteArray tocData;
+    std::size_t i;
+    for (i = 0; i < 3; i++)
     {
-        NetMDByteVector toc;
-        QByteArray tocData;
-        std::size_t i;
-        for (i = 0; i < 3; i++)
+        toc += mpApi->readUTOCSector(static_cast<UTOCSector>(i));
+        if (toc.size() != ((i + 1) * 2352))
         {
-            toc += mpApi->readUTOCSector(static_cast<UTOCSector>(i));
-            if (toc.size() != ((i + 1) * 2352))
-            {
-                qCritical() << "Error: Can't read UTOC sector" << i;
-                break;
-            }
+            qCritical() << "Error: Can't read UTOC sector" << i;
+            break;
+        }
+    }
+
+    if (toc.size() == 2352 * 3)
+    {
+        for (i = 0; i < toc.size(); i++)
+        {
+            tocData.append(static_cast<char>(toc.at(i)));
         }
 
-        if (toc.size() == 2352 * 3)
+        CNetMdTOC tocHlp(trackData.size() - 1, trackData.at(0).mLengthInMs, reinterpret_cast<uint8_t*>(tocData.data()));
+        std::ostringstream oss;
+
+        oss << std::endl
+            << "Read Disc Layout:" << std::endl
+            << "=================" << std::endl
+            << tocHlp.discInfo() << std::endl;
+        for(int j = 1; j <= tocHlp.trackCount(); j++)
         {
-            for (i = 0; i < toc.size(); i++)
+            oss << tocHlp.trackInfo(j);
+        }
+
+        for (int j = 1; j < trackData.size(); j++)
+        {
+            tocHlp.addTrack(j, trackData.at(j).mLengthInMs, trackData.at(j).mName.toStdString(),
+                            trackData.at(j).mDate, mono);
+        }
+        tocHlp.setDiscTitle(trackData.at(0).mName.toStdString());
+
+        oss << "Finished Disc Layout:" << std::endl
+            << "=====================" << std::endl
+            << tocHlp.discInfo() << std::endl;
+        for(int j = 1; j <= tocHlp.trackCount(); j++)
+        {
+            oss << tocHlp.trackInfo(j);
+        }
+
+        qInfo() << oss.str().c_str();
+
+        bool good = true;
+        for (i = 0; i < 3; i++)
+        {
+            toc.clear();
+            addArrayData(toc, tocData.constData() + i * 2352, 2352);
+            if (mpApi->writeUTOCSector(static_cast<UTOCSector>(i), toc) == NETMDERR_NO_ERROR)
             {
-                tocData.append(static_cast<char>(toc.at(i)));
-            }
-
-            CNetMdTOC tocHlp(trackData.size() - 1, trackData.at(0).mLengthInMs, reinterpret_cast<uint8_t*>(tocData.data()));
-            std::ostringstream oss;
-
-            oss << std::endl
-                << "Read Disc Layout:" << std::endl
-                << "=================" << std::endl
-                << tocHlp.discInfo() << std::endl;
-            for(int j = 1; j <= tocHlp.trackCount(); j++)
-            {
-                oss << tocHlp.trackInfo(j);
-            }
-
-            for (int j = 1; j < trackData.size(); j++)
-            {
-                tocHlp.addTrack(j, trackData.at(j).mLengthInMs, trackData.at(j).mName.toStdString(),
-                                trackData.at(j).mDate, mono);
-            }
-            tocHlp.setDiscTitle(trackData.at(0).mName.toStdString());
-
-            oss << "Finished Disc Layout:" << std::endl
-                << "=====================" << std::endl
-                << tocHlp.discInfo() << std::endl;
-            for(int j = 1; j <= tocHlp.trackCount(); j++)
-            {
-                oss << tocHlp.trackInfo(j);
-            }
-
-            qInfo() << oss.str().c_str();
-
-            bool good = true;
-            for (i = 0; i < 3; i++)
-            {
-                toc.clear();
-                addArrayData(toc, tocData.constData() + i * 2352, 2352);
-                if (mpApi->writeUTOCSector(static_cast<UTOCSector>(i), toc) == NETMDERR_NO_ERROR)
-                {
-                    qDebug() << "TOC sector" << i << "written!";
-                }
-                else
-                {
-                    qWarning() << "Can't write TOC sector" << i << "!";
-                    good = false;
-                }
-            }
-
-            if (good)
-            {
-                return mpApi->finalizeTOC(resetDev);
+                qDebug() << "TOC sector" << i << "written!";
             }
             else
             {
-                ret = NETMDERR_USB;
+                qWarning() << "Can't write TOC sector" << i << "!";
+                good = false;
             }
+        }
+
+        if (good)
+        {
+            return mpApi->finalizeTOC(resetDev);
         }
         else
         {
             ret = NETMDERR_USB;
         }
+    }
+    else
+    {
+        ret = NETMDERR_USB;
     }
 
     return ret;

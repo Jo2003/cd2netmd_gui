@@ -157,6 +157,15 @@ void CMDTreeModel::setupModelData()
         mDiscConf.mNativeMono = 0;
     }
 
+    if (mMDJson.find("pcm_speedup") != mMDJson.end())
+    {
+        mDiscConf.mPCMSpeedUp = mMDJson["pcm_speedup"].get<int>();
+    }
+    else
+    {
+        mDiscConf.mPCMSpeedUp = 0;
+    }
+
     if (mMDJson.find("trk_count") != mMDJson.end())
     {
         mDiscConf.mTrkCount = mMDJson["trk_count"].get<int>();
@@ -173,6 +182,21 @@ void CMDTreeModel::setupModelData()
     else
     {
         mDiscConf.mTotTime = 0;
+    }
+
+    // some devices report the time multiplied already for LP2, LP4, or Mono
+    // compare range is length of MD60 and MD80
+    if (inBetween(mDiscConf.mTotTime, 2 * MD60_SECS, 2 * MD80_SECS))
+    {
+        mDiscConf.mDevTimeMulti = 2;
+    }
+    else if (inBetween(mDiscConf.mTotTime, 4 * MD60_SECS, 4 * MD80_SECS))
+    {
+        mDiscConf.mDevTimeMulti = 4;
+    }
+    else
+    {
+        mDiscConf.mDevTimeMulti = 1;
     }
 
     if (mMDJson.find("t_free") != mMDJson.end())

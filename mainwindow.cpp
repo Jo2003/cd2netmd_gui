@@ -32,9 +32,12 @@ using namespace c2n;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), mpRipper(nullptr),
       mpNetMD(nullptr), mpXEnc(nullptr), mpMDmodel(nullptr),
-      mpSettings(nullptr), mSpUpload(false), mTocManip(false),
+      mpMDDevice(nullptr), mpCDDevice(nullptr), mpSettings(nullptr),
+      /*
+      mSpUpload(false), mTocManip(false),
       mPcm2Mono(false), mNativeMono(false), mpSpUpload(nullptr),
       mpOtfEncode(nullptr), mpTocManip(nullptr), mpMonoSupport(nullptr),
+      */
       mTransferMode(TransferMode::TM_UNKNOWN)
 {
     ui->setupUi(this);
@@ -78,6 +81,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     mpMDDevice     = new StatusWidget(this, ":main/md", tr("Please re-load MD"));
     mpCDDevice     = new StatusWidget(this, ":buttons/cd", tr("Please re-load CD"));
+    /*
     mpSpUpload     = new StatusWidget(this, ":label/red", tr("SP"), tr("Marker for SP download"));
     mpOtfEncode    = new StatusWidget(this, ":label/red", tr("OTF"), tr("Marker for on-the-fly encoding"));
     mpTocManip     = new StatusWidget(this, ":label/red", tr("TOC"), tr("Marker for TOC manipulation"));
@@ -87,6 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusbar->addPermanentWidget(mpTocManip);
     ui->statusbar->addPermanentWidget(mpSpUpload);
     ui->statusbar->addPermanentWidget(mpOtfEncode);
+    */
     ui->statusbar->addPermanentWidget(mpCDDevice);
     ui->statusbar->addPermanentWidget(mpMDDevice);
 }
@@ -227,13 +232,15 @@ void MainWindow::catchCDDBEntry(c2n::AudioTracks tracks)
 void MainWindow::catchJson(QString j)
 {
     recreateTreeView(j);
-    bool otf = !!mpMDmodel->discConf()->mOTFEnc;
+    // bool otf = !!mpMDmodel->discConf()->mOTFEnc;
 
-    mpSettings->enaDisaOtf(mpSettings->onthefly(true), otf);
+    mpSettings->enaDisaOtf(mpSettings->onthefly(true), !!mpMDmodel->discConf()->mOTFEnc);
+    mpSettings->enaDisaPCMSpdUp(false, !!mpMDmodel->discConf()->mPCMSpeedUp);
 
-    mTocManip = !!mpMDmodel->discConf()->mTocManip;
-    mpSettings->enaDisaDevReset(mpSettings->devReset(true), mTocManip);
+    // mTocManip = !!mpMDmodel->discConf()->mTocManip;
+    mpSettings->enaDisaDevReset(mpSettings->devReset(true), !!mpMDmodel->discConf()->mTocManip);
 
+    /*
     mSpUpload =   !!mpMDmodel->discConf()->mSPUpload;
     mPcm2Mono =   !!mpMDmodel->discConf()->mPcm2Mono;
     mNativeMono = !!mpMDmodel->discConf()->mNativeMono;
@@ -250,18 +257,22 @@ void MainWindow::catchJson(QString j)
 
     mpMonoSupport->setStatusTip((mPcm2Mono || mNativeMono) ? tr("Mono supported by device") : tr("Mono not supported by device"));
     mpMonoSupport->setIcon((mPcm2Mono || mNativeMono) ? ":label/green" : ":label/red");
+    */
 
-    if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
+    if (mpMDmodel->discConf()->mDiscFlags != 0xff)
     {
-        // read only disc
-        delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive isn't writeable.\n"
-                                                                "Replace it with a writeable disc and reload the MD!"));
-    }
-    else if (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)
-    {
-        // write lock
-        delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive is write locked.\n"
-                                                                "Remove the write lock and reload the MD!"));
+        if (!(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
+        {
+            // read only disc
+            delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive isn't writeable.\n"
+                                                                    "Replace it with a writeable disc and reload the MD!"));
+        }
+        else if (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)
+        {
+            // write lock
+            delayedPopUp(ePopUp::INFORMATION, tr("Information"), tr("The MD in your drive is write locked.\n"
+                                                                    "Remove the write lock and reload the MD!"));
+        }
     }
 
     int idx = ui->cbxTranferMode->currentIndex();
@@ -273,14 +284,16 @@ void MainWindow::catchJson(QString j)
     {
         TransferMode tMode(m);
 
-        if (tMode && tMode.supports(mTocManip, mSpUpload, mPcm2Mono, mNativeMono))
+        if (tMode && tMode.supports(!!mpMDmodel->discConf()->mTocManip,
+                                    !!mpMDmodel->discConf()->mSPUpload,
+                                    !!mpMDmodel->discConf()->mPcm2Mono,
+                                    !!mpMDmodel->discConf()->mNativeMono))
         {
             ui->cbxTranferMode->addItem(QIcon(tMode.iconSrc()), tMode.name(), m);
         }
     }
 
     ui->cbxTranferMode->setCurrentIndex(idx);
-    on_cbxTranferMode_currentIndexChanged(idx);
     enableDialogItems(true);
 }
 
@@ -459,6 +472,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
     qInfo() << "checkBusy:" << checkBusy << "ret:" << ret;
     if ((!checkBusy || !mpNetMD->busy()) && !mWorkQueue.isEmpty())
     {
+        qInfo() << "Entered checks...";
         QString labText = tr("MD-Transfer");
         int dc = 0;
         using NetMDCmd = CNetMD::NetMDCmd;
@@ -466,6 +480,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
         if (ret < 0)
         {
+            qInfo() << "Error...";
             for (auto& t : mWorkQueue)
             {
                 // mark all tracks as failed
@@ -478,7 +493,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             }
 
             mpRipper->removeTemp();
-            mpNetMD->start({NetMDCmd::END_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
+            mpNetMD->start({NetMDCmd::END_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures(mpSettings->pcmSpdUp())});
             enableDialogItems(true);
             delayedPopUp(ePopUp::CRITICAL, tr("Transfer Error!"), tr("Error while track transfer. Sorry!"));
             return;
@@ -486,8 +501,10 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
 
         if (mTransferMode.tocManip())
         {
+            qInfo() << "TOC Manip";
             if (mWorkQueue.at(0).mStep == WorkStep::DONE)
             {
+                qInfo() << "TOC Manip done";
                 ui->progressMDTransfer->setValue(100);
 
                 for (auto& t : mWorkQueue)
@@ -504,6 +521,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::TRANSFER)
             {
+                qInfo() << "TOC Manip transfer done";
                 mWorkQueue[0].mStep = WorkStep::DONE;
 
                 CNetMD::TocData tocData;
@@ -526,16 +544,18 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             }
             else if (mWorkQueue.at(0).mStep == WorkStep::ENCODED)
             {
+                qInfo() << "TOC Manip transfer start";
                 auto& disc = mWorkQueue[0];
                 disc.mStep = WorkStep::TRANSFER;
 
                 ui->progressMDTransfer->setValue(0);
-                mpNetMD->start({NetMDCmd::START_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
+                mpNetMD->start({NetMDCmd::START_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures(mpSettings->pcmSpdUp())});
                 mpNetMD->start({netMdCmd, disc.mFileName, "DAO All in One!"});
             }
         }
         else
         {
+            qInfo() << "Track Mode";
             for (auto& j : mWorkQueue)
             {
                 if (j.mStep == WorkStep::TRANSFER)
@@ -555,7 +575,7 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
                     ui->progressMDTransfer->setValue(0);
                     if (i == 0)
                     {
-                        mpNetMD->start({NetMDCmd::START_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
+                        mpNetMD->start({NetMDCmd::START_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures(mpSettings->pcmSpdUp())});
                     }
                     mpNetMD->start({netMdCmd, j.mFileName, j.mTitle});
                     break;
@@ -572,6 +592,8 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
         }
 
         countLabel(ui->labMDTransfer, WorkStep::ENCODED, labText);
+
+        qInfo() << "Tracks done:" << dc << "Queue Size:" << mWorkQueue.size();
 
         if (dc == mWorkQueue.size())
         {
@@ -612,13 +634,13 @@ void MainWindow::transferFinished(bool checkBusy, int ret)
             }
             mWorkQueue.clear();
             mpRipper->removeTemp();
+            mpNetMD->start({NetMDCmd::END_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures(mpSettings->pcmSpdUp())});
             enableDialogItems(true);
             QString info = tr("All (selected) tracks were transferred to MiniDisc!");
             if (mTransferMode.tocManip() && (ret != CNetMD::TOCMANIP_DEV_RESET))
             {
                 info += QString("<br><b>%1</b> %2").arg(tr("TOC edit done!")).arg("Please re-insert the minidisc in your device as soon as possible!");
             }
-            mpNetMD->start({NetMDCmd::END_HB_SESSION, "", "", "", -1, -1, -1, mTransferMode.hbFeatures()});
             delayedPopUp(ePopUp::INFORMATION, tr("Success"), info);
         }
     }
@@ -649,8 +671,8 @@ void MainWindow::addMDTrack(int number, const QString &title, double length)
     mdJson["tracks"].push_back(trk);
 
     mdJson["trk_count"] = mpMDmodel->discConf()->mTrkCount + 1;
-    mdJson["t_used"]    = mpMDmodel->discConf()->mUsedTime + tUsed;
-    mdJson["t_free"]    = mpMDmodel->discConf()->mFreeTime - tUsed;
+    mdJson["t_used"]    = mpMDmodel->discConf()->addUsedTime(tUsed);
+    mdJson["t_free"]    = mpMDmodel->discConf()->addFreeTime(-tUsed);
 
     recreateTreeView(QString::fromStdString(mdJson.dump()));
 }
@@ -760,22 +782,30 @@ void MainWindow::enableDialogItems(bool ena)
     ui->pushLoadMD->setEnabled(ena);
     ui->pushInitCD->setEnabled(ena);
     ui->pushLoadImg->setEnabled(ena);
-    ui->cbxTranferMode->setEnabled(ena);
+
     if (ena)
     {
         if ((ui->tableViewCD->model() != nullptr)
             && (ui->tableViewCD->model()->rowCount() > 0)
             && (ui->treeView->model() != nullptr)
             && (ui->treeView->model()->rowCount() > 0)
+            && (mpMDmodel && (mpMDmodel->discConf()->mDiscFlags != 0xff))
             && (mpMDmodel && (mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITEABLE))
             && (mpMDmodel && !(mpMDmodel->discConf()->mDiscFlags & eDiscFlags::WRITE_LOCK)))
         {
             ui->pushTransfer->setEnabled(ena);
+            ui->cbxTranferMode->setEnabled(ena);
+        }
+        else
+        {
+            ui->pushTransfer->setEnabled(false);
+            ui->cbxTranferMode->setEnabled(false);
         }
     }
     else
     {
         ui->pushTransfer->setEnabled(ena);
+        ui->cbxTranferMode->setEnabled(ena);
     }
 }
 
@@ -858,11 +888,12 @@ void MainWindow::eraseDisc()
 
 void MainWindow::on_pushTransfer_clicked()
 {
-    QSettings set;
+    // capture current transfer mode
+    mTransferMode = ui->cbxTranferMode->currentData().toInt();
 
-    if (mTransferMode.isDao() && !set.value("dont_show_dao_info", false).toBool())
+    if (mTransferMode.isDao() && mpSettings->daoInfo())
     {
-        CDaoConfDlg* pDaoConf = new CDaoConfDlg(this);
+        CDaoConfDlg* pDaoConf = new CDaoConfDlg(this, mpSettings);
 
         if (pDaoConf)
         {
@@ -921,10 +952,10 @@ void MainWindow::on_pushTransfer_clicked()
     // check selection with available time
     selectionTime /= mTransferMode.multi();
 
-    if (mpSettings->sizeCheck() && (selectionTime > mpMDmodel->discConf()->mFreeTime))
+    if (mpSettings->sizeCheck() && (selectionTime > mpMDmodel->discConf()->freeTime()))
     {
         // not enough space left on device
-        time_t need = selectionTime - mpMDmodel->discConf()->mFreeTime;
+        time_t need = selectionTime - mpMDmodel->discConf()->freeTime();
         QString t = QString("%1:%2:%3").arg(need / 3600).arg((need % 3600) / 60, 2, 10, QChar('0')).arg(need % 60, 2, 10, QChar('0'));
         mWorkQueue.clear();
         enableDialogItems(true);
@@ -1210,9 +1241,8 @@ void MainWindow::delayedPopUp(ePopUp tp, const QString& caption, const QString& 
 //!
 //! @param[in]  index new activated index
 //--------------------------------------------------------------------------
-void MainWindow::on_cbxTranferMode_currentIndexChanged(int index)
+void MainWindow::on_cbxTranferMode_currentIndexChanged(int)
 {
-    mTransferMode = ui->cbxTranferMode->itemData(index).toInt();
     updateFreeTimeLabel();
 }
 
@@ -1221,7 +1251,9 @@ void MainWindow::on_cbxTranferMode_currentIndexChanged(int index)
 //--------------------------------------------------------------------------
 void MainWindow::updateFreeTimeLabel()
 {
-    int secs = mpMDmodel->discConf()->mFreeTime * mTransferMode.multi();
+    TransferMode tm = ui->cbxTranferMode->currentData().toInt();
+
+    int secs = mpMDmodel->discConf()->freeTime() * tm.multi();
 
     if (secs > 0)
     {

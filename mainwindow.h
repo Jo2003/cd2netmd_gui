@@ -337,6 +337,7 @@ private:
     /// keep a clean backup of the tracks
     c2n::AudioTracks mTracksBackup;
 
+    /*
     /// can the device SP upload
     bool mSpUpload;
 
@@ -360,6 +361,7 @@ private:
 
     /// show SP Mono support
     StatusWidget   *mpMonoSupport;
+    */
 
     /// chosen transfer mode
     TransferMode mTransferMode;

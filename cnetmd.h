@@ -33,12 +33,13 @@ class CNetMD : public QThread
 public:
     static constexpr const char* EMPTY_JSON_RESP = R"({
     "device": "unknown",
-    "disc_flags": "0x00",
+    "disc_flags": "0xff",
     "groups": [],
     "otf_enc": 0,
     "sp_upload": 0,
     "toc_manip": 0,
     "pcm2mono": 0,
+    "pcm_speedup": 0,
     "native_mono_upld": 0,
     "t_free": 0,
     "t_total": 0,
@@ -309,6 +310,16 @@ protected:
     {
         return (t->hour * 3600) + (t->minute * 60) + t->second;
     }
+
+    //--------------------------------------------------------------------------
+    //! @brief callback to be registered to netmd api
+    //!        gets called when device was added / delted
+    //!
+    //! @param[in] added true if added, false otherwise
+    //!
+    //! @return 0
+    //--------------------------------------------------------------------------
+    int hotPlugCB(bool added);
 
     /// current job description
     NetMDStartup mCurrJob;

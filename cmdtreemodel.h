@@ -40,18 +40,77 @@ public:
     /// disc config
     struct SDiscConf
     {
-       int mTocManip;   ///< TOC manipulation support
-       int mSPUpload;   ///< SP upload supported
-       int mOTFEnc;     ///< On-The-Fly encoding support
-       int mPcm2Mono;   ///< PCM2Mono support
-       int mNativeMono; ///< native mono upload support
-       int mTrkCount;   ///< track count
-       int mTotTime;    ///< total disc time
-       int mFreeTime;   ///< free disc time
-       int mUsedTime;   ///< used time
-       int mDiscFlags;  ///< disc flags
-       QString mDevice; ///< device name
+       int mTocManip;     ///< TOC manipulation support
+       int mSPUpload;     ///< SP upload supported
+       int mOTFEnc;       ///< On-The-Fly encoding support
+       int mPcm2Mono;     ///< PCM2Mono support
+       int mNativeMono;   ///< native mono upload support
+       int mPCMSpeedUp;   ///< PCM speedup support
+       int mTrkCount;     ///< track count
+       int mTotTime;      ///< total disc time
+       int mFreeTime;     ///< free disc time
+       int mUsedTime;     ///< used time
+       int mDiscFlags;    ///< disc flags
+       int mDevTimeMulti; ///< device time multiplier
+       QString mDevice;   ///< device name
+
+       //--------------------------------------------------------------------------
+       //! @brief freeTime
+       //
+       //! @return free disc time
+       //--------------------------------------------------------------------------
+       int freeTime() const
+       {
+           return mDevTimeMulti ? (mFreeTime / mDevTimeMulti) : 0;
+       }
+
+       //--------------------------------------------------------------------------
+       //! @brief usedTime
+       //
+       //! @return used disc time
+       //--------------------------------------------------------------------------
+       int usedTime() const
+       {
+           return mDevTimeMulti ? (mUsedTime / mDevTimeMulti) : 0;
+       }
+
+       //--------------------------------------------------------------------------
+       //! @brief totalTime
+       //
+       //! @return total disc time
+       //--------------------------------------------------------------------------
+       int totalTime() const
+       {
+           return mDevTimeMulti ? (mTotTime / mDevTimeMulti) : 0;
+       }
+
+       //--------------------------------------------------------------------------
+       //! @brief addFreeTime
+       //
+       //! @param[in] val to add
+       //
+       //! @return result of addition
+       //--------------------------------------------------------------------------
+       int addFreeTime(int val) const
+       {
+           return mFreeTime + val * mDevTimeMulti;
+       }
+
+       //--------------------------------------------------------------------------
+       //! @brief addUsedTime
+       //
+       //! @param[in] val to add
+       //
+       //! @return result of addition
+       //--------------------------------------------------------------------------
+       int addUsedTime(int val) const
+       {
+           return mUsedTime + val * mDevTimeMulti;
+       }
     };
+
+    static constexpr int MD60_SECS = 60 * 60 + 59;
+    static constexpr int MD80_SECS = 80 * 60 + 59;
 
     //--------------------------------------------------------------------------
     //! @brief      Constructs a new instance.

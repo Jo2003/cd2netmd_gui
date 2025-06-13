@@ -17,6 +17,7 @@
 #pragma once
 
 #include <QDialog>
+#include "settingsdlg.h"
 
 namespace Ui {
 class CDaoConfDlg;
@@ -35,8 +36,9 @@ public:
     //! @brief      Constructs a new instance.
     //!
     //! @param      parent  The parent widget
+    //! @param      set     pointer to settingsdialog
     //--------------------------------------------------------------------------
-    explicit CDaoConfDlg(QWidget *parent = nullptr);
+    explicit CDaoConfDlg(QWidget *parent, SettingsDlg* set);
     
     //--------------------------------------------------------------------------
     //! @brief      Destroys the object.
@@ -48,5 +50,6 @@ private slots:
 
 private:
     Ui::CDaoConfDlg *ui;
+    SettingsDlg *pSet;
 };
 

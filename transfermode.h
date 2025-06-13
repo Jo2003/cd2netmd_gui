@@ -339,6 +339,11 @@ public:
         {
             features |= HBFeatures::PCM_SPEEDUP;
         }
+
+        if (tocManip())
+        {
+            features |= HBFeatures::USB_EXEC;
+        }
         return features;
     }
 

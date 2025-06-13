@@ -95,6 +95,14 @@ public:
     void enaDisaDevReset(bool check, bool ena);
 
     //--------------------------------------------------------------------------
+    //! @brief      set / enable / diable PCM speedup checkbox
+    //!
+    //! @param[in]  check  The checked value
+    //! @param[in]  ena    The enaable value
+    //--------------------------------------------------------------------------
+    void enaDisaPCMSpdUp(bool check, bool ena);
+
+    //--------------------------------------------------------------------------
     //! @brief      reset device after TOC edit
     //!
     //! @param[in]  statusOnly get checked status only (optional)
@@ -102,6 +110,20 @@ public:
     //! @return     true if enabled
     //--------------------------------------------------------------------------
     bool devReset(bool statusOnly = false) const;
+
+    //--------------------------------------------------------------------------
+    //! @brief      set / unset DAO info flag
+    //!
+    //! @param[in]  check  The checked value
+    //--------------------------------------------------------------------------
+    void setDaoInfo(bool check);
+
+    //--------------------------------------------------------------------------
+    //! @brief      should we show the DAO info
+    //!
+    //! @return     true if yes; false otherwise
+    //--------------------------------------------------------------------------
+    bool daoInfo() const;
     
     //--------------------------------------------------------------------------
     //! @brief      gets wait animation (theme dependent)
@@ -152,6 +174,13 @@ public:
     //--------------------------------------------------------------------------
     bool sizeCheck() const;
 
+    //--------------------------------------------------------------------------
+    //! @brief      use PCM speedup
+    //!
+    //! @return     true if enabled
+    //--------------------------------------------------------------------------
+    bool pcmSpdUp() const;
+
 private slots:
     //--------------------------------------------------------------------------
     //! @brief      get path to at3tool
@@ -186,6 +215,11 @@ private slots:
     //! @brief      Called when push OK clicked.
     //--------------------------------------------------------------------------
     void on_pushOK_clicked();
+
+    //--------------------------------------------------------------------------
+    //! @brief      Called when push Reset clicked.
+    //--------------------------------------------------------------------------
+    void on_pushReset_clicked();
 
 signals:
     //--------------------------------------------------------------------------

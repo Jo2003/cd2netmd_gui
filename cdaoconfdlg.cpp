@@ -16,16 +16,15 @@
  */
 #include "cdaoconfdlg.h"
 #include "ui_cdaoconfdlg.h"
-#include <QSettings>
 
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------------
 //! @brief      Constructs a new instance.
 //!
-//! @param      parent  The parent widet
-//------------------------------------------------------------------------------
-CDaoConfDlg::CDaoConfDlg(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::CDaoConfDlg)
+//! @param      parent  The parent widget
+//! @param      set     pointer to settingsdialog
+//--------------------------------------------------------------------------
+CDaoConfDlg::CDaoConfDlg(QWidget *parent, SettingsDlg* set) :
+    QDialog(parent), ui(new Ui::CDaoConfDlg), pSet(set)
 {
     ui->setupUi(this);
     QString s = R"(
@@ -80,6 +79,5 @@ CDaoConfDlg::~CDaoConfDlg()
 //--------------------------------------------------------------------------
 void CDaoConfDlg::on_checkDontShow_toggled(bool checked)
 {
-    QSettings set;
-    set.setValue("dont_show_dao_info", checked);
+    pSet->setDaoInfo(!checked);
 }

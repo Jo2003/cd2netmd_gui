@@ -50,6 +50,9 @@ CNetMD::CNetMD(QObject *parent)
         qCritical() << "Can't share Log File / Stream";
     }
 
+    mpApi->initHotPlug();
+    // mpApi->registerForHotplugEvents(std::bind(&CNetMD::hotPlugCB, this, std::placeholders::_1));
+
     connect(&mTReadLog, &QTimer::timeout, this, &CNetMD::extractPercent);
     connect(this, &CNetMD::finished, this, &CNetMD::procEnded);
 }
@@ -66,8 +69,8 @@ CNetMD::~CNetMD()
 
     if (mpApi != nullptr)
     {
-        // remove all homebrew features
-        mpApi->endHBSession(0);
+        mpApi->registerForHotplugEvents(nullptr);
+        mpApi->endHBSession(netmd::HomebrewFeatures::NOTHING);
         delete mpApi;
     }
 }
@@ -87,7 +90,6 @@ void CNetMD::start(NetMDStartup startup)
         break;
     // async call
     default:
-        mLog.clear();
         mTReadLog.start();
         QThread::start();
         break;
@@ -103,7 +105,6 @@ void CNetMD::start(NetMDStartup startup)
 //--------------------------------------------------------------------------
 void CNetMD::start(const TocData& tocData, bool resetDev, bool mono)
 {
-    mLog.clear();
     mTocData = tocData;
     mCurrJob.mCmd = NetMDCmd::TOC_MANIP;
     mCurrJob.miFirst = resetDev ? 1 : 0;
@@ -176,6 +177,7 @@ int CNetMD::getDiscInfo()
     tree.insert("sp_upload", mpApi->spUploadSupported() ? 1 : 0);
     tree.insert("pcm2mono", mpApi->pcm2MonoSupported() ? 1 : 0);
     tree.insert("native_mono_upld", mpApi->nativeMonoUploadSupported() ? 1 : 0);
+    tree.insert("pcm_speedup", mpApi->pcmSpeedupSupported() ? 1 : 0);
 
     if ((i = mpApi->trackCount()) > -1)
     {
@@ -303,16 +305,13 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
     {
     case NetMDCmd::WRITE_TRACK_LP2:
         onTheFlyConvert = netmd::NETMD_DISKFORMAT_LP2;
-        ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_LP4:
         onTheFlyConvert = netmd::NETMD_DISKFORMAT_LP4;
-        ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_SP:
     case NetMDCmd::WRITE_TRACK_SP_PREENC: // patch will be automatically applied
         onTheFlyConvert = netmd::NO_ONTHEFLY_CONVERSION;
-        ret = netmd::NETMDERR_NO_ERROR;
         break;
     case NetMDCmd::WRITE_TRACK_SP_MONO:
         onTheFlyConvert = netmd::NETMD_DISKFORMAT_SP_MONO;
@@ -330,6 +329,7 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
                                    onTheFlyConvert);
     }
 
+    qInfo() << ret;
     return ret;
 }
 
@@ -345,7 +345,9 @@ int CNetMD::writeTrack(const NetMDCmd& cmd, const QString& fName, const QString&
 int CNetMD::addGroup(const QString& name, int first, int last)
 {
     qInfo() << "add group" << name << "first track:" << first << "last track:" << last << "to" << mDevName;
-    return mpApi->createGroup(static_cast<const char*>(utf8ToMd(name)), first, last);
+    int ret = mpApi->createGroup(static_cast<const char*>(utf8ToMd(name)), first, last);
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -358,7 +360,9 @@ int CNetMD::addGroup(const QString& name, int first, int last)
 int CNetMD::renameDisc(const QString& name)
 {
     qInfo() << "rename MD to" << name << "on" << mDevName;
-    return mpApi->setDiscTitle(static_cast<const char*>(utf8ToMd(name)));
+    int ret = mpApi->setDiscTitle(static_cast<const char*>(utf8ToMd(name)));
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -372,7 +376,9 @@ int CNetMD::renameDisc(const QString& name)
 int CNetMD::renameTrack(const QString& name, int trackNo)
 {
     qInfo() << "rename track" << trackNo << "to" << name << "on" << mDevName;
-    return mpApi->setTrackTitle(trackNo, static_cast<const char*>(utf8ToMd(name)));
+    int ret = mpApi->setTrackTitle(trackNo, static_cast<const char*>(utf8ToMd(name)));
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -386,7 +392,9 @@ int CNetMD::renameTrack(const QString& name, int trackNo)
 int CNetMD::renameGroup(const QString& name, int groupNo)
 {
     qInfo() << "rename group" << groupNo << "to" << name << "on" << mDevName;
-    return mpApi->setGroupTitle(groupNo, static_cast<const char*>(utf8ToMd(name)));
+    int ret = mpApi->setGroupTitle(groupNo, static_cast<const char*>(utf8ToMd(name)));
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -397,7 +405,9 @@ int CNetMD::renameGroup(const QString& name, int groupNo)
 int CNetMD::eraseDisc()
 {
     qInfo() << "erase disc on" << mDevName;
-    return mpApi->eraseDisc();
+    int ret = mpApi->eraseDisc();
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -410,7 +420,9 @@ int CNetMD::eraseDisc()
 int CNetMD::delGroup(int groupNo)
 {
     qInfo() << "delete group" << groupNo << "on" << mDevName;
-    return mpApi->deleteGroup(groupNo);
+    int ret = mpApi->deleteGroup(groupNo);
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -423,7 +435,9 @@ int CNetMD::delGroup(int groupNo)
 int CNetMD::delTrack(int trackNo)
 {
     qInfo() << "delete track" << trackNo << "on" << mDevName;
-    return mpApi->deleteTrack(trackNo);
+    int ret = mpApi->deleteTrack(trackNo);
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -435,8 +449,11 @@ int CNetMD::delTrack(int trackNo)
 //--------------------------------------------------------------------------
 int CNetMD::doTocManip(bool devReset)
 {
+    qInfo() << "manipulate TOC on" << mDevName;
     CTocManip manip(mpApi);
-    return manip.manipulateTOC(mTocData, devReset, mMono);
+    int ret = manip.manipulateTOC(mTocData, devReset, mMono);
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -447,7 +464,9 @@ int CNetMD::doTocManip(bool devReset)
 int CNetMD::startHBSession()
 {
     qInfo() << "start homebrew session" << QString("0x%1").arg(mCurrJob.mHbFeatures, 2, 16, QChar('0')) << "on" << mDevName;
-    return mpApi->startHBSession(mCurrJob.mHbFeatures);
+    int ret = mpApi->startHBSession(mCurrJob.mHbFeatures);
+    qInfo() << ret;
+    return ret;
 }
 
 //--------------------------------------------------------------------------
@@ -455,8 +474,29 @@ int CNetMD::startHBSession()
 //--------------------------------------------------------------------------
 void CNetMD::endHBSession()
 {
-    qInfo() << "end homebrew session 0x" << QString("0x%1").arg(mCurrJob.mHbFeatures, 2, 16, QChar('0')) << "on" << mDevName;
+    qInfo() << "end homebrew session" << QString("0x%1").arg(mCurrJob.mHbFeatures, 2, 16, QChar('0')) << "on" << mDevName;
     mpApi->endHBSession(mCurrJob.mHbFeatures);
+}
+
+//--------------------------------------------------------------------------
+//! @brief callback to be registered to netmd api
+//!        gets called when device was added / delted
+//!
+//! @param[in] added true if added, false otherwise
+//!
+//! @return 0
+//--------------------------------------------------------------------------
+int CNetMD::hotPlugCB(bool added)
+{
+    if (added)
+    {
+        start({NetMDCmd::DISCINFO});
+    }
+    else
+    {
+        emit jsonOut(EMPTY_JSON_RESP);
+    }
+    return 0;
 }
 
 void CNetMD::run()
@@ -526,6 +566,7 @@ void CNetMD::run()
         || (mCurrJob.mCmd == NetMDCmd::DEL_TRACK)
         || (ret == TOCMANIP_DEV_RESET)) // TOC edit successful, dev reset done
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         getDiscInfo();
     }
 
@@ -579,5 +620,6 @@ void CNetMD::procEnded(bool, int)
     if (!mLog.isEmpty())
     {
         qInfo().noquote() << Qt::endl << static_cast<const char*>(mLog.toUtf8());
+        mLog.clear();
     }
 }
