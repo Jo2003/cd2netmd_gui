@@ -5,8 +5,13 @@
 # good loking deb package!
 # (c)2022 By Jo2003 All rights reserved!
 #-----------------------------------------------------------------------
-BIN_FILE=${1}
+BIN_FILE=${1:-build/netmd_wizard}
 BIN_NAME=netmd_wizard
+
+if [ ! -x "${BIN_FILE}" ]; then
+    echo "Error: binary '${BIN_FILE}' not found! Usage: ${0} [path/to/${BIN_NAME}]" >&2
+    exit 1
+fi
 PACKAGE=$(echo -n ${BIN_NAME} | sed 's/_/-/')
 OFF_NAME="NetMD Wizard"
 VER="$(sed -n 's/.*GIT_VERSION[^0-9]\+\([^\"]\+\).*/\1/p' git_version.h)"
@@ -55,6 +60,25 @@ Categories=Audio;Recorder
 EOF
 }
 
+calc_depends() {
+    # collect dynamically linked binaries (c2nffmpeg is static)
+    local bins=()
+    for f in "${BUILD_FOLDER}"/usr/bin/*; do
+        readelf -d "${f}" 2>/dev/null | grep -q NEEDED && bins+=("$(realpath "${f}")")
+    done
+
+    local tmpd="$(mktemp -d)"
+    mkdir "${tmpd}/debian" && touch "${tmpd}/debian/control"
+    local deps="$(cd "${tmpd}" && dpkg-shlibdeps --warnings=0 -O "${bins[@]}" | sed 's/^shlibs:Depends=//')"
+    rm -rf "${tmpd}"
+
+    if [ -z "${deps}" ]; then
+        echo "Error: could not calculate dependencies!" >&2
+        return 1
+    fi
+    echo -n "${deps}"
+}
+
 create_control_file() {
     cat << EOF > "${BUILD_FOLDER}/DEBIAN/control"
 Package: ${PACKAGE}
@@ -65,8 +89,11 @@ Architecture: ${ARCH}
 Installed-Size: $(($(du -b --max-depth=0 ${BUILD_FOLDER}/usr|gawk '{print $1}') / 1024))
 EOF
 
+    local deps
+    deps="$(calc_depends)" || exit 1
+
     cat << EOF >> "${BUILD_FOLDER}/DEBIAN/control"
-Depends: libusb-1.0-0 (>= 2:1.0.21), libsndfile1 (>= 1.0.28), libflac8 (>= 1.3.2), libogg0 (>= 1.3.2), libvorbis0a (>= 1.3.5), libvorbisenc2 (>= 1.3.5), libgcrypt20 (>= 1.8.1), libqt5widgets5 (>= 5.9.5), libqt5gui5 (>= 5.9.5), libqt5network5 (>= 5.9.5), libqt5core5a (>= 5.9.5), libgpg-error0 (>= 1.27)
+Depends: ${deps}
 EOF
 
 
@@ -103,7 +130,7 @@ chmod +x "${BUILD_FOLDER}/DEBIAN/postinst"
 }
 
 create_deb() {
-    dpkg-deb --build "${BUILD_FOLDER}"
+    dpkg-deb --root-owner-group --build "${BUILD_FOLDER}"
 }
 
 create_man_page() {
